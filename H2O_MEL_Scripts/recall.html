@@ -1,7 +1,7 @@
 <HTML>
 <HEAD>
-<TITLE>H2O MEL Scripts · recall</TITLE>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<TITLE>H2O MEL Scripts Â· recall</TITLE>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
 
 </HEAD>
@@ -41,14 +41,14 @@ Selections.</P>
 
 <P>Any pickable item<SUP><A HREF="#recall_1">1</A></SUP> can be stored in a Named Selection.  This includes objects, components,
 cameras, lights, constraints, handles, etc.  Specifically, Recall simply stores the
-results of the MEL command ‘<CODE>ls -sl</CODE>’ and reissues the selection when
+results of the MEL command â€˜<CODE>ls -sl</CODE>â€™ and reissues the selection when
 requested.<SUP><A HREF="#recall_2">2</A></SUP></P>
 
 <P CLASS="sidebar"><SPAN STYLE="color:red"><SUP><A NAME="recall_1">1</SUP></SPAN>
 <SPAN CLASS="note">Note:</SPAN> Currently Recall is unable to restore the selection of sets.  Maya's
-default behavior for the ‘<CODE>select</CODE>’ command is to select the members of a set
+default behavior for the â€˜<CODE>select</CODE>â€™ command is to select the members of a set
 and not the set itself.  To restore the selection of a set the select command requires
-the ‘<CODE>-ne</CODE>’ flag.  At some point I'll add the smarts for Recall to handle
+the â€˜<CODE>-ne</CODE>â€™ flag.  At some point I'll add the smarts for Recall to handle
 these properly.</P>
 
 <P>If an item is deleted after being added to a Named Selection, it, of course, cannot
@@ -67,7 +67,7 @@ To delete a selection, highlight a Named Selection in the list and click "<SPAN 
 <P>To clear all Named Selections, click "<SPAN CLASS="ui">Clear&nbsp;All</SPAN>".</P>
 
 <P>The status and contents of the Named Selections are preserved when you close the
-Recall window.  Next time you activate it with the ‘<CODE>recall</CODE>’ MEL command the
+Recall window.  Next time you activate it with the â€˜<CODE>recall</CODE>â€™ MEL command the
 window will be re-opened with the previous contents.  You can destroy the window,
 along with all of its contents, by clicking the "<SPAN CLASS="ui">Destroy</SPAN>" button.  Note that this
 will clear all of your Named Selections.</P>
@@ -80,7 +80,7 @@ clashing nodes are <B>not</B> considered when importing Scenes (see
 <A HREF="#recall_4">Behind The Scenes<SUP>4</SUP></A>).</P>
 
 <P>If you clear the scene, either through the menus or with the MEL command
-‘<CODE>file&nbsp;-f&nbsp;-new</TT></CODE>’, the Named Selection list will clear as well.</P>
+â€˜<CODE>file&nbsp;-f&nbsp;-new</TT></CODE>â€™, the Named Selection list will clear as well.</P>
 
 <P>When using Maya 2.0's "<SPAN CLASS="ui">Optimize Scene Size</SPAN>" function the 'recallData' node would typically be identified as an "Empty Partition" and would be deleted.  To prevent this, an explicit
 connection is created between "<CODE>persp.translate</CODE>" and "<CODE>recallData.translate</CODE>".</P>
@@ -89,7 +89,7 @@ connection is created between "<CODE>persp.translate</CODE>" and "<CODE>recallDa
 
 <P><SPAN STYLE="color:red"><SUP><A NAME="recall_2">2</SUP></SPAN>
 As mentioned above, Recall defines a selection by storing the results of the MEL
-command ‘<CODE>ls -sl</CODE>’.  This command returns an array of multiple strings.
+command â€˜<CODE>ls -sl</CODE>â€™.  This command returns an array of multiple strings.
 All good and fine, but I ran into a snag when trying to store multiples of these
 for Recall's selection lists.</P>
 
@@ -114,7 +114,7 @@ showWindow hiddenRecallDataWindow;
 
 <P><SPAN STYLE="color:red"><SUP><A NAME="recall_3">3</SUP></SPAN>
 When Recall runs, it creates a partition-class node with the name <CODE>recallData</CODE>.
-A custom attribute ‘<CODE>data</CODE>’ is added to this node; this attribute is used to
+A custom attribute â€˜<CODE>data</CODE>â€™ is added to this node; this attribute is used to
 store the Named Selection list.  The node is saved with the Scene file, and allows
 Recall to restore a Named Selection list when a Scene is reloaded.</P>
 
