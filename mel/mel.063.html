@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#63</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #63</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.062.html">Previous</a> &middot; <a href="mel.064.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I toggle the Polygon statistics in the Heads-up Display?</h2>
+<!-- How do I toggle the Polygon statistics in the Heads-up Display? -->
+
+<div class="sidebar">
+<p><SPAN CLASS="note">Note:</SPAN> This How-To was introduced back in Maya v3.0, when the state of the Heads-Up Display
+would not persist when Maya was restarted. As of Maya v4.0 the commands for controlling this display changed,
+and the HUD now stays where you put it. The text below has been updated for Maya 6.</p>
+</div>
+
+<P>The "macro" command for this is:</P>
+
+<PRE CLASS="mel">
+TogglePolyCount;
+</PRE>
+
+<P>Which is a run-time command mapping to:</P>
+
+<PRE CLASS="mel">
+setPolyCountVisibility(!`optionVar -q polyCountVisibility`);
+</PRE>
+
+<p>The commands above toggles the state. If you want to specifically show or hide the Poly Count HUD, use the following:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Show the Poly Count HUD</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+setPolyCountVisibility( on );
+
+<SPAN CLASS="comment">// Hide the Poly Count HUD</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+setPolyCountVisibility( off );
+</PRE>
+
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.062.html">How do I set defaults so Materials, Cameras, Layout views, et al. have my own settings every time I start a new scene?</a></li>
+<li class="howto"><a href="mel.089.html">How can I use a single hotkey to toggle a ‘Show’ Option (or other mode)?</a></li>
+<li class="howto"><a href="mel.045.html">How do I toggle playback between "Normal" and "Free" while playback is running?  It only seems to take effect when I restart playback at the beginning.</a></li>
+<li class="howto"><a href="mel.047.html">How do I toggle between 'Hide UI Elements' and 'Show UI Elements?'</a></li>
+<li class="howto"><a href="mel.048.html">How do I toggle the visibility of the Model panels' menu bars?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->14 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

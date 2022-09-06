@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#21</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #21</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.020.html">Previous</a> &middot; <a href="api.022.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I find the file texture, and the image filepath, assigned to a material?</h2>
+<p>The textures for a material are assigned
+through dependency node connections. Typically the primary color connection
+(if any) is through the ".color" attribute. Different materials will have
+different channels, however, but the means for obtaining a texture
+connection are the same.</p>
+
+<p>Given:</p>
+
+<PRE CLASS="api">
+MStatus status;
+
+<SPAN CLASS="comment">// The material node.</SPAN>
+MObject material;
+
+<SPAN CLASS="comment">// The attribute to which may be connected a texture.</SPAN>
+const MString COLOR_ATTR( "color" );
+
+<SPAN CLASS="comment">// The attribute on Maya's "file" node which stores the</SPAN>
+<SPAN CLASS="comment">// path to the assigned texture image.</SPAN>
+const MString TEXTURE_NAME( "fileTextureName" );
+
+</PRE>
+
+<P>We find the incoming texture thusly:</P>
+
+<PRE CLASS="api">
+  MFnDependencyNode fnDependNode( material );
+  MPlug plug = fnDependNode.findPlug( COLOR_ATTR, &amp;status );
+  if ( status == MS::kSuccess )
+  {
+    <SPAN CLASS="comment">// If you're looping through arbitrary attributes here, you could</SPAN>
+    <SPAN CLASS="comment">// add a check to ensure that the queried plug represents a</SPAN>
+    <SPAN CLASS="comment">// (double3) attribute, and perhaps even MFnAttribute::isUsedAsColor().</SPAN>
+
+    <SPAN CLASS="comment">// Is plug connected?</SPAN>
+    MPlugArray cc;
+
+    <SPAN CLASS="comment">// Do not simply check for return value here; this returns TRUE if the</SPAN>
+    <SPAN CLASS="comment">// the plug is _either_ the source or destination for a connection,</SPAN>
+    <SPAN CLASS="comment">// even though we've specified only destination.</SPAN>
+    plug.connectedTo( cc, true /* asDst */, false );
+    if ( cc.length() &gt; 0 )
+    {
+      <SPAN CLASS="comment">// As a destination there can be only one source.</SPAN>
+      MObject src = cc[0];
+
+      <SPAN CLASS="comment">// Is it a file texture?</SPAN>
+      if ( src.hasFn( MFn::kFileTexture ) )
+      {
+        MFnDependencyNode fnFile( src );
+        MPlug ftnPlug = fnFile.findPlug( TEXTURE_NAME, &amp;status );
+        if ( status == MS::kSuccess )
+        {
+          MString fileTextureName;
+          ftnPlug.getValue( fileTextureName );
+        }
+      }
+
+      <SPAN CLASS="comment">// Not a file node? Add support for other nodes here.</SPAN>
+      else
+      {
+        assert( false &amp;&amp; "Unsupported texture node." );
+      }
+    }
+    else
+    {
+      <SPAN CLASS="comment">// The plug is not connected. Just read its color values.</SPAN>
+      double r, g, b;
+      plug.getChild(0).getValue( r );
+      plug.getChild(1).getValue( g );
+      plug.getChild(2).getValue( b );
+    }
+  }
+</PRE>
+
+<P>The file texture name will likely be returned as a full path - but it's not always
+that straight-forward. Maya has all sorts of little internal tricks to resolve the
+actual location for a file texture, and uses one or more double slash "//" separators
+(in place of a single slash) as a hint to derive a path for the image relative to
+the current project. You may need to do some more massaging of this path to
+determine the actual file.</P>
+
+<P>In Maya v5 Alias introduced a handy means of extracting the image itself - that is,
+the pixel data - from the 'file' node:</P>
+
+<PRE CLASS="api">
+MImage::readFromTextureNode( const MObject&amp; fileTextureObject );
+</PRE>
+
+<p>And in Maya 6, they added a method to the MRenderUtil class to return the full path to the
+texture image resolved by a file node <SPAN CLASS="remark">(Hallelujah!)</SPAN>:</p>
+
+<PRE CLASS="api">
+  MRenderUtil:: exactFileTextureName ( const MObject&amp; fileNode,
+                                       MString&amp; texturePath,
+                                       MStatus* ReturnStatus );
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.015.html">How do I create a Shading Group / Material / File texture network?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->19 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

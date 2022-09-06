@@ -1,0 +1,42 @@
+BODY.toc {background-color: #D4D0C0}
+BODY.docs {background-color: #E4E0DA}
+
+H1, H2, H3, UL {width: 640px}
+
+H1 {font: bold normal x-large times, serif}
+H2 {font: bold normal large times, serif}
+
+H3 {font-weight: bold; font-family: Verdana,Arial,sans-serif; color: #485D7C}
+H4 {font-size: medium; font-family: Verdana,Arial,sans-serif; color: #485D7C}
+
+PRE {font-family: "Courier New",monospace; margin-left: 50px}
+
+CODE {font-family: "Courier New",monospace}
+
+ADDRESS {font-family: Arial,sans-serif; font-size: smaller; margin-left: 100px}
+
+P.title {font-size: large; font-family: Verdana,Arial,Helvetica,sans-serif; color: blue}
+P.anno {font-size:smaller; font-family:"Comic Sans MS",fantasy; color:black; text-align:center}
+P.cheading {font-family:"Comic Sans MS",fantasy; font-weight:bold; color:black; text-align:center}
+P.sidebar {font-size:smaller; font-family:fantasy; color: #500040; margin-left: 10%; margin-right: 10%}
+P.warning {font-size:large; font-family:Times,serif; color:red}
+P.rcomment {color:gray; text-align:right}
+
+LI.howto {list-style-image: URL(../images/pin.gif); list-style-type: circle}
+LI.tutorial {list-style-image: URL(../images/pins.gif); list-style-type: square}
+
+IMG.float {float:right}
+
+SPAN.comment {color:gray}
+DIV.tall {line-height:1.5em }
+DIV.right {text-align:right}
+DIV.center {text-align:center}
+
+.in {margin-left: 25px}
+.note {font-weight:bold; font-style:italic; font-variant:small-caps; color:maroon}
+.ui {font-family:Courier,monospace; color:#005000}
+.heading {font-size: larger; font-family: Verdana,Arial,sans-serif; color: #485D7C}
+.mel {font-family:Courier,monospace; color: red}
+
+
+

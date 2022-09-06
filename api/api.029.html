@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#29</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #29</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.028.html">Previous</a> &middot; <a href="api.030.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine the type of a MPlug in order to use the appropriate getValue() overload?</h2>
+<!-- How do I determine the type of a MPlug in order to use the appropriate getValue() overload? -->
+
+<p>The MPlug itself doesn't have a type, but its attribute does. Use the
+<SPAN CLASS="api">MPlug::attribute()</SPAN> method to get the MObject for the attribute. You can then
+use <SPAN CLASS="api">MObject::hasFn()</SPAN> to determine its type (e.g. kNumericAttribute,
+kTypedAttribute, kUnitAttribute, kMessageAttribute, etc.). If it's a numeric
+attribute then you can use <SPAN CLASS="api">MFnNumericAttribute::unitType()</SPAN> to query its
+numeric type.</p>
+
+<pre class="api">
+MObject attribute = plug.attribute();
+
+if ( attribute.hasFn( MFn::kNumericAttribute ) )
+{
+    MFnNumericAttribute fnAttrib(attribute);
+
+    switch(fnAttrib.unitType())
+    {
+        case MFnNumericData::kBoolean:
+        {
+            bool value;
+            plug.getValue(value);
+            break;
+        }
+        case MFnNumericData::kShort:
+        {
+            short value;
+            plug.getValue(value);
+            break;
+        }
+        case MFnNumericData::kLong:
+        {
+            int value;
+            plug.getValue(value);
+            break;
+        }
+        case MFnNumericData::kFloat:
+        {
+            float value;
+            plug.getValue(value);
+            break;
+        }
+        case MFnNumericData::kDouble:
+        {
+            double value;
+            plug.getValue(value);
+            break;
+        }
+        case MFnNumericData::k3Float:
+        {
+            MVector float3;
+            plug.child(0).getValue(float3.x);
+            plug.child(1).getValue(float3.y);
+            plug.child(2).getValue(float3.z);
+        }
+    }
+}
+</pre>
+
+<p>Similarly, there's <SPAN CLASS="api">MFnUnitAttribute::unitType()</SPAN> for unit attributes and
+<SPAN CLASS="api">MFnTypedAttribute::attrType()</SPAN> for typed attributes.</p>
+
+<p>Remember to consider for the case where the MPlug derives its value from an incoming
+connection. If a plug is connected, it may be animated (and thus its value may change from frame
+to frame), or - in the case of a (kFloat) or (k3Float) attribute - it may be connected to a texture. A
+texture connection has no valid value outside of Maya's rendering context, so any queries via
+<SPAN CLASS="api">getValue()</SPAN> are going to be non-representative of the plug's actual
+behavior.</p>
+
+<P CLASS="rcomment"><!-- DATE -->19 Feb 2005</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

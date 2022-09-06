@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#40</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #40</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.039.html">Previous</a> &middot; <a href="mel.041.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I extract just the filename or just the directory from an absolute path description?</h2>
+<!-- How do I extract just the filename or just the directory from an absolute path description? -->
+
+<P>Using the example path:</P>
+
+<PRE CLASS="mel">
+string $fullpath = "c:/maya/projects/default/sourceimages/myImage.tif"
+</PRE>
+
+<P>I use a few handy dandy utility procedures to deal with filepaths, filenames
+and the different slashes used for Windows vs. UNIX/Maya.</P>
+
+<P>The ‘<CODE>filepart</CODE>’ script extracts just the filename from the path description:</P>
+
+<PRE CLASS="mel">
+global proc string filepart( string $path )
+// Extracts the path portion of an absolute filepath.
+// Input: e.g. "D:/projects/default/scenes/myScene.mb"
+// Result: e.g. "myScene.mb"
+//
+// Filepath can be delimited with
+// either slash ("/" or "\")
+{
+  string $filepart = match( "[^/\\]*$", $path );
+
+  return $filepart;
+}
+</PRE>
+
+<P>The ‘<CODE>pathpart</CODE>’ script extracts just the directory from the path description:</P>
+
+<PRE CLASS="mel">
+proc string pathpart( string $path )
+// Extracts the path portion of an absolute filepath.
+// Input: e.g. "D:/projects/default/scenes/myScene.mb"
+// Result: e.g. "D:/projects/default/scenes"
+//
+// Note: Requires that the filepath be delimited with
+//       _forward_ slashes ("/")
+{
+  string $dir = match( "^.*/", $path );
+
+  int $sz = size( $dir );
+  // Strip off trailing '/'
+  //
+  if ( ( $sz &gt; 1 ) &amp;&amp; ( substring( $dir, $sz, $sz ) == "/" ) ) {
+    $dir = substring( $dir, 1, ($sz - 1) );
+  }
+  return $dir;
+
+}
+</PRE>
+
+<P>So, to get just the filename from the path description:</P>
+
+<PRE CLASS="mel">
+string $file = filepart( $fullpath );
+// Result: myImage.tif //
+</PRE>
+
+<P>And, to get just the directory from the path description:</P>
+
+<PRE CLASS="mel">
+string $directory = pathpart( $fullpath );
+// Result: c:/maya/projects/default/sourceimages //
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.034.html">How do I enforce backslashes for Windows filepaths (or forward slashes for Maya)?</a></li>
+<li class="howto"><a href="mel.078.html">How do I determine the path for a script while it is executing; for example, to load another file in the same folder?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Thursday, September 07, 2000</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

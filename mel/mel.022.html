@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#22</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #22</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.021.html">Previous</a> &middot; <a href="mel.023.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I add a control to the top of a UI layout instead of the bottom (as is the default)?</h2>
+<!-- How can I add a control to the top of a UI layout instead of the bottom (as is the default)? -->
+
+<P>You have two options:</P>
+
+<OL>
+<LI>
+<P>Use a formLayout and re-attach the controls as you add each to the layout:</P>
+
+<PRE CLASS="mel">
+formLayout myForm;
+  text1;
+  text2;
+  text3;
+
+formLayout -e
+  -attachForm     text1    top   4
+  -attachControl  text2    top   4  text1
+  -attachControl  text3    top   4  text2
+    myForm;
+
+<SPAN CLASS="comment">// and then..</SPAN>
+
+setParent myForm;
+  text4;
+
+formLayout -e
+  -attachForm     text4    top   4
+  -attachControl  text1    top   4  text4
+    myForm;
+</PRE></LI>
+
+<LI>
+<P>Delete all children of the layout and re-add in the desired order:</P>
+
+<PRE CLASS="mel">
+columnLayout myColumn;
+  text1;
+  text2;
+  text3;
+
+<SPAN CLASS="comment">// and then...</SPAN>
+
+string $children[] = `columnLayout -q -childArray myColumn`;
+for ( $child in $children )
+  deleteUI $child;
+
+setParent myColumn;
+  text4;
+  text1;
+  text2;
+  text3;
+</PRE>
+</LI>
+
+</OL>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

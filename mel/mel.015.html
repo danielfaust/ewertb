@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#15</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #15</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.014.html">Previous</a> &middot; <a href="mel.016.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How should I name my UI controls?  Which is better: defining my own names, or using the names Maya assigns?</h2>
+<!-- How should I name my UI controls?  Which is better: defining my own names, or using the names Maya assigns? -->
+
+<P>In most of the MEL examples scattered about these pages you may notice that I usually let Maya assign its own name for a control and use a string variable to store the full path to the control.</P>
+
+<PRE CLASS="mel">
+string $button = `button`;
+// Result: window1|columnLayout18|button1 //
+
+button -e -label "Push Me" $button;
+</PRE>
+
+<P>Maya allows you to define your own names for controls when they are created.</P>
+
+<PRE CLASS="mel">
+button myButton;
+// Result: window1|columnLayout18|myButton //
+
+button -e -label "Push Me" myButton;
+</PRE>
+
+<P>So why not just assign your own name and have at it?  There are advantages to both methods.  How the control is going to be used in the rest of the script determines the best option for defining (or not defining) its name.</P>
+
+<P>For the sake of short tutorials (and bug reports to A|w) I tend to use strings assigned with the return value from the control's creation.  It reduces the chance of error and makes following the examples a little clearer, IMO.</P>
+
+<P>In most practical scripts I hard-code the names of the controls and refer to them by explicit names.  I'm constantly referring to UI controls from procedures outside of the main procedure that creates them, and it would be a pain to always pass the names of UI controls to every procedure that has to access them.</P>
+
+<P>If you choose to use your own names for your UI controls, you have to make sure that the names you use are unique.  If you choose the same name for two different controls, Maya has to deal with the ambiguity conflict that results.  Consider the following example.</P>
+
+<PRE CLASS="mel">
+string $window = `window`;
+  columnLayout;
+    button myButton;
+showWindow $window;
+
+// Result: window1|columnLayout18|myButton //
+</PRE>
+
+<P>This works just fine.  But what if the user executes this script twice?</P>
+
+<PRE CLASS="mel">
+// Result: window2|columnLayout19|myButton //
+</PRE>
+
+<P>With two buttons labelled "myButton" you attempt the following:</P>
+
+<PRE CLASS="mel">
+button -e -label "Push Me" myButton;
+</PRE>
+
+<P>The label for the button in ‘<CODE>window2</CODE>’ is set to "Push Me".  What if you meant to change the label for the button in ‘<CODE>window1</CODE>’?  To do that you'd need to know the full path to the control -- ‘<CODE>window1|columnLayout18|myButton</CODE>’ -- and the way to know that is to use the return value from the control's creation.</P>
+
+<P>So if you choose to define your own names for UI controls there are two rules which you must follow:</P>
+
+<OL>
+  <LI><P>Allow only one instance of your UI at any time.  This is very simple to implement; I include this as part of the initialization in all of my scripts.</P>
+
+<PRE CLASS="mel">
+// If window already exists, delete it
+if ( `window -exists «<I>windowName</I>»` )
+  deleteUI -window «<I>windowName</I>»;
+
+// Now build a new window
+window «<I>windowName</I>»;
+</PRE>
+
+  </LI>
+
+  <LI><P>To avoid conflicts with other scripts (those installed with Maya, third-party, or even your own), prefix all control names with an identifier.  For all H2O scripts I prefix all control names with "h2o_".  I also include in the prefix an abbreviation of the script in question.  For example, in H2O's Game Editor script all controls are prefixed with "h2o_ge_".</P></LI>
+</OL>
+
+<P>There are times in which using the automatically assigned names is preferable, or even required.</P>
+
+<P>I use the formLayout frequently when building dialogs.  In many cases I only ever refer to the formLayout directly for the purpose of setting the attachment flags for each child control.  Rather than rely on a long, unique name it is easier to assign a string using the path Maya provides and then use it for editing the layout.</P>
+
+<PRE CLASS="mel">
+string $form = `formLayout`;
+
+// <I>add controls here</I> //
+
+formLayout -e
+// <I>&minus;attachForm, et al</I> //
+  $form;
+</PRE>
+
+<P>I tend to modularize a lot of my scripts so that functions are as flexible as possible.  Such a structure means that there will often be more than one instance of a control.  This breaks the first rule I cited above for using your own control names.  Therefore, in this case you must be prepared to use the path Maya returns when a control is created.</P>
+
+<P>Take, for example, a menu that you want to be able to attach to the menuBar of any window that calls upon it.  The creation command for the menu must accept as an argument the name of the window to which it will be added, and all commands from the menu must refer to the instance of the menu that has been created.  This is the technique that is used in the <A HREF="rolloInt/oopMEL_01.html">Scene Management Menu</A>.</P>
+
+<PRE CLASS="mel">
+global proc makeWindowWithMenu()
+{
+  // Create a window with a menuBar
+  string $window = `window -menuBar true`;
+
+  // Add the menu to this window
+  addMyMenu( $window );
+
+  showWindow;
+}
+</PRE>
+
+<PRE CLASS="mel">
+global proc addMyMenu( string $window )
+{
+  // Assert that this window has a menuBar
+  if ( `window -q -menuBar $window` )
+  {
+    // Set current parent to the window
+    setParent $window;
+
+    // Add the menu
+    string $theMenu = `menu -label "The Menu"`;
+
+      // Create a menuItem
+      // The command for the menu is built using the path returned by the `menu` command above
+      menuItem -label "Add item to this menu" -c ( "addAnotherMenuItem( \"" + $theMenu + "\" )" );
+
+      setParent ..;
+  }
+}
+</PRE>
+
+<PRE CLASS="mel">
+proc addAnotherMenuItem( string $menu )
+{
+  // Set the menu parent to the appropriate menu
+  setParent -m $menu;
+
+  // Add another menuItem
+  menuItem -label "Another Item";
+}
+</PRE>
+
+<P>Perhaps you would like to create a group of controls that could be docked into any window's layout, and allow for multiple instances of this group.  A practical implementation of this is the <A HREF="http://www.ewertb.com/maya/rolloInt">rolloInt</A>.  Maya's ‘<CODE>scriptedPanel</CODE>’ works in a similar fashion, and uses the same principles.</P>
+
+<BR>
+
+<P>For most purposes, it doesn't really matter whether you choose to name your controls or let Maya do it.  It is the overall function of the script that determines which method will work best.  The one primary caution is to avoid allowing multiple controls using the same name.</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

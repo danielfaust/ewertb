@@ -1,0 +1,36 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · abortTest</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">abortTest</P>
+
+<P>Code MEL for a while and you'll soon learn that Maya does not provide
+a method for terminating a runaway script.  If you lose communication with
+Maya's UI, you're pretty well resigned to killing its task.</P>
+
+<P>The ‘<CODE>abortTest</CODE>’ function provides a pro-active method for killing non-responsive scripts.
+It tests for the presence of a file called "<CODE>DIE</CODE>" in your
+"<CODE>$HOME/maya/</CODE>" directory and returns a non-zero value if this file
+exists.  The "<CODE>DIE</CODE>" file is deleted after detection.</P>
+
+<P>Insert the following code in your MEL script, for example in a time-consuming
+<CODE>for()</CODE> loop:</P>
+
+<PRE CLASS="mel">
+if ( abortTest() )
+  error( "Aborted externally!" );
+</PRE>
+
+<P>Now if this script gets out of control, you can force it to exit by creating
+the ‘<CODE>DIE</CODE>’ file from a shell:</P>
+
+<PRE CLASS="mel">
+touch ~/maya/DIE
+</PRE>
+
+<!-- footer --></BODY>
+</HTML>

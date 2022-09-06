@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#56</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #56</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.055.html">Previous</a> &middot; <a href="mel.058.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine which UV Set is being used to derive the UVs for the Texture of a given face component?</h2>
+<!-- How do I determine which UV Set is being used to derive the UVs for the Texture of a given face component? -->
+
+<P>Given a textured polymesh face component, there are five steps to determine the UV Set used to derive its UVs:</P>
+
+<OL>
+<LI><P>Determine the Shading Group used to shade the face.</P></LI>
+<LI><P>Trace this upstream to the Material providing the ‘<CODE>.surfaceShader</CODE>’ input for the Shading Group.</P></LI>
+<LI><P>Trace this upstream to the Texture providing the ‘<CODE>.color</CODE>’ input for the Material.</P></LI>
+<LI><P>Find the attribute plug for the corresponding UV Set which is linked to this Texture.</P></LI>
+<LI><P>Query the name of the UV set from this plug.</P></LI>
+</OL>
+
+<P>The first three steps can be accomplished using:</P>
+
+<PRE CLASS="mel">
+getFacetSG();
+getMaterialFromSG();
+getTextureFromMaterial();
+</PRE>
+
+These are all described in the How-To:
+
+<DIV CLASS="in">
+<P><A HREF="mel_043.html">How do I get the attached Shading Group and File Texture for an object?</A></P>
+</DIV>
+
+The ‘<CODE>uvLink</CODE>’ MEL command is used to determine the relationship between a Texture and a UV Set.
+You may query the relationship for all UV Sets or for the UV Set in a specific object.
+To perform the latter, specify the <CODE>&minus;queryObject</CODE> flag with the uvLink command.
+
+<PRE CLASS="mel">
+string $object = "pSphere1";
+
+string $texture = "myTexture";  // example, as returned from getTextureFromMaterial()
+
+string $uvSetPlug[] = `uvLink -queryObject $object -texture $texture`;
+// Result: pSphereShape1.uvSet[0].uvSetName //
+</PRE>
+
+<P>By my observations UV Set linking is mutually exclusive.  Linking a UV
+Set to one Texture (or linking a Texture to a UV Set) will unlink any
+previous relationship.  Thus you may expect there to be a 1:1
+relationship.  In short, if you query a uvLink for a single object you
+will get only one ‘<CODE>.uvSetName</CODE>’ in return.</P>
+
+<P>The last step is to query the plug returned by ‘<CODE>uvLink</CODE>’ to get the name of the UV Set:</P>
+
+<PRE CLASS="mel">
+getAttr $uvSetPlug[0];
+// Result: map1 //
+</PRE>
+
+</DIV>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.043.html">How do I get the assigned Shading Group for an object or face component?</a></li>
+<li class="howto"><a href="mel.072.html">How do I output the UVs for each Vertex component?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Tuesday, October 09, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

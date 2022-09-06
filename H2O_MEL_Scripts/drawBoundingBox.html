@@ -1,0 +1,45 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · drawBoundingBox</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">drawBoundingBox</P>
+
+<H3>Function</H3>
+
+<P>Creates a polygon cube object to encompass the bounding box
+area of the selected objects or components.</P>
+
+<P>Supported selection types:</P>
+
+<UL>
+  <LI><P>most (if not all) transform and geometry (shape) nodes</P></LI>
+  <LI><P>locators (yes, these were a special case!)</P></LI>
+  <LI><P>polygon components: vertex, edge, facet, UV</P></LI>
+  <LI><P>NURBS components: CV, edit point</P></LI>
+  <LI><P>particle components</P></LI>
+</UL>
+
+<P>The size and location of the bounding box are echoed to Maya's output
+in the form of:</P>
+
+<PRE>
+  &lt;width (X)&gt; x &lt;height (Y)&gt; x &lt;depth (Z)&gt; @ { X, Y, Z }
+</PRE>
+
+<P>e.g.:</P>
+
+<PRE CLASS="mel">
+Bounding Cube: 1.38 x 1.36 x 1.08 @ { -1.61, 1.26, 1.28 }
+</PRE>
+
+<H3>Limitations</H3>
+
+<P>Due to a BUG in Maya, all selected objects must be visible
+else the bounding box will be calculated incorrectly.</P>
+
+<!-- footer --></BODY>
+</HTML>

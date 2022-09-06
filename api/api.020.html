@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#20</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #20</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.019.html">Previous</a> &middot; <a href="api.021.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">What are the advantages of using the API versus MEL?</h2>
+<P>The strongest motivation for using the API is speed. Alias suggests that, for the
+same work, a tool written using Maya's API will execute 10Ч faster than the
+equivalent instructions in MEL. This is not an exaggeration.</P>
+
+<P>I recently wrote a tool to extract all of the per-polygon shading assignments for
+a scene and stream them to a text file. For a scene with 100000 polygons, the
+MEL script took over an hour to execute; the equivalent command performed by a plug-in
+took less than 10 seconds.</P>
+
+<P>It took less time for me to write and execute a MPxCommand then for
+the MEL to finish!</P>
+
+<p>Speed notwithstanding, MEL does have its restrictions, and some tasks you simply need
+to tackle from the API:</p>
+
+<ol>
+<LI><P>Variable and optional command arguments. MEL procedures are dead simple to
+write, but are limited in the way they can handle arguments. If you
+declare a procedure to accept a string argument and an int argument,
+then that's what you need. No more, no less. The API's MSyntax class
+provides for conveniently defining an argument database, and allows
+both optional and multi-use flags.</P></LI>
+
+<LI><P>Defining a node. You cannot define a custom node type through MEL; you
+must use the MPxNode-derived classes in the API.</P></LI>
+
+<LI><P>Reading array attributes. A well-known limitation - you cannot query
+an array (e.g. '-dt "stringArray"') from MEL.</P></LI>
+
+<LI><P>Querying a componentListData attribute. It's possible (and common) to
+set an attribute of this type via MEL (Maya does this when you load a
+MayaAscii scene file, for instance), but it is not possible to query
+the component list on this plug. You must use the API's
+MFnComponentListData wrapper.</P></LI>
+
+<LI><P>Manipulators. If you wish to define your own manipulator for a tool or an attribute
+you must use the APIs MPxManipContainer. And it's not fun.</P></LI>
+
+<LI><P>Quaternion and matrix data types. It's possible to work with either of
+these in MEL, but you'll have to write your own math library in MEL
+to do it. The API conveniently provides MMatrix and MQuaternion classes.
+<SPAN CLASS="remark">(Yes, I know MEL has a matrix datatype. I'm referring to actually
+<em>doing</em> something with the values once you have them stored.)</SPAN></P></LI>
+
+<LI><P>Multi-dimensional arrays and data structures. Yes, MEL has array types and a triple-float vector type.
+Storing data in these types is convenient; however, managing data within these types
+quickly reveals limitations. For example, a task such as sorting two arrays and keeping the
+elements properly associated carries with it a lot of overhead in MEL. Pointers and containers
+available in C/C++ are much better suited to this task.</P></LI>
+
+<LI><P>Binary input and output. As an exercise I once tried to write a BMP image using MEL.
+In a word, painful. If you need to read or write binary data, save yourself the headache and
+go the plug-in route.</P></LI>
+</ol>
+
+<br>
+<p class="heading">MEL To The Rescue</p>
+
+<p>There are certain tasks for which you must use MEL, as there is no
+equivalent in the API:</P>
+
+<OL>
+<li><P>Any UI work. If you're building (or querying) windows, menus,
+layouts, buttons, shelves, what-have-you, MEL is the only mechanism
+available.</P></li>
+
+<li><P>User preferences. The optionVar interface is available only
+through MEL.</P></li>
+
+<li><P>Querying the current tool. There is no equivalent to 'currentCtx'
+within the API.</P></li>
+
+<li><P>Polygon operations. Thankfully they've finally added some of the
+more common polygon operations to Maya's API: subdivideFace and extrudeEdge,
+for example. Still, convenience operations such as polyMapCut,
+or polyMapMoveSew require that you call MEL (or write a helluva a
+lot of API code).</P></li>
+
+<li><P>Assigning/restoring the bind pose for a skeleton.</P></li>
+
+<LI><P>Querying the default value for a dynamic attribute. The MEL query "addAttr -q -defaultValue $attr" carries no equivalent in the API.</P></LI>
+
+<LI><p>The API offers no convenient method for collapsing construction history, such as the "delete -ch" offered in MEL.</p></li>
+
+<LI><P>The 'dgdirty' command. I haven't found an API equivalent for "dgdirty -all".</P></LI>
+
+<LI><P>Removing an unused array element from a multi attribute. Suppose, for instance, that you have multi attribute with connections on
+'.attr[0]', '.attr[1]' and '.attr[2]'. If you disconnect the input from '.attr[1]' you'll still have three elements in the array plug.
+The MEL command to clean up this unused index is "removeMultiInstance"; this action cannot be accomplished from the API.
+<SPAN CLASS="remark">(A possible exception is for attributes on custom nodes which may be managed via disconnect behaviors or MArrayDataBuilder.)</SPAN>
+</P></LI>
+
+<li><p>Duplicating a node. Maya's API offers no similar function to MEL's "duplicate",
+and the process for copying all attributes and data from one node to another would simply be an insane amount of work!</p></li>
+
+<li><p>Access to namespaces is not available in the API. You must use the two MEL commands "namespace" and "namespaceInfo".</p></li>
+
+<li><p>Access to project settings, as via the MEL "workspace" command, is not available in the API.</p></li>
+
+<li><p>Loading and unloading plug-ins. Ironically, the functionality available in the MEL commands "loadPlugin", "unloadPlugin" and "pluginInfo" are not available from the plug-in API.</p></li>
+
+<li><p>Sourcing MEL scripts. I've had little luck using MGlobal::sourceFile(), and have always resorted to calling MEL's "source" command via MGlobal::executeCommand().</p></li>
+
+</ol>
+
+<p>Finally, there is one bonus for using MEL: Undo is free. The API allows you to manage your Undo, but it also
+requires that you manage your Undo.</p>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.019.html">How do I execute MEL commands from the API? And <EM>why</EM> would I want or need to execute MEL from the API?</a></li>
+<li class="howto"><a href="api.028.html">How do I read and write a "componentList" attribute, such as '.inputComponents' found on polygon modifier nodes?</a></li>
+</ul>
+</div>
+
+<p class="rcomment">19 Dec 2004</p>
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

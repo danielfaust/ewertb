@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#17</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #17</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.016.html">Previous</a> &middot; <a href="api.018.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I initialize a string attribute's default when it is added?</h2>
+<!-- How do I initialize a string attribute's default when it is added? -->
+
+<P>A string attribute is created using the typed attribute function set: MFnTypedAttribute.
+To set a default value for a typed attribute you must first create a MObject
+for that type's data.</P>
+
+<P>You can set the default values for attributes at the same time they are
+created. The following excerpt from a node's ::initialize() method depicts an example for a
+string attribute:</P>
+
+<PRE CLASS="api">
+MObject myNode::aStringAttr;
+
+MStatus myNode::initialize()
+{
+  <SPAN CLASS="comment">// Declare the function set for a typed attribute.</SPAN>
+  MFnTypedAttribute                     tAttr;
+
+  <SPAN CLASS="comment">// Declare the function set and a MObject for the attribute data.</SPAN>
+  MFnStringData                         fnStringData;
+  MObject                               defaultString;
+
+  <SPAN CLASS="comment">// Create the default string.</SPAN>
+  defaultString = fnStringData.create( "Default String" );
+
+  <SPAN CLASS="comment">// Create the attribute and specify its default.</SPAN>
+  aStringAttr = tAttr.create( "string", "str", MFnData::kString, defaultString );
+
+  tAttr.setStorable(true);
+  tAttr.setKeyable(false);
+
+  status = addAttribute( aStringAttr );
+  if (!status) { status.perror("addAttribute .string"); return status;}
+}
+</PRE>
+
+<P><SPAN CLASS="heading">A Gotcha with Dynamic Attributes</SPAN></P>
+
+<P>The above method works find within an MPxNode::initialize() method. However, if
+you are adding a dynamic string attribute via an MPxCommand you'll find that, although
+the node's attribute does indeed have a default string, the default will not "stick"
+after saving and reloading scene. In other words, if you save the scene without modifying
+the default, then reload the scene, the string value will disappear.</P>
+
+<P>This is a side-effect of one of Maya's optimizations: If an attribute's value is equal to
+its default, Maya does not store the attribute on save. Usually this is not an issue, because the
+attribute is added with knowledge of its default value. Something is amiss with dynamic
+string attributes, however, as the default is not specified in the 'addAttr' command.</P>
+
+<P>The workaround for this is to add the attribute with a NULL default value, and set the
+attribute's value via its MPlug immediately after adding it:</P>
+
+<PRE CLASS="api">
+static const char kDefaultString[] = "Default String";
+
+MStatus myCommand::AddAttribute( MObject & node )
+{
+  MStatus                               status;
+
+  MDGModifier                           dgModifier;
+  MFnTypedAttribute                     tAttr;
+
+  aStringWithDefault = tAttr.create( "string", "str", MFnData::kString, MObject::kNullObj );
+  fnTypedAttr.setStorable(true);
+  fnTypedAttr.setKeyable(false);
+
+  status = dgModifier.addAttribute( node, aStringWithDefault );
+  status = dgModifier.doIt();
+
+  <SPAN CLASS="comment">// The default for the string attribute does not "stick" after a</SPAN>
+  <SPAN CLASS="comment">// save and reload; explicitly set it via its MPlug.</SPAN>
+  MPlug plug( node, aStringWithDefault );
+  plug.setValue( kDefaultString );
+
+  return status;
+}
+</PRE>
+
+<P CLASS="rcomment"><DATE>04 January 2003</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

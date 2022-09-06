@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#08</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #08</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.007.html">Previous</a> &middot; <a href="api.009.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I assign polygon objects (and individual face components) to a Shading Group?</h2>
+<!-- How do I assign polygon (and individual face components) to a Shading Group? -->
+
+<p>Given the MEL example:</p>
+
+<PRE CLASS="mel">
+string $select = `ls -sl`;
+string $shadingGroup = "initialShadingGroup`;
+
+// Assign to Shading Group
+sets -e -forceElement $shadingGroup $select;
+</PRE>
+
+<p>Here's a static member function that I created to allow me to do the same thing:</p>
+
+<PRE CLASS="api">
+<SPAN CLASS="comment">//********************************************************************</SPAN>
+<SPAN CLASS="comment">//    Function: MShadingGroup::AssignToShadingGroup   (static)</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Description: Assigns the provided DAG (and optional component) to </SPAN>
+<SPAN CLASS="comment">//              the specified Shading Group.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//       Input: const MObject & shadingGroup: The Shading Group set.</SPAN>
+<SPAN CLASS="comment">//              const MDagPath & dagPath: The DAG.</SPAN>
+<SPAN CLASS="comment">//              const MObject & component: (optional) The DAG's</SPAN>
+<SPAN CLASS="comment">//                                           components.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//      Output: (MStatus): The usual.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//       Notes: dagPath must be the _shape_ node!</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//********************************************************************</SPAN>
+MStatus MShadingGroup::AssignToShadingGroup(
+  const MObject & shadingGroup,
+  const MDagPath & dagPath,
+  const MObject & component )
+{
+  MStatus                     status;
+  MFnSet                      fnSG( shadingGroup, &status );
+
+  if ( fnSG.restriction() != MFnSet::kRenderableOnly )
+    return MS::kFailure;
+
+  status = fnSG.addMember( dagPath, component );
+  if ( status != MS::kSuccess )
+  {
+    cerr &lt;&lt; " ! MShadingGroup::assignToShadingGroup could not add Dag/Component to SG ! " &lt;&lt; endl;
+  }
+
+  return status;
+}
+</PRE>
+
+<P>So, to duplicate the MEL commands above you would use something like this:</P>
+
+<PRE CLASS="api">
+MSelectionList      selList;
+MDagPath            dagPath;
+MObject             component;
+MObject             initialSG;
+
+MGlobal::getSelectionListByName( MString( "initialShadingGroup" ), selList );
+selList.getDependNode( 0, initialSG );
+
+MGlobal::getActiveSelectionList( selList );
+
+MItSelectionList    iter( selList );
+
+for ( ; !iter.isDone(); iter.next() )
+{
+  iter.getDagPath( dagPath, component );
+  dagPath.extendToShape();
+
+  MShadingGroup::AssignToShadingGroup( initialSG, dagPath, component );
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.015.html">How do I create a Shading Group / Material / File texture network?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Wednesday, October 10, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#37</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #37</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.036.html">Previous</a> &middot; <a href="mel.038.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I represent a custom numeric attribute as a drop-down text menu in the Attribute Editor?</h2>
+<!-- How do I represent a custom numeric attribute as a drop-down text menu in the Attribute Editor? -->
+
+<P>If you select any transform node in Maya, the Attribute Editor displays a drop-down option menu for its Rotate Order attribute.  This How-To demonstrates how to create a similar menu for your own attributes.</P>
+
+<P>The first task is to determine how Maya generates these menus for numeric attributes.  I had a look through the AEtemplate scripts, expecting these would be defined as custom controls there.  However, it seems that this behavior is defined internally and not via the MEL template:</P>
+
+<PRE CLASS="mel">
+global proc AEtransformMain ( string $nodeName )
+{
+  <SPAN CLASS="comment">// ...</SPAN>
+  editorTemplate -beginLayout "Transform Attributes" -collapse 0;
+
+  <SPAN CLASS="comment">// ...</SPAN>
+    editorTemplate -addControl "rotateOrder";
+}
+</PRE>
+
+<P>Well, we can't modify Maya's internal behavior.  But we <EM>can</EM> achieve the effect by using the AEtemplate system -- modifying/adding code in the template for the node type.  I use a locator in this example, and create an attrEnumOptionMenuGrp for a .locatorOption attribute.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> There's one small hiccup when defining this type of behavior for a custom attribute that's not included in the node type's definition: The whole works will FAIL if the <EM>first</EM> locator instance this script sees does not have the specified attribute.  And if it does, only a restart will convince Maya to again consider adding the tweaked AEtemplate items.</P>
+
+<P>I've added a hack here to ensure that the locator attribute always exists; however, I admit this is by no means the best way or place to do this.  And while there may be a better place to instigate the hack, the only permanent solution is to create a custom node class through the API and define your locator-derived node to include your custom attribute.</P>
+
+<P>Here's what I came up with:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">//  Procedure Name:</SPAN>
+<SPAN CLASS="comment">//  AElocatorTemplate (modified)</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//  Description:</SPAN>
+<SPAN CLASS="comment">//  Creates the attribute editor controls for the locator node</SPAN>
+<SPAN CLASS="comment">//  and creates an attrEnumOptionMenuGrp for a '.locatorOption' attr</SPAN>
+
+<SPAN CLASS="comment">// This function adds the given attribute if it doesn't already exist.</SPAN>
+proc assertAttribute( string $attrName )
+{
+  string $nodeName[];
+  tokenize($attrName, ".", $nodeName);
+
+  if ( !`attributeQuery -node $nodeName[0] -exists $nodeName[1]` )
+    addAttr -at "short" -ln $nodeName[1] -dv 0 -min 0 $nodeName[0];
+}
+
+<SPAN CLASS="comment">// This function is called when the Attribute Editor page is </SPAN>
+<SPAN CLASS="comment">// first created for a locator node</SPAN>
+global proc AElocatorOptionNew( string $attrName )
+{
+  string $nodeName[];
+  tokenize($attrName, ".", $nodeName);
+
+  <SPAN CLASS="comment">// This hack ensures that the standard locator has the</SPAN>
+  <SPAN CLASS="comment">// extra attribute; else, this enhancement will not work!</SPAN>
+  assertAttribute( $attrName );
+
+  <SPAN CLASS="comment">// Push the Attribute Editor UITemplate </SPAN>
+  setUITemplate -pst attributeEditorPresetsTemplate;
+
+  <SPAN CLASS="comment">// Add the optionMenu enumeration group.</SPAN>
+  <SPAN CLASS="comment">// This will be connected to the our specified attribute.</SPAN>
+  attrEnumOptionMenuGrp
+    -l "Option"
+    -columnAlign 1 "right"
+    -at $attrName
+    -ei 0 "Default"
+    -ei 1 "Option #1"
+    -ei 2 "Option #2"
+    -ei 3 "Option #3"
+    -ei 4 "(etc)"
+      locatorEnumOptionMenu;
+
+  <SPAN CLASS="comment">// Pop to restore the UITemplate </SPAN>
+  setUITemplate -ppt;
+}
+
+<SPAN CLASS="comment">// This function is called for subsequent selections </SPAN>
+<SPAN CLASS="comment">// of a locator node</SPAN>
+global proc AElocatorOptionReplace( string $attrName )
+{
+  string $nodeName[];
+  tokenize($attrName, ".", $nodeName);
+
+  <SPAN CLASS="comment">// Disable the drop-down menu if the attribute does not exist</SPAN>
+  if ( `attributeQuery -node $nodeName[0] -exists "locatorOption"` )
+    attrEnumOptionMenuGrp -e
+       -enable true
+       -attribute $attrName
+          locatorEnumOptionMenu;
+  else
+    attrEnumOptionMenuGrp -e -enable false locatorEnumOptionMenu;
+
+}
+
+<SPAN CLASS="comment">// The editor template for the locator</SPAN>
+global proc AElocatorTemplate( string $nodeName )
+{
+  editorTemplate -beginScrollLayout;
+
+    editorTemplate -beginLayout "Locator Attributes" -collapse 0;
+      AElocatorCommon $nodeName;
+
+     <SPAN CLASS="comment"> // Define custom control for locatorOption attribute</SPAN>
+      editorTemplate -callCustom
+        "AElocatorOptionNew"
+        "AElocatorOptionReplace"
+        "locatorOption";
+
+      <SPAN CLASS="comment">// Suppress the numerical attribute in Extra Attributes</SPAN>
+      editorTemplate -suppress "locatorOption";
+
+    editorTemplate -endLayout;
+
+    AElocatorInclude $nodeName;
+
+  editorTemplate -addExtraControls;
+  editorTemplate -endScrollLayout;
+}
+</PRE>
+
+<P><SPAN CLASS="comment">(The bitch about developing AEtemplates is that they are cached and you have to restart Maya if you change anything substantial.)</SPAN></P>
+
+<P>The next obvious question is:  How do I elicit this behavior in the Channel Box.</P>
+
+<P>Unfortunately, I don't know how (or if) this is possible.</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

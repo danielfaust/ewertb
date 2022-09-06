@@ -1,0 +1,27 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · polyCombineNoHistory</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">polyCombineNoHistory</P>
+
+<H3>Preamble</H3>
+
+<P>When you Combine multiple polymesh objects, Maya leaves
+behind the transforms from the original shape nodes.
+This can be useful if Construction History is turned on
+as it allows you to modify the resultant polymesh as
+tho' it were still separated.  Oddly, Maya keeps these
+transform nodes around even if you have Construction History
+turned off, although they serve no purpose (that I've yet
+discovered).</P>
+
+<H3>Function</H3>
+
+<P>Performs the <SPAN CLASS="ui">Edit&nbsp;Polygons&nbsp;-&gt;&nbsp;Combine</SPAN> function on all selected polygon mesh objects, then deletes the construction history for the resultant polymesh and deletes the leftover transforms from the original polymesh objects.  The final polymesh object is renamed to the name of the first object you selected.  Additionally, Border Edge display is enabled for the new mesh.</P>
+
+<!-- footer --></BODY>
+</HTML>

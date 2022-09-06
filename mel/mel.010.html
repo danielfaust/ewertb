@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#10</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #10</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.009.html">Previous</a> &middot; <a href="mel.011.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I declare a matrix whose size is determined at run-time?</h2>
+<!-- How do I declare a matrix whose size is determined at run-time? -->
+
+<P>MEL does not allow you to declare a matrix using dynamic variables for its size.  The following does not work:</P>
+
+<PRE CLASS=mel>
+int $a = 4;
+int $b = 4;
+matrix $m[$a][$b];
+// Error: Line 1.12: Syntax error //
+</PRE>
+
+<P>To work around this, generate a string command for the declaration and use the ‘<CODE>eval</CODE>’ command to execute it:</P>
+
+<PRE CLASS=mel>
+int $a = 4;
+int $b = 4;
+string $declare = ( "matrix $m[" + $a + "][" + $b + "];" );
+eval $declare;
+print $m;
+<< 0, 0, 0, 0;
+   0, 0, 0, 0;
+   0, 0, 0, 0;
+   0, 0, 0, 0 >>
+</PRE>
+
+<DIV CLASS="in">
+<P><SPAN CLASS="note">Note:</SPAN> I've had a number of e-mails reporting that this example does not work for them.  It seems that, while the example does work when run from the Script Editor, it reports an error when run from a procedure:</P>
+
+<PRE CLASS="mel">
+// Error: "$m" is an undeclared variable.
+</PRE>
+
+<P>I have not determined a solution for this yet.  Sorry about that.</P>
+</DIV>
+
+<P>So far, the best work-around I've found is to staticly declare your matrix for the largest size you think is required, and using only the sub-matrix from this as needed.  Provide an assertion in your script so the desired size does not exceed the declared size.</P>
+
+<P CLASS="rcomment"><DATE>Friday, September 29, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

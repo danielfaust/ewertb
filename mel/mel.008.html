@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#08</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #08</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.007.html">Previous</a> &middot; <a href="mel.009.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I find the Shape node of a Transform?  Or the Transform of a Shape node?
+</h2>
+<!-- How do I find the Shape node of a Transform?  Or the Transform of a Shape node? -->
+
+<P>To get the list of Shape nodes from a Transform:</P>
+
+<PRE CLASS=mel>
+proc string[] getShapes( string $xform )
+{
+   string $shapes[];
+
+   $shapes[0] = $xform;
+
+   if ( "transform" == `nodeType $xform` )
+   // If given node is not a transform, assume it is a shape
+   // and pass it through
+   {
+      $shapes = `listRelatives -fullPath -shapes $xform`;
+   }
+
+   return $shapes;
+}
+</PRE>
+
+<P>Note that this returns a string array, as it is possible for a single transform to be the parent of multiple shape nodes.</P>
+
+<P>To get the Transform from a Shape node:</P>
+
+<PRE CLASS=mel>
+proc string getTransform( string $shape )
+{
+   string $transform = "";
+
+   if ( "transform" != `nodeType $shape` )
+   // If given node is already a transform, just pass on through
+   {
+      string $parents[] = `listRelatives -fullPath -parent $shape`;
+      $transform = $parents[0];
+   }
+
+   return $transform;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.023.html">How do I retrieve a list of only the selected Lights (or any other node type that uses a transform/shape pair)?</a></li>
+<li class="howto"><a href="mel.085.html">How do I determine if a shape node has been instanced?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment">11 May 2003</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

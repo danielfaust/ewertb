@@ -1,0 +1,235 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#106</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #106</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.105.html">Previous</a> &middot; <a href="mel.107.html">Next</a></td><td> <a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I find the type of an anonymous MEL UI control?</h2>
+<!-- How do I find the type of an anonymous MEL UI control? -->
+
+<p>The "objectTypeUI" command may be used to query the type of a MEL UI control.</p>
+
+<pre class="mel">
+objectTypeUI AEnodeNameHeaderLayout;
+// Result: formLayout //
+
+objectTypeUI directKeyTool;
+// Result: toolButton //
+
+objectTypeUI bdeOutOfRangeColor;
+// Result: canvas //
+</pre>
+
+<p>Watch out, tho'. It can throw you a change-up when querying items from Maya's custom control
+groups - e.g. a "radioButtonGrp" or "attrFieldSliderGrp."</p>
+
+<pre class="mel">
+string $ca[] = `layout -q -ca columnLayout12`;
+
+// Result: polyObjsAffectedRadio separator5 polyVerticesDisplayCheck
+           separator6 polyEdgeDisplayRadio borderEdgeHiliteDisplayCheck
+           borderEdgeSizeSlider separator7 polyFacetDisplayCheck
+           separator8 polyItemDisplayCheck normalSizeSlider
+           polyUVDisplayCheck separator9 colorShadedDisplayCheck
+           colorMaterialPopup materialBlendPopup separator10
+           backfaceCullPopup //
+
+for ( $c in $ca )
+{
+  print ( $c + ": " + (`objectTypeUI $c`) + "\n" );
+}
+</pre>
+
+<p>Result <SPAN CLASS="remark">(formatted for easy reading)</SPAN>:</p>
+
+<pre>
+       polyObjsAffectedRadio: rowGroupLayout
+                  separator5: separator
+    polyVerticesDisplayCheck: rowGroupLayout
+                  separator6: separator
+        polyEdgeDisplayRadio: rowGroupLayout
+borderEdgeHiliteDisplayCheck: rowGroupLayout
+        borderEdgeSizeSlider: rowGroupLayout
+                  separator7: separator
+       polyFacetDisplayCheck: rowGroupLayout
+                  separator8: separator
+        polyItemDisplayCheck: rowGroupLayout
+            normalSizeSlider: rowGroupLayout
+          polyUVDisplayCheck: rowGroupLayout
+                  separator9: separator
+     colorShadedDisplayCheck: rowGroupLayout
+          colorMaterialPopup: rowGroupLayout
+          materialBlendPopup: rowGroupLayout
+                 separator10: separator
+           backfaceCullPopup: rowGroupLayout
+</pre>
+
+<p>Now extend the query into a... rowGroupLayout? Wazzat?  Well, it's a pretty good clue that
+this is a layout of some sort; perhaps we can generalize and again use the "layout" command.</p>
+
+<pre class="mel">
+string $ca[] = `layout -q -ca polyVerticesDisplayCheck`;
+// Result: label check1 check2 check3 //
+</pre>
+
+<p><span class="remark">(Incidentally, querying via "rowLayout" works here, too.)</span></p>
+
+<pre class="mel">
+string $ca[] = `rowLayout -q -ca polyVerticesDisplayCheck`;
+// Result: label check1 check2 check3 //
+</pre>
+
+<pre class="mel">
+for ( $c in $ca )
+{
+  print ( $c + ": " + (`objectTypeUI $c`) + "\n" );
+};
+</pre>
+
+<p>Results:</p>
+
+<pre>
+ label: staticText
+check1: checkBox
+check2: checkBox
+check3: checkBox
+</pre>
+
+<p>And now what? The "checkBox" controls are all well and good, but
+"staticText?" It's clear you'll have to back up a step and be able to
+recognize this type of layout is actually a checkBoxGrp:</p>
+
+<pre class="mel">
+checkBoxGrp -q -label polyVerticesDisplayCheck;
+// Result: Vertices //
+
+checkBoxGrp -q -value1 polyVerticesDisplayCheck;
+// Result: 1 //
+
+checkBoxGrp -q -value2 polyVerticesDisplayCheck;
+// Result: 1 //
+
+checkBoxGrp -q -value3 polyVerticesDisplayCheck;
+// Result: 1 //
+
+checkBoxGrp -q -value4 polyVerticesDisplayCheck;
+// Error: line 1: Object not found: check4 //
+</pre>
+
+<p>Oops.. you'll also have to take care to consult the number of children
+before you query willy-nilly (since you cannot query the '-numberOfCheckBoxes' flag).</p>
+
+<p>Or how about this one from the Attribute Editor:</p>
+
+<pre class="mel">
+string $ca[] = `layout -q -ca columnLayout3`;
+
+// Result: attrFieldSliderGrp1 formLayout52 attrFieldSliderGrp2
+           formLayout53 attrFieldSliderGrp3 formLayout54
+           attrFieldSliderGrp4 formLayout55 attrFieldSliderGrp5
+           formLayout56 attrFieldSliderGrp6 //
+
+for ( $c in $ca )
+{
+  print ( $c + ": " + (`objectTypeUI $c`) + "\n" );
+};
+</pre>
+
+<p>Results:</p>
+
+<pre>
+attrFieldSliderGrp1: rowGroupLayout
+       formLayout52: formLayout
+attrFieldSliderGrp2: rowGroupLayout
+       formLayout53: formLayout
+attrFieldSliderGrp3: rowGroupLayout
+       formLayout54: formLayout
+attrFieldSliderGrp4: rowGroupLayout
+       formLayout55: formLayout
+attrFieldSliderGrp5: rowGroupLayout
+       formLayout56: formLayout
+attrFieldSliderGrp6: rowGroupLayout
+</pre>
+
+<pre class="mel">
+string $ca[] = `layout -q -ca attrFieldSliderGrp1`;
+
+// Result: AFGlabel AFGfield //
+
+for ( $c in $ca )
+{
+  print ( $c + ": " + (`objectTypeUI $c`) + "\n" );
+};
+</pre>
+
+<pre>
+AFGlabel: exprStaticText
+AFGfield: exprFloatField
+</pre>
+
+<p>Hmmm.. that doesn't help. Again, back up and recognize "AFGlabel" and
+"AFGfield" as controls within an attrFieldSliderGrp:</p>
+
+<pre class="mel">
+attrFieldSliderGrp -q -label attrFieldSliderGrp1;
+// Result: Max Triangles //
+
+attrFieldSliderGrp -q -at attrFieldSliderGrp1;
+// Result: pCubeShape1.maxTriangles //
+</pre>
+
+In other words, in order to query the properties of Maya's built-in control groups, you'll need to devise 
+some sort of logic to be able to recognize a layout's type by its children. Remember, you can always assert 
+whether a control (or layout) is, or isn't, a presumed type by using an '-exists' query:
+
+<pre class="mel">
+radioButtonGrp -q -exists polyVerticesDisplayCheck;
+// Result: 0 //
+
+rowLayout -q -exists polyVerticesDisplayCheck;
+// Result: 1 //
+
+checkBoxGrp -q -exists polyVerticesDisplayCheck;
+// Result: 1 //
+</pre>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.101.html">How do I find a window and query its child layout and controls?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->19 Feb 2005</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2006 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <a href="http://www.autodesk.com">Autodesk</a> (formerly <A HREF="http://www.alias.com">Alias</A>)<br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

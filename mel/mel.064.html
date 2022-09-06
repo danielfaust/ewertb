@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#64</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #64</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.063.html">Previous</a> &middot; <a href="mel.065.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I create a window with controls overlaying a background image?</h2>
+<!-- How do I create a window with controls overlaying a background image? -->
+
+<p><IMG CLASS="float" SRC="images/james_ui.gif" WIDTH=282 HEIGHT=344 ALT="James UI"></p>
+
+This is pretty easy, really.  You just have to remember a few pointers:<BR>
+
+<UL>
+  <LI><p>Use a formLayout so you can control the overlapping of controls.</p></LI>
+  <LI><p>Add the image <EM>last</EM>.  This is necessary so that mouse-clicks are received by the controls.</p></LI>
+  <LI><p>Set the &lsquo;<CODE>-numberOfDivisions</CODE>&rsquo; for the formLayout equal to the width or height in pixels of the image, and use PhotoShop
+  (or similar image editing app) to read the pixel coordinates for the desired placement of controls.</p></LI>
+  <LI><p>Use &lsquo;<CODE>-attachPosition</CODE>&rsquo; when aligning the controls so you can use actual pixel values (you'll have to compensate for
+  one of the dimensions if your image isn't square).</p></LI>
+  <LI><p>The image will <EM>not</EM> resize with the window.  It is probably best to set the window dimensions when it is created,
+  and use the &lsquo;<CODE>-sizeable false</CODE>&rsquo; flag to lock it.</p></LI>
+</UL>
+
+<BR STYLE="clear: left">
+
+<P>Following is the MEL script which creates the UI pictured above:</P>
+
+<PRE CLASS="mel">
+global proc james()
+{
+  <SPAN CLASS="comment">// Click link to download image</SPAN>
+  string $image = "<A HREF="images/james.bmp">james.bmp</A>";
+
+  if ( `window -exists imageWindow` )
+    deleteUI -window imageWindow;
+
+  <SPAN CLASS="comment">// Window is locked for image dimensions: 278Ч320</SPAN>
+  <SPAN CLASS="comment">// (add a few pixels to compensate for title bar and borders)</SPAN>
+  window -title "James" -width 282 -height 344
+         -sizeable false imageWindow;
+
+    <SPAN CLASS="comment">// Use a formLayout so you control the overlap of the controls</SPAN>
+    string $form = `formLayout -numberOfDivisions 320`;
+
+      <SPAN CLASS="comment">// First add controls</SPAN>
+      string $head = `button -label "Head"`;
+      string $lHand = `button -label "L.Hand"`;
+      string $rHand = `button -label "R.Hand"`;
+      string $lFoot = `button -label "L.Foot"`;
+      string $rFoot = `button -label "R.Foot"`;
+
+      string $lHandIK = `checkBox -label "IK/FK"`;
+      string $rHandIK = `checkBox -label "IK/FK"`;
+
+      <SPAN CLASS="comment">// Add image LAST</SPAN>
+      string $image = `image -image $image`;
+
+      setParent ..;
+
+  <SPAN CLASS="comment">// Now edit the layout of the controls</SPAN>
+  formLayout -e
+
+    -af   $image              "top"     0
+    -af   $image              "left"    0
+
+    <SPAN CLASS="comment">// Controls overlaps image</SPAN>
+    <SPAN CLASS="comment">// Use -attachPosition to place controls</SPAN>
+    -ap   $head               "top"     0   4
+    -ap   $head               "left"    0   188
+
+    -ap   $lHand              "top"     0   160
+    -ap   $lHand              "right"   0   316
+
+    -ap   $rHand              "top"     0   160
+    -ap   $rHand              "left"    0   4
+
+    -ap   $lFoot              "bottom"  0   318
+    -ap   $lFoot              "left"    0   234
+
+    -ap   $rFoot              "bottom"  0   318
+    -ap   $rFoot              "right"   0   88
+
+    <SPAN CLASS="comment">// Except these two, which are under the Hand buttons</SPAN>
+    -ac   $lHandIK            "top"     2   $lHand
+    -ap   $lHandIK            "right"   0   316
+
+    -ac   $rHandIK            "top"     2   $rHand
+    -ap   $rHandIK            "left"    0   4
+
+      $form;
+
+  showWindow;
+}
+</PRE>
+
+<P CLASS="rcomment"><!-- DATE -->Thursday, April 26, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

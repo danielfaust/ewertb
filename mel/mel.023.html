@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#23</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #23</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.022.html">Previous</a> &middot; <a href="mel.024.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I retrieve a list of only the selected Lights (or any other node type that uses a transform/shape pair)?</h2>
+<!-- How do I retrieve a list of only the selected Lights (or any other node type that uses a transform/shape pair)? -->
+
+<P>Well, logically you would think this would do it:</P>
+
+<PRE CLASS="mel">
+string $selectedLights[] = `ls -sl -lights`;
+</PRE>
+
+<P>But -- while this does indeed return the list of selected lights, unfortunately it is only reliable if the user selects the <I>shape</I> node of the light.  Often they won't, nor should they be required to.</P>
+
+<P>Fortunately, the "ls" command offers a convenient method for retrieving the shape nodes from the current selection:</P>
+
+<PRE CLASS="mel">
+string $selectedShapes[] = `ls -selection -dag -leaf`;
+</PRE>
+
+<P>By using this query, you need not concern yourself if the user has selected the transform or the shape
+for a particular node.</p>
+
+<p>From here, you can typically use the "nodeType" command to query if the shape is the type you're looking for:</p>
+
+<PRE CLASS="mel">
+if ( "mesh" == `nodeType $shape` )
+{
+  // Do something with a mesh shape.
+}
+
+if ( "camera" == `nodeType $shape` )
+{
+  // Do something with a camera.
+}
+</PRE>
+
+<p>However, "light" is not a node type; rather, there are several types of lights: spotLight, directionalLight, etc.
+A more generalized query is convenient in this case - that provided by the "getClassification" command. This command
+returns a classification string for the node's type. Be aware that this returns a <em>string array</em> and not just
+a string.</p>
+
+<PRE CLASS="mel">
+getClassification spotLight;
+// Result: light //
+
+getClassification volumeLight;
+// Result: light //
+</PRE>
+
+<p>The following procedure demonstrates its use for extracting all lights from the current selection.</p>
+
+<PRE CLASS="mel">
+proc string[] getSelectedLights()
+{
+  string $selectedLights[];
+
+  string $select[] = `ls -sl -dag -leaf`;
+
+  for ( $shape in $select )
+  {
+    <SPAN CLASS="comment">// Determine if this is a light.</SPAN>
+    <SPAN CLASS="comment">// </SPAN>
+    string $class[] = getClassification( `nodeType $shape` );
+
+    if ( ( `size $class` ) &gt; 0 &amp;&amp; ( "light" == $class[0] ) )
+    {
+      $selectedLights[ `size $selectedLights` ] = $shape;
+    }
+  }
+
+  <SPAN CLASS="comment">// Result is an array of all lights included in </SPAN>
+  <SPAN CLASS="comment">// current selection list.</SPAN>
+  return $selectedLights;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.095.html">Introduction To MEL</a></li>
+<li class="howto"><a href="mel.008.html">How do I find the Shape node of a Transform?  Or the Transform of a Shape node?
+</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->26 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

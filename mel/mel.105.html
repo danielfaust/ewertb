@@ -1,0 +1,419 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#105</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #105</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.104.html">Previous</a> &middot; <a href="mel.106.html">Next</a></td><td> <a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I align an object to a curve (without using a constraint)?</h2>
+<!-- How do I align an object to a curve (without using a constraint)? -->
+
+<h3 class="body">Orthogonal Basis Vectors</h2>
+
+<p class="anno">(Wait! Don't run away frightened at the prospect of calculus derivatives <i>a la</i> 
+<a href= "http://mathworld.wolfram.com">Eric W. Weisstein's MathWorld</a>. I promise it won't be
+nearly so intense.)</p>
+
+<p>The key to aligning an object to a curve is generating the orthogonal axes to which the
+object will be aligned. That's not as nearly as difficult as it sounds. One of the wonderful
+properties of matrix mathematics is that the rows of a 3x3 rotation matrix are in fact the
+orthogonal basis vectors for the space described by the matrix. In this How-To we apply this in
+reverse - calculating the basis vectors and then using them to populate a rotation matrix.</p>
+
+<p>(This would be a good opportunity to the plug the <a href="../h2o/h2o.html?script=matrixPlayground">matrixPlayground</a> MEL script.)</p>
+
+<h4 class="body">Tangent</h3>
+
+<p>The first axis of interest is the <em>tangent</em> for the curve. Webster's defines "tangent" as:</p>
+
+<blockquote>
+<p>"A line that is tangent; specifically : a straight line that is the limiting position of a
+secant of a curve through a fixed point and a variable point on the curve as the variable point
+approaches the fixed point."</p>
+</blockquote>
+
+<p>Hmm.. perhaps an illustration would be better.</p>
+
+<div class="in">
+<table width="101">
+<tr><td class="center"><img src="images/105_tangent.gif" width="101" height="81" alt="Tangent"></td></tr>
+<tr><td class="center"><span class="caption">Tangent</span></td></tr>
+</table>
+</div>
+
+<p>The tangent for a curve is easily queried with the "pointOnCurve" command:</p>
+
+<pre class="mel">
+float $tangent[3] = `pointOnCurve -ch off -parameter 0.0 -tangent curve1`;
+// Result: 3.359381 1.5 -11.471752 //
+</pre>
+
+<h4 class="body">Normal</h3>
+
+<p>The other two vectors are the <em>normal</em> and <em>binormal</em>. These two vectors lie at
+right-angles to the <em>tangent</em>, and to each other, and form the orthogonal basis vectors
+for our alignment.</p>
+
+<p>The normal can also be queried with the "pointOnCurve" command:</p>
+
+<pre class="mel">
+float $normal[3] = `pointOnCurve -ch off -parameter 0.0 -normal curve1`;
+// Result: -1.706138 48.378846 5.826198 //
+</pre>
+
+<p>Maya also promises a "normalized" query for this vector (that is, returned as a unit vector). However, this is unfortunately not always the case.</p>
+
+<pre class="mel">
+float $normal[3] = `pointOnCurve -ch off -parameter 0.0 -normalizedNormal curve1`;
+// Result: -0.000349918 0.00992218 0.00119492 //
+</pre>
+
+<p>Do not rely on Maya's normalized result - always normalize them yourself.</p>
+
+<h4 class="body">Binormal</h3>
+
+<p>The <em>binormal</em> is not available as a query from "pointOnCurve"; however, once you have the <em>tangent</em>
+and <em>normal</em> it is simply a matter of performing a cross product - using the "cross" command - to generate
+the <em>binormal</em>. Note that you'll need to represent the <em>tangent</em> and <em>normal</em> as a (vector)
+to use the "cross" command.</p>
+
+<div class="sidebar">
+<p>Maya 6 offers implicit conversion between a (float[3]) array and a (vector), so you may simply store
+the "pointOnCurve" results directly into a (vector) variable.</p>
+</div>
+
+<pre class="mel">
+vector $tan  = `pointOnCurve -ch off -parameter 0.0 -tangent curve1`;
+// Result: &lt;&lt;3.359381, 1.5, -11.471752&gt;&gt;  //
+
+vector $norm = `pointOnCurve -ch off -parameter 0.0 -normal curve1`;
+// Result: &lt;&lt;-1.706138, 48.378846, 5.826198&gt;&gt;  //
+
+<SPAN CLASS="comment">// Normalize the vectors queried from "pointOnCurve".</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+$tan = `unit $tan`;
+// Result: &lt;&lt;0.27885, 0.12451, -0.952229&gt;&gt;  //
+$norm = `unit $norm`;
+// Result: &lt;&lt;-0.0349918, 0.992218, 0.119492&gt;&gt;  //
+
+<SPAN CLASS="comment">// Calculate the binormal.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+vector $bi = `cross $tan $norm`;
+// Result: &lt;&lt;0.959697, 0.0, 0.281037&gt;&gt; //
+</pre>
+
+<h3 class="body">Five Easy Steps</h2>
+
+<p>With the math in hand, let's put it to use. In five easy steps, this is how we'll perform the alignment:</p>
+
+<OL>
+<li>Query the position of the parameter point along the curve.</li>
+<li>Query the tangent and normal for the parameter point.</li>
+<li>Calculate the orthogonal binormal to the tangent and normal.</li>
+<li>Assemble these into a transformation matrix.</li>
+<li>Assign this matrix to the object.</li>
+</ol>
+
+<p>First, let's make a curve to demonstrate:</p>
+
+<pre class="mel">
+global proc string be_make_curve()
+{
+  string $curve = `curve -d 3 -p -72.883868 0.0 -12.81907 
+                              -p -50.487995 10.0 -89.297418 
+                              -p -5.696248 50.0 -242.254114 
+                              -p 15.842993 25.0 26.335076 
+                              -p 33.010327 50.0 136.913809 
+                              -p 112.657308 10.0 71.004563 
+                              -p 140.283868 -25.0 -34.099569 
+                              -p 154.097148 50.0 -86.651634 
+                              -k 0 -k 0 -k 0 
+                              -k 1 -k 2 -k 3 -k 4 
+                              -k 5 -k 5 -k 5`;
+
+  return $curve;
+}
+
+<SPAN CLASS="comment">// Make the curve.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $curve = be_make_curve();
+</pre>
+
+<p>Now plot a bunch of locators along the curve. The Z axes for these locators
+will be aligned to the curve's tangent, and their X axes will be aligned to
+the curve's normal, as returned by the "pointOnCurve" command.</p>
+
+<pre class="mel">
+global proc be_plot_locators( string $curve )
+{
+  float $p[3];
+  float $t[3];
+  float $n[3];
+  vector $tan;
+  vector $norm;
+  vector $bi;
+  string $locator[];
+  matrix $m[4][4] = &lt;&lt; 1.0, 0.0, 0.0, 0.0;
+                       0.0, 1.0, 0.0, 0.0;
+                       0.0, 0.0, 1.0, 0.0;
+                       0.0, 0.0, 0.0, 1.0 &gt;&gt;;
+
+  float $u;
+  float $span = 0.1;
+  float $maxU = `getAttr ( $curve + ".maxValue" )`;
+  for ( $u = 0.0; $u &lt;= $maxU; $u += $span )
+  {
+    <SPAN CLASS="comment">// Query the position, tangent and normal.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $p = `pointOnCurve -ch off -pr $u -p $curve`;
+    $t = `pointOnCurve -ch off -pr $u -nt $curve`;
+    $n = `pointOnCurve -ch off -pr $u -nn $curve`;
+
+    <SPAN CLASS="comment">// Translational coordinates in a Maya matrix are always represented</SPAN>
+    <SPAN CLASS="comment">// in Maya's internal units. Convert position to (cm) units.</SPAN>
+    <SPAN CLASS="comment">// See <A href="../mel/mel.102.html">MEL How-To #102</a>.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $p[0] = <A class="discreet" href="../mel/mel.102.html">linearToInternal</a>( $p[0] );
+    $p[1] = <A class="discreet" href="../mel/mel.102.html">linearToInternal</a>( $p[1] );
+    $p[2] = <A class="discreet" href="../mel/mel.102.html">linearToInternal</a>( $p[2] );
+
+    <SPAN CLASS="comment">// Maya promises normalized tangent and normal,</SPAN>
+    <SPAN CLASS="comment">// but they really aren't.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $tan  = `unit &lt;&lt; $t[0], $t[1], $t[2] &gt;&gt;`;
+    $norm = `unit &lt;&lt; $n[0], $n[1], $n[2] &gt;&gt;`;
+    
+    <SPAN CLASS="comment">// Calculate the binormal.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $bi = `cross &lt;&lt; ($tan.x),  ($tan.y),  ($tan.z)  &gt;&gt;
+                 &lt;&lt; ($norm.x), ($norm.y), ($norm.z) &gt;&gt;`;
+
+    <SPAN CLASS="comment">// Normalize our vector.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $bi = `unit $bi`;
+
+    <SPAN CLASS="comment">// Create a matrix, using normal for the X axis and </SPAN>
+    <SPAN CLASS="comment">// tangent for the Z axis.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $m = &lt;&lt; ($norm.x), ($norm.y), ($norm.z), 0.0;     <SPAN CLASS="comment">// X axis</SPAN>
+            ($bi.x),   ($bi.y),   ($bi.z),   0.0;     <SPAN CLASS="comment">// Y axis</SPAN>
+            ($tan.x),  ($tan.y),  ($tan.z),  0.0;     <SPAN CLASS="comment">// Z axis</SPAN>
+            $p[0],     $p[1],     $p[2],     1.0 &gt;&gt;;  <SPAN CLASS="comment">// Position</SPAN>
+
+    <SPAN CLASS="comment">// Create a locator and assign its world-space matrix.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $locator = `spaceLocator`;
+
+    xform -ws -m ($m[0][0]) ($m[0][1]) ($m[0][2]) ($m[0][3]) 
+                 ($m[1][0]) ($m[1][1]) ($m[1][2]) ($m[1][3]) 
+                 ($m[2][0]) ($m[2][1]) ($m[2][2]) ($m[2][3]) 
+                 ($m[3][0]) ($m[3][1]) ($m[3][2]) ($m[3][3]) $locator[0];
+  }
+}
+
+<SPAN CLASS="comment">// Plot some locators.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+be_plot_locators( $curve );
+</pre>
+
+<h3 class="body">Preventing "Roll"</h2>
+
+<p>When using the tangents and normals returned from the "pointOnCurve" command, 
+you may find that the normals "roll" around the curve. The illustration below shows the orientation
+for some of the locators plotted from the example above.</p>
+
+<div class="in">
+<table width="525">
+<tr><td class="center"><img src="images/105_roll.gif" width="525" height="269" alt="Rolling normals"></td></tr>
+<tr><td class="center"><span class="caption">Rolling normals</span></td></tr>
+</table>
+</div>
+
+<p>It is common that this is not the desired behavior. What is necessary, then, is to calculate
+a normal which better satisfies the desired orientation, rather than simply querying it from the
+curve. Consider how Maya offers several "up vector" options when animating an object along a
+motion path - these options constrain the solution in order to produce a more consistent
+behavior. We'll employ the same technique here.</p>
+
+<p>A popular method is to use the world up-axis as a basis for the desired
+alignment. To calculate the desired normal you'll need to resort to some
+trigonometry - specifically, the use of the cross product operator. This
+allows us to calculate the orthogonal basis - the tangent, normal and
+binormal - for any point along the curve. Maya will provide the tangent,
+and we'll figure out the other two.</p>
+
+<p>Below is a variation for plotting the locators. This one allows you to
+specify an up vector. As before, the locators' Z axes will be aligned to the
+tangent of the curve. This time, however, the Y axis (the binormal) will
+favour the $upVector, and the X axis (the normal) will be calculated
+accordingly.</p>
+
+<pre class="mel">
+global proc be_plot_no_roll_locators( string $curve, vector $upVector )
+{
+  <SPAN CLASS="comment">// Ensure a valid up-vector. Use Y-up as default if input is bogus.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  if ( `mag $upVector` &lt; 0.001 ) $upVector = &lt;&lt; 0.0, 1.0, 0.0 &gt;&gt;;
+
+  <SPAN CLASS="comment">// Ensure up-vector is normalized.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  $upVector = `unit $upVector`;
+
+  float $p[3];
+  float $t[3];
+  vector $norm;
+  vector $tan;
+  vector $bi;
+  string $locator[];
+  matrix $m[4][4] = &lt;&lt; 1.0, 0.0, 0.0, 0.0;
+                       0.0, 1.0, 0.0, 0.0;
+                       0.0, 0.0, 1.0, 0.0;
+                       0.0, 0.0, 0.0, 1.0 &gt;&gt;;
+
+  float $u;
+  float $span = 0.1;
+  float $maxU = `getAttr ( $curve + ".maxValue" )`;
+  for ( $u = 0.0; $u &lt;= $maxU; $u += $span )
+  {
+    <SPAN CLASS="comment">// Query the position and tangent.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $p = `pointOnCurve -ch off -pr $u -p $curve`;
+    $t = `pointOnCurve -ch off -pr $u -nt $curve`;
+
+    <SPAN CLASS="comment">// Translational coordinates in a Maya matrix are always represented</SPAN>
+    <SPAN CLASS="comment">// in Maya's internal units. Convert position to (cm) units.</SPAN>
+    <SPAN CLASS="comment">// See <A href="../mel/mel.102.html">MEL How-To #102</a>.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $p[0] = <A class="discreet" href="../mel/mel.102.html">linearToInternal</a>( $p[0] );
+    $p[1] = <A class="discreet" href="../mel/mel.102.html">linearToInternal</a>( $p[1] );
+    $p[2] = <A class="discreet" href="../mel/mel.102.html">linearToInternal</a>( $p[2] );
+
+    <SPAN CLASS="comment">// Maya promises normalized tangent,</SPAN>
+    <SPAN CLASS="comment">// but it really isn't.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $tan  = `unit &lt;&lt; $t[0], $t[1], $t[2] &gt;&gt;`;
+
+    <SPAN CLASS="comment">// Calculate a normal using the Y-up vector as the binormal.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $norm = `cross $tan $upVector`;
+
+    <SPAN CLASS="comment">// Calculate the orthogonal binormal.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $bi = `cross $tan $norm`;
+    
+    <SPAN CLASS="comment">// If the binormal is pointing the wrong way,</SPAN>
+    <SPAN CLASS="comment">// negate it and the normal.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    if ( `dot $upVector $bi` &lt; 0.0 )
+    {
+      $bi = -$bi;
+      $norm = -$norm;
+    }
+
+    <SPAN CLASS="comment">// Normalize our vectors.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $norm = `unit $norm`;
+    $bi = `unit $bi`;
+
+    <SPAN CLASS="comment">// Create a matrix, using normal for the X axis and </SPAN>
+    <SPAN CLASS="comment">// tangent for the Z axis.</SPAN>
+    $m = &lt;&lt; ($norm.x), ($norm.y), ($norm.z), 0.0;     <SPAN CLASS="comment">// X axis</SPAN>
+            ($bi.x),   ($bi.y),   ($bi.z),   0.0;     <SPAN CLASS="comment">// Y axis</SPAN>
+            ($tan.x),  ($tan.y),  ($tan.z),  0.0;     <SPAN CLASS="comment">// Z axis</SPAN>
+            $p[0],     $p[1],     $p[2],     1.0 &gt;&gt;;  <SPAN CLASS="comment">// Position</SPAN>
+
+    <SPAN CLASS="comment">// Create a locator and assign its world-space matrix.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    $locator = `spaceLocator`;
+
+    xform -ws -m ($m[0][0]) ($m[0][1]) ($m[0][2]) ($m[0][3]) 
+                 ($m[1][0]) ($m[1][1]) ($m[1][2]) ($m[1][3]) 
+                 ($m[2][0]) ($m[2][1]) ($m[2][2]) ($m[2][3]) 
+                 ($m[3][0]) ($m[3][1]) ($m[3][2]) ($m[3][3]) $locator[0];
+  }
+}
+
+<SPAN CLASS="comment">// You may want to delete all of the previous locators here.</SPAN>
+
+<SPAN CLASS="comment">// Specify an up vector.</SPAN>
+<SPAN CLASS="comment">//  </SPAN>
+vector $upVector = &lt;&lt; 0.0, 1.0, 0.0 &gt;&gt;;
+
+<SPAN CLASS="comment">// Plot new locators, using the "no roll" method.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+be_plot_no_roll_locators( $curve, $upVector );
+</pre>
+
+<p>And, voila. No roll.</p>
+
+<div class="in">
+<table width="525">
+<tr><td class="center"><img src="images/105_noroll.gif" width="525" height="269" alt="No roll"></td></tr>
+<tr><td class="center"><span class="caption">No roll</span></td></tr>
+</table>
+</div>
+
+<h4 class="body">Limitation</h3>
+
+<p>Try it using the X axis as the up vector:</p>
+
+<pre class="mel">
+vector $upVector = &lt;&lt; 1.0, 0.0, 0.0 &gt;&gt;;
+be_plot_no_roll_locators( $curve, $upVector );
+</pre>
+
+<p>Here you're going to see a roll again. You'll note that the roll occurs at
+the two points where the curve's tangent is aligned along the X axis - the
+same as the up-vector. This introduces a problem when calculating the
+binormal, as you cannot generate an orthogonal basis from two equal
+vectors. You would need to work around this by either carefully selecting
+your up-vector, or by adjusting the up-vector slightly when approaching this
+situation.</p>
+
+<br><h3 class="body">Acknowledgements</h3>
+<div class="in">
+<ul>
+<li><b><a href="http://www.terathon.com">Terathon Software</a></b>. Their article on <a href="http://www.terathon.com/code/tangent.html">Computing tangent space basis vectors for an arbitrary mesh</a> enlightened me as to the correct usage of "binormal" vs. "bitangent"</li>
+</ul>
+</div>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.102.html">How do I convert between Maya's internal linear unit ('cm') and the unit which is represented in the UI?</a></li>
+<li class="howto"><a href="mel.108.html">How do I plot equidistant points along a curve?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->19 Feb 2005</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2006 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <a href="http://www.autodesk.com">Autodesk</a> (formerly <A HREF="http://www.alias.com">Alias</A>)<br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#80</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #80</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.079.html">Previous</a> &middot; <a href="mel.081.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I extract the numeric part of a unique name; e.g. the value 42 from "pCube42"?</h2>
+<!-- How do I extract the numeric part of a unique name; e.g. the value 42 from "pCube42"? -->
+
+<P>The "<CODE>match</CODE>" command is ideal for this.  Use the expression pattern "<CODE>[0-9]+$</CODE>":</P>
+
+<PRE CLASS="mel">
+int $number = `match "[0-9]+$" "a1"`;
+// Result: 1 //
+
+int $number = `match "[0-9]+$" "pCube42"`;
+// Result: 42 //
+
+int $number = `match "[0-9]+$" "blah123"`;
+// Result: 123 //
+</PRE>
+
+<P>The expression pattern, translated, means "match one or more characters between '0' and
+'9' at the end of the string."</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> You'll have to be careful to wrap your assignment to prevent annoying
+warnings such as:</P>
+
+<PRE CLASS="mel">
+int $number = `match "[0-9]+$" "noNumber"`;
+// Warning: line 1: Converting string "" to an int value of 0. //
+// Result: 0 //
+</PRE>
+
+<P>You could check first with "<CODE>gmatch</CODE>".  Note that "<CODE>gmatch</CODE>" uses shell-style
+pattern matching, and not regular expressions.  For this binary check use an
+expression that checks if the last character is numeric - "<CODE>*[0-9]</CODE>"; e.g.:</P>
+
+<PRE CLASS="mel">
+int $number;
+
+string $name = "noNumber";
+
+$number = 0;
+if ( `gmatch $name "*[0-9]"` )
+{
+  $number = `match "[0-9]+$" $name`;
+}
+<SPAN CLASS="comment">// No numeric suffix was found; return default value of 0.</SPAN>
+print $number;
+// Result: 0 //
+
+string $name2 = "pCube42";
+
+int $number = 0;
+if ( `gmatch $name2 "*[0-9]"` )
+{
+  $number = `match "[0-9]+$" $name2`;
+}
+print $number;
+// Result: 42 //
+</PRE>
+
+<P CLASS="rcomment"><DATE>13 January 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

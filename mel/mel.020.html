@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#20</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #20</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.019.html">Previous</a> &middot; <a href="mel.021.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I determine the world space coordinates of NURBS surface edit points?</h2>
+<!-- How can I determine the world space coordinates of NURBS surface edit points? -->
+
+<P>Determine the U and V values for the edit point.  My attempts to do this yielded the following:</P>
+
+<P>Create a surfaceInfo node and connect it to the NURBS surface, then query its '.knotsU' and '.knotsV' attributes:</P>
+
+<PRE CLASS="mel">
+createNode surfaceInfo;
+// Result: surfaceInfo1 //
+
+connectAttr -f nurbsPlane1.worldSpace surfaceInfo1.inputSurface;
+
+getAttr surfaceInfo1.knotsU;
+// Result: 0 0 0 0.333333 0.6666667 1 1 1 //
+
+getAttr surfaceInfo1.knotsV;
+// Result: 0 0 0 0.25 0.5 0.75 1 1 1 //
+</PRE>
+
+<P>This would be from a nurbsPlane with 3 spans in U and 4 spans in V.  Ignore the first two 0's and the last two 1's (this may or may not be the case for all surfaces).  So, for the edit point at the intersection of the second U span and the second V span would be:</P>
+
+<DIV CLASS="in">
+<P>U = 0.33333   V = 0.25</P>
+</DIV>
+
+<P>Create a pointOnSurface node at these coordinates:</P>
+
+<PRE CLASS="mel">
+string $posNode = `pointOnSurface -ch on -u 0.3333 -v .25 nurbsSurface1`;
+</PRE>
+
+<P>Query the position of the pointOnSurface node:</P>
+
+<PRE CLASS="mel">
+float $posCoord = `getAttr ( $posNode + ".position" )`;
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

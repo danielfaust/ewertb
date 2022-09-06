@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#76</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #76</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.075.html">Previous</a> &middot; <a href="mel.077.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I undeclare a variable used in the Script Editor so I can use it as a different type?</h2>
+<!-- How do I undeclare a variable used in the Script Editor so I can use it as a different type? -->
+
+<P>Technically, you can't.</P>
+
+<P>For example:</P>
+
+<PRE CLASS="mel">
+int $value = 3;
+// Result: 3 //
+
+string $value = "foo";
+// Error: string $value = "foo"; //
+// Error: Line 1.15: Invalid redeclaration of variable "$value" as a different type. //
+</PRE>
+
+<P>A variable must go out of scope before it can be declared as a
+different type.  If you declare a variable within the Script Editor (outside
+of a proc), then that variable must always be used as that type within the
+Script Editor (outside of a proc) for the duration of your Maya session.</P>
+
+<P>To "redeclare" the variable, place your test code within braces:</P>
+
+<PRE CLASS="mel">
+int $value = 3;
+{
+  string $value = "foo";
+  print ( "String $value = " + $value + "\n" );
+}
+print ( "Int $value = " + $value + "\n" );
+</PRE>
+
+<P>The output:</P>
+
+<PRE>
+String $value = foo
+Int $value = 3
+</PRE>
+
+<P>Alternately, write your test code as a procedure:</P>
+
+<PRE CLASS="mel">
+global proc test()
+{
+  string $value = "foo";
+  print ( "$value = " + $value + "\n" );
+}
+
+test;
+</PRE>
+
+<P>The output:</P>
+
+<PRE>
+$value = foo
+</PRE>
+
+<P>Then immediately:</P>
+
+<PRE CLASS="mel">
+global proc test()
+{
+  int $value = 3;
+  print ( "$value = " + $value + "\n" );
+}
+
+test;
+</PRE>
+
+<P>The output:</P>
+
+<PRE>
+$value = 3
+</PRE>
+
+
+<P CLASS="rcomment"><DATE>Wednesday, October 10, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,44 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · enableMaterials</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">enableMaterials</P>
+
+<H3>Function</H3>
+
+<P>Enables (or disables) the connectionState for all Materials in the currently loaded scene.  This causes the materials' connections to be ignored in the render pipeline; all surfaces will render their neutral gray.</P>
+
+<H3>Usage</H3>
+
+<P>Call this function using an on or off argument; e.g.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Disable all connectionStates</SPAN>
+enableMaterials off;
+</PRE>
+
+<H3>Input</H3>
+
+<PRE CLASS="mel">
+int $enable
+</PRE>
+<DIV CLASS="in">
+  If <SPAN CLASS="ui">ON</SPAN>, all connectionStates are enabled.  Materials' connections are evaluated during render.<BR>
+  If <SPAN CLASS="ui">OFF</SPAN>, all connectionStates are disabled.  Materials' connections are not evaluated, and surfaces will render their default gray.
+</DIV>
+
+
+<H4>Related Articles</H4>
+
+<P><A HREF="../mel/mel.026.html">How can I Prelight a polymesh without having its material/texture influence the resulting vertex colouring?</A></P>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Tuesday, August 15, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

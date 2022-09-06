@@ -1,0 +1,31 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · getMotionPath</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">getMultiListerSelection<BR>
+getExMultiListerSelection</P>
+
+<H3>Function</H3>
+
+<P>These two scripts determine what is highlighted or selected in the MultiLister.</P>
+
+<H3>Usage</H3>
+
+<PRE>
+string[] getMultiListerSelection()
+</PRE>
+
+<P>This function takes no parameters and returns a string array containing all highlighted or selected items from the MultiLister.</P>
+
+<PRE>
+string[] getExMultiListerSelection( string $nodeType )
+</PRE>
+
+<P>This function requires an input parameter that specifies the nodeType to match in the MultiLister.  For example, the nodeType "file" is used to get a list of all file nodes that are selected.  The result is a string array containing all highlighted or selected items that match the specified nodeType.</P>
+
+<!-- footer --></BODY>
+</HTML>

@@ -1,0 +1,35 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · setPreRenderSelection</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">setPreRenderSelection</P>
+
+<H3>Function</H3>
+
+<P>Sets the Render Globals' <SPAN CLASS="ui">Pre Render MEL</SPAN> attribute
+to select the currently selected items.  This allows
+shell-initiated renders to render only active items --
+selection is not saved with the Scene file and must be explicitly
+set with this MEL command for rendering.  The <SPAN CLASS="ui">Pre Render MEL</SPAN>
+attribute <I>is</I> saved with the scene file, so this command is
+not required every time you load the scene.</P>
+
+<H3>Usage</H3>
+
+<P>Select one or more items (don't forget lights, cameras
+and texture placements) and call this function.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> Calling this function more than once will <I>append</I>
+the new selection command to the <SPAN CLASS="ui">Pre Render MEL</SPAN> attribute.
+This behavior is by design so as to preserve existing
+pre-render commands.  This will still work, as the MEL
+command will simply replace the previous selection with
+the new one.  Access the Render Globals via the Attribute
+Editor if you want to clear the command.</P>
+
+<!-- footer --></BODY>
+</HTML>

@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#73</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #73</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.072.html">Previous</a> &middot; <a href="mel.074.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine the length of a NURBS curve?</h2>
+<!-- How do I determine the length of a NURBS curve? -->
+
+<h3 class="body">Using 'arclen'</h3>
+
+<DIV CLASS="in">
+
+<div class="sidebar">
+This tip generously provided by Adrian Graham (<A HREF="http://www.compt.com">commandpostTOYBOX</A>).
+</div>
+
+<p>The &lsquo;<CODE>arclen</CODE>&rsquo; MEL command can be used to query the total length of a NURBS curve:</p>
+
+<PRE CLASS="mel">
+string $curve = `curve -d 1 -p -2.1 0.0 -2.0 -p 0.5 1.0 -3.2 -p 1.4 0.3 -1.2 -k 0 -k 1 -k 2`;
+// Result: curve1 //
+
+float $curveLength = `arclen $curve`;
+// Result: 5.335323 //
+</PRE>
+
+<p>If the &lsquo;<CODE>-constructionHistory</CODE>&rsquo; flag is specified the command creates a "<CODE>curveInfo</CODE>" node
+downstream of the curve.  This offers a persistent node which you can use to track changes to the curve.</p>
+
+<PRE CLASS="mel">
+string $curveInfo = `arclen -ch true $curve`;
+// Result: curveInfo1 //
+
+getAttr ( $curveInfo + ".arcLength" );
+// Result: 5.335323 //
+
+move -r -os -wd 0 0 1.0 ( $curve + ".cv[1]" );
+
+getAttr ( $curveInfo + ".arcLength" );
+// Result: 4.309423 //
+</PRE>
+
+</DIV>
+
+<h3 class="body">Using 'arcLengthDimension'</h3>
+
+<DIV CLASS="in">
+
+<P>Create an "<CODE>arcDimension</CODE>" node and attach it to the end CV for the curve,
+then read the &lsquo;<CODE>.arcLength</CODE>&rsquo; attribute.</P>
+
+<PRE CLASS="mel">
+string $curve = `curve -d 3 -p -5.4 0.0 -5.5 -p -6.0 0.0  4.1
+                            -p  3.4 0.0 -4.7 -p  7.8 0.0 -0.7
+                            -p  0.3 0.0  2.3
+                            -k -2 -k -1 -k 0 -k 1 -k 2 -k 3 -k 4`;
+
+<SPAN CLASS="comment">// Determine the U range for this curve.</SPAN>
+float $maxU = `getAttr ( $curve + ".maxValue" )`;
+
+<SPAN CLASS="comment">// Create an arcLengthDimension node, attached downstream of this curve.</SPAN>
+string $arcLD = `arcLengthDimension ( $curve + ".u[" + $maxU + "]" )`;
+
+float $arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 1246.701327 //
+</PRE>
+
+<P><SPAN CLASS="note">NOTE:</SPAN> This will return the arc length in <EM>centimeters</EM> regardless of your UI Unit Preference.</P>
+
+<p>This method has the added advantage for querying the length along the curve at any parameter value.</p>
+
+<PRE CLASS="mel">
+setAttr ( $arcLD + ".uParamValue" ) 1.0;
+$arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 784.586627 //
+
+setAttr ( $arcLD + ".uParamValue" ) 0.7071;
+$arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 539.611324 //
+</PRE>
+
+
+<P>The "<CODE>arcLengthDimension</CODE>" command returns the <EM>shape</EM> node.
+If you want to delete the &lsquo;<CODE>arcLengthDimension</CODE>&rsquo; node when you are finished you
+should pop <CODE>$arcLD</CODE> from its shape and delete the transform.</P>
+
+<PRE CLASS="mel">
+string $transform[] = `listRelatives -parent $arcLD`;
+delete $transform[0];
+</PRE>
+
+</DIV>
+
+<br><h3 class="body">Acknowledgements</h3>
+<div class="in">
+<ul>
+<li><b>Adrian Graham</b>, <A HREF="http://www.compt.com">commandpostTOYBOX</A></li>
+</ul>
+</div>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.058.html">How do I determine how many CVs are in a NURBS Curve or Surface?</a></li>
+<li class="howto"><a href="mel.108.html">How do I plot equidistant points along a curve?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Wednesday, October 10, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

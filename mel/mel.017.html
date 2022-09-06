@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#17</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #17</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.016.html">Previous</a> &middot; <a href="mel.018.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">Why are my "instantaneous" constraints not being applied to the target object?</h2>
+<!-- Why are my "instantaneous" constraints not being applied to the target object? -->
+
+<P>OK, you've got two objects in a scene.  You want to snap one to the other, just to line them up, before performing other operations on the target object.  A couple constraints seems an obvious and simple way to achieve this.</P>
+
+<PRE CLASS="mel">
+// Create two objects for this example
+string $locatorA[] = `spaceLocator -name "theSource"`;
+string $locator = $locatorA[0];
+
+string $cubeA[] = `polyCube -w 1 -h 2 -d 3 -sx 1 -sy 1 -sz 1 -ax 0 1 0 -tx 1 -name "theTarget"`;
+string $cube = $cubeA[0];
+
+// Move and Rotate the locator to some arbitrary location
+move 1.23 2.5 3.14 $locator;
+rotate 45 15 3.33 $locator;
+
+// Now we snap the cube to the locator
+string $myPointConstraintA[] = `pointConstraint $locator $cube`;
+string $myOrientConstraintA[] = `orientConstraint $locator $cube`;
+
+// We just wanted them lined up.. now that's done, so dump the constraint nodes
+delete $myPointConstraintA $myOrientConstraintA
+</PRE>
+
+<P>So we quickly execute that and... nothing happens.  The cube is still sitting at the origin.  What the heck?</P>
+
+<P>The problem is that there's nothing that happens to convince Maya that it needs to update its display (visually or internally) between the creation and the destruction of the constraints and thus, the cube doesn't move.  To coerce Maya to do the constraint evaluation, throw a ‘<CODE>refresh</CODE>’ command just before the constraints are deleted:</P>
+
+<PRE CLASS="mel">
+// Now we snap the cube to the locator
+string $myPointConstraintA[] = `pointConstraint $locator $cube`;
+string $myOrientConstraintA[] = `orientConstraint $locator $cube`;
+
+// Tell Maya its display is "dirty"
+refresh;
+
+// We just wanted them lined up.. now that's done, so dump the constraint nodes
+delete $myPointConstraint $myOrientConstraint
+</PRE>
+
+<P>That works.  But frankly, this is not a good way to achieve this alignment.</P>
+
+<P>Instead of the roundabout constraint network you can use the ‘<CODE>xform</CODE>’ command to quickly copy the transformation of one to the other:</P>
+
+<PRE CLASS="mel">
+// Create two objects for this example
+string $locatorA[] = `spaceLocator -name "theSource"`;
+string $locator = $locatorA[0];
+
+string $cubeA[] = `polyCube -w 1 -h 2 -d 3 -sx 1 -sy 1 -sz 1 -ax 0 1 0 -tx 1 -name "theTarget"`;
+string $cube = $cubeA[0];
+
+// Move and Rotate the locator to some arbitrary location
+move 1.23 2.5 3.14 $locator;
+rotate 45 15 3.33 $locator;
+
+// Get the translation and rotation, in world space, of the locator
+float $trans[] = `xform -worldSpace -q -translation $locator`;
+float $rot[] = `xform -worldSpace -q -rotation $locator`;
+
+// And apply to the cube
+xform -worldSpace -translation $trans[0] $trans[1] $trans[2] $cube;
+xform -worldSpace -rotation $rot[0] $rot[1] $rot[2] $cube;
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

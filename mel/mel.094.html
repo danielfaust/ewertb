@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#94</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #94</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.093.html">Previous</a> &middot; <a href="mel.095.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">Useful Regular Expressions for MEL</h2>
+<h3 class="body">Strip component</H3>
+
+<PRE CLASS="mel">
+string $node = "pCube1.f[2]";
+string $no_component = `match "^[^\.]*" $node`;
+// Result: "pCube1" //
+</PRE>
+
+<h3 class="body">Extract component or attribute, with '.'</H3>
+
+<PRE CLASS="mel">
+string $node = "pCube1.f[2]";
+string $component = `match "\\..*" $node`;
+// Result: ".f[2]" //
+
+string $nodeAttr = "blinn1.color";
+string $attrName = `match "\\..*" $nodeAttr`;
+// Result: ".color" //
+</PRE>
+
+<h3 class="body">Extract attribute name, without '.'</H3>
+
+<PRE CLASS="mel">
+string $node = "pCube1.f[2]";
+string $component = `substitute "^[^.]*\\." $node ""`;
+// Result: "f[2]" //
+
+string $nodeAttr = "blinn1.color";
+string $attrName = `substitute "^[^.]*\\." $nodeAttr ""`;
+// Result: "color" //
+</PRE>
+
+<h3 class="body">Extract parent UI control from full path</H3>
+
+<PRE CLASS="mel">
+string $uiControl = "OptionBoxWindow|formLayout52|formLayout55|button6";
+string $uiParent = `substitute "|[^|]*$" $uiControl ""`;
+// Result: OptionBoxWindow|formLayout52|formLayout55 //
+</PRE>
+
+<h3 class="body">Strip trailing CR, if any</H3>
+
+<P>This is useful when processing text input read from a file using &lsquo;<CODE>fgetline</CODE>&rsquo;.</P>
+
+<PRE CLASS="mel">
+string $input = "line\n";
+$string $line = `match "^[^(\r\n)]*" $input`;
+// Result: "line" //
+</PRE>
+
+<h3 class="body">Extract directory from path</H3>
+
+<P>Note that this leaves a trailing slash. This is typically desired, as it makes it easy to simply
+append a filename, and the slash is required for the &lsquo;<CODE>getFileList</CODE>&rsquo; command to return anything useful.</P>
+
+<PRE CLASS="mel">
+string $path = "C:/AW/Maya5.0/bin/maya.exe";
+string $dir = `match "^.*/" $path`;
+// Result: "C:/AW/Maya5.0/bin/"
+</PRE>
+
+<h3 class="body">Extract file from path</H3>
+
+<PRE CLASS="mel">
+string $path = "C:/AW/Maya5.0/bin/maya.exe";
+string $filepart = `match "[^/\\]*$" $path`;
+// Result: "maya.exe"
+</PRE>
+
+<h3 class="body">Strip numeric suffix</H3>
+
+<PRE CLASS="mel">
+string $node = "pCube1|pCubeShape223";
+string $noSuffix = `match ".*[^0-9]" $node`;
+// Result: "pCube1|pCubeShape"
+</PRE>
+
+<h3 class="body">Extract numeric suffix</H3>
+
+<PRE CLASS="mel">
+string $node = "pCube1|pCubeShape223";
+string $suffix = `match "[0-9]+$" $node`;
+// Result: "223" //
+</PRE>
+
+<h3 class="body">Extract short name of DAG or control path</H3>
+
+<PRE CLASS="mel">
+string $dagPath = "pCube1|pCubeShape223";
+string $shortName = `match "[^|]*$" $dagPath`;
+// Result: pCubeShape223 //
+</PRE>
+
+<P CLASS="rcomment"><DATE>11 May 2003</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

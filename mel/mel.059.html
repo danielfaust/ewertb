@@ -1,0 +1,73 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#59</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #59</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.058.html">Previous</a> &middot; <a href="mel.060.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I create a hotkey to cycle through the Shelf tabs?</h2>
+<!-- How can I create a hotkey to cycle through the Shelf tabs? -->
+
+<P>The first thing you'll need is the path to the main Shelf.  Maya stores the UI identity of the Main Shelf in the global string variable <SPAN CLASS="mel">
+$gShelfTopLevel</SPAN>.</P>
+
+<P>This provides you with the tabLayout that generates the Shelf tabs, and from here it's just a matter of a couple queries and specifying the new tab to choose.</P>
+
+<PRE CLASS="mel">
+global proc nextShelfTab()
+{
+  <SPAN CLASS="comment">// Get Maya's global Shelf identifier</SPAN>
+  global string $gShelfTopLevel;
+
+  <SPAN CLASS="comment">// How many tabs are in the Shelf?  </SPAN>
+  int $numTabs = `tabLayout -q -nch $gShelfTopLevel`;
+
+  <SPAN CLASS="comment">// What's the currently selected Shelf tab?</SPAN>
+  int $currentTab = `tabLayout -q -sti $gShelfTopLevel`;
+
+  <SPAN CLASS="comment">// Roll the current Shelf one tab to the right (looping to first)</SPAN>
+  $currentTab = ( $currentTab % $numTabs ) + 1;
+
+  <SPAN CLASS="comment">// Set the Shelf to the new tab</SPAN>
+  tabLayout -e -sti $currentTab $gShelfTopLevel;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.030.html">How do I create and edit Shelf buttons?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Tuesday, March 20, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

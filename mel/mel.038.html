@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#38</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #38</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.037.html">Previous</a> &middot; <a href="mel.039.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I activate any of Maya's Sacred Tools via MEL?</h2>
+<!-- How do I activate any of Maya's Sacred Tools via MEL? -->
+
+<P>Maya maintains several global string variables which define the names for
+the Sacred Tools:</P>
+
+<DIV CLASS="in">
+<P><SPAN CLASS="ui">Select</SPAN> Tool:      <SPAN CLASS="mel">$gSelect</SPAN>      (typically "selectSuperContext")</P>
+<P><SPAN CLASS="ui">Lasso</SPAN> Tool:       <SPAN CLASS="mel">$gLasso</SPAN>       (typically "lassoSelectContext")</P>
+<P><SPAN CLASS="ui">Move</SPAN> Tool:        <SPAN CLASS="mel">$gMove</SPAN>        (typically "moveSuperContext")</P>
+<P><SPAN CLASS="ui">Rotate</SPAN> Tool:      <SPAN CLASS="mel">$gRotate</SPAN>      (typically "RotateSuperContext")</P>
+<P><SPAN CLASS="ui">Scale</SPAN> Tool:       <SPAN CLASS="mel">$gScale</SPAN>       (typically "scaleSuperContext")</P>
+<P><SPAN CLASS="ui">Show Manip</SPAN> Tool:  <SPAN CLASS="mel">$gShowManip</SPAN>   (typically "ShowManips")</P>
+</DIV>
+
+<P>Examples:</P>
+
+<PRE CLASS="mel">
+// Activate the Select Tool
+global string $gSelect;
+setToolTo $gSelect;
+
+// Activate the Rotate Tool
+global string $gRotate;
+setToolTo $gRotate;
+</PRE>
+
+<P CLASS="rcomment"><DATE>Wednesday, October 24, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#46</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #46</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.045.html">Previous</a> &middot; <a href="mel.047.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I change the precision of the floating point values in Maya's editors (such as the Channel Box, Attribute Spreadsheet and Attribute Editor)?</h2>
+<!-- How can I change the precision of the floating point values in Maya's editors (such as the Channel Box, Attribute Spreadsheet and Attribute Editor)? -->
+
+<DIV CLASS="heading">
+Channel Box
+</DIV>
+
+<DIV CLASS="in">
+<P>Maya defines a global string to store the name of its main Channel Box:</P>
+
+<PRE CLASS="mel">
+$gChannelBoxName
+</PRE>
+
+<P>This is typically something like:</P>
+
+<PRE>
+"MayaWindow|mayaMainWindowForm|formLayout5|formLayout7|formLayout11|menuBarLayout1|frameLayout1|mainChannelBox"
+</PRE>
+
+<P>Thus, to reliably modify the Channel Box 'precision' property:</P>
+
+<PRE CLASS="mel">
+global string $gChannelBoxName;
+channelBox -e -precision 4 $gChannelBoxName;
+</PRE>
+</DIV>
+
+<DIV CLASS="heading">
+Attribute Spreadsheet
+</DIV>
+
+<DIV CLASS="in">
+<P>The Attibute Spreadsheet offers no convenient global, but can it can be sussed through a few queries:</P>
+
+<PRE CLASS="mel">
+int $precision = 4;
+
+// Get a list of all current Editors
+string $editors[] = `lsUI -editors`;
+
+for ( $ed in $editors )
+{
+  // If this one is a spreadSheetEditor, edit its 'precision' flag
+  if ( `objectTypeUI $ed` == "TspreadSheetEditor" )
+  {
+    spreadSheetEditor -e -precision $precision $ed;
+  }
+}
+</PRE>
+</DIV>
+
+<DIV CLASS="heading">
+Attribute Editor
+</DIV>
+
+<DIV CLASS="in">
+<P>The Attribute Editor is a complex beast that is controlled through
+AEtemplate scripts and several functions built into the kernal.  While it
+would be theoretically possible to navigate and edit the precision of the AE
+controls, it would likely prove to be more work than it's worth.</P>
+</DIV>
+
+<BR>
+<H3>Caveats</H3>
+
+<P>None of these adjustments are persistent.  The Channel Box will
+reset when Maya is restarted, and the Attribute Spreadsheet will revert if
+it is closed and re-opened.</P>
+
+<P>If you want to hard-code the changes:</P>
+
+<DIV CLASS="in">
+<DIV CLASS="heading">
+Channel Box
+</DIV>
+
+<DIV CLASS="in">
+<P>Add the precision alteration to your <CODE>userSetup.mel</CODE>.</P>
+</DIV>
+
+<DIV CLASS="heading">
+Attribute Spreadsheet
+</DIV>
+
+<DIV CLASS="in">
+<P>Find the MEL script that generates the window:</P>
+
+<PRE>
+<MAYA_INSTALL_DIR>/others/SpreadSheetWindow.mel
+</PRE>
+
+<P>and alter the lines that create the spreadsheet:</P>
+
+<PRE CLASS="mel">
+  spreadSheetEditor
+    -ln true
+          -parent $formName
+          -mlc SSEcon
+         <SPAN CLASS="comment">// Add Precision flag</SPAN>
+          -precision 4
+          $edName;
+</PRE>
+</DIV>
+</DIV>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.037.html">How do I represent a custom numeric attribute as a drop-down text menu in the Attribute Editor?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Wednesday, November 29, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

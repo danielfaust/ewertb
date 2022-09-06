@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#93</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #93</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.092.html">Previous</a> &middot; <a href="mel.094.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I create a file dialog for which I can define the default starting directory?</h2>
+<!-- How do I create a file dialog for which I can define the default starting directory? -->
+
+<P>For Windows NT:</P>
+
+<P>For a file-selection dialog the '<CODE>fileDialog</CODE>' command provides the functionality of specifying a default starting location and filetype.</P>
+
+<PRE CLASS=mel>
+string $selectedFile = `fileDialog -dm "D:\\joe\\mayastuff\\*.mb;*.ma"`;
+</PRE>
+
+<P>For a folder-selection dialog you can use the ‘<CODE>fileBrowserDialog</CODE>’ command, but it does not have any direct means to define the starting directory.  You can do it, however, with a little help from the ‘<CODE>workspace</CODE>’ command.</P>
+
+<PRE CLASS="mel">
+global proc browseForFolder( string $startFolder )
+{
+  string $mayaFolder;
+
+  <SPAN CLASS="comment">// Get current directory.. we'll restore this when we're done</SPAN>
+  $mayaFolder = `workspace -q -dir`;
+
+  <SPAN CLASS="comment">// Set the current directory to our own.</SPAN>
+  <SPAN CLASS="comment">// Note that this will set Maya's workspace folder even</SPAN>
+  <SPAN CLASS="comment">// if the specified folder does not exist.</SPAN>
+  workspace -dir $startFolder;
+
+  <SPAN CLASS="comment">// Present the user with a folder-selection dialog.</SPAN>
+  <SPAN CLASS="comment">// It will default to $startFolder.</SPAN>
+  <SPAN CLASS="comment">// The $mayaFolder is included as the first argument for the callback.</SPAN>
+  fileBrowserDialog -mode 4
+    -fileCommand ( "browseForFolderCallback \"" + $mayaFolder + "\"" )
+    -actionName "Pick Your Folder";
+}
+
+global proc browseForFolderCallback( string $mayaFolder, string $result, string $type )
+{
+  <SPAN CLASS="comment">// Do whatever you need to with the $result</SPAN>
+  print ( "Folder selection: " + $result + "\n" );
+
+  <SPAN CLASS="comment">// Restore the original folder path</SPAN>
+  workspace -dir $mayaFolder;
+}
+</PRE>
+
+<P>Example:</P>
+
+<PRE CLASS="mel">
+browseForFolder( "C:/projects/gameData/" );
+</PRE>
+
+<P>For IRIX:</P>
+
+<P>I know of only one command that will allow you to define the default directory for a file dialog.  The command is not in the docs, but you can investigate it under the file:</P>
+
+<PRE>
+«<I>maya_install_dir</I>»\scripts\others\fileBrowser.mel
+</PRE>
+
+<P>You need to set a global variable to define the default starting location; e.g.:</P>
+
+<PRE CLASS=mel>
+global proc myFileBrowserCB( string $file, string $fileType )
+{
+  print ( "File selected: " + $file + "\n" );
+}
+
+global proc myFileBrowser()
+{
+  global string $gDefaultFileBrowserDir;
+  $gDefaultFileBrowserDir = "/usr/joe/mayastuff/";
+
+   fileBrowser( "myFileBrowserCB", "Open Joe's File", "mayaBinary", 0 );
+}
+</PRE>
+
+<P>Suggestion to A|w:  Please consolidate all '<CODE>fileDialog</CODE>', etc. functions into one command that works universally under UNIX and NT:  default starting folder, file- or folder-selection, file selection mask, allowance for entering filenames which do not yet exist (e.g. save dialogs), definable dialog titles and button labels, proper return status and/or callbacks for success/failure/no selection.</P>
+
+<P CLASS="rcomment"><DATE>Monday, April 10, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

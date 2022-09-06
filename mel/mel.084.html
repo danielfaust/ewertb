@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#84</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #84</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.083.html">Previous</a> &middot; <a href="mel.085.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I query which keyframes are selected in the Graph Editor or Dope Sheet?</h2>
+<!-- How do I query which keyframes are selected in the Graph Editor or Dope Sheet? -->
+
+<P>To get the selected curves and keys you can use the &lsquo;<CODE>keyframe</CODE>&rsquo; command.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Selected animCurve(s)</SPAN>
+string $animCurves[] = `keyframe -q -name`;
+// Result: pSphere1_translateX //
+</PRE>
+
+<P>An animCurve may be feeding more than one node/channel/whatever in Maya.
+You can determine its effect by finding its downstream connections:</P>
+
+<PRE CLASS="mel">
+string $effects[] = `listConnections -plugs true $animCurves[0]`;
+// Result: pSphere1.translateX //
+</PRE>
+
+<P>To determine the values for the key, use the &lsquo;<CODE>-timeChange</CODE>&rsquo; and &lsquo;<CODE>-valueChange</CODE>&rsquo;
+flags:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Here I've selected the entire curve:</SPAN>
+
+float $selectTimes[] = `keyframe -q -sl -timeChange $animCurves[0]`;
+// Result: 1 60 //
+
+float $selectValues[] = `keyframe -q -sl -valueChange $animCurves[0]`;
+// Result: 0 0.5 //
+
+<SPAN CLASS="comment">// And here I've selected the key at frame 60:</SPAN>
+
+float $selectTimes[] = `keyframe -q -sl -timeChange $animCurves[0]`;
+// Result: 60 //
+
+float $selectValues[] = `keyframe -q -sl -valueChange $animCurves[0]`;
+// Result: 0.5 //
+</PRE>
+
+<P>Note in the examples above how the <CODE>$animCurves</CODE> array is used to explicitly query
+a single animCurve. If more than one animCurve is selected this is required to
+avoid ambiguous results.  This becomes important when it is necessary to modify a value for a selected curve
+(described below).</P>
+
+<P>Consider the following Graph Editor where I've selected the keys at frame 60 for all three
+translation curves.</P>
+
+<DIV CLASS="center">
+<P><IMG SRC="mel_a84.gif" WIDTH="581" HEIGHT="176" ALT="Graph Editor"></P>
+</DIV>
+
+<PRE CLASS="mel">
+string $animCurves[] = `keyframe -q -sl -name`;
+// Result: pSphere1_translateX pSphere1_translateY pSphere1_translateZ //
+
+keyframe -q -sl -vc;
+// Result: 1 1 1 //
+
+keyframe -q -sl -tc;
+// Result: 60 60 60 //
+</PRE>
+
+<P>This wouldn't do you much good if you were looking to modify a key at a particular
+frame.  However, you can isolate the key and time values by querying on individual curves.</P>
+
+<PRE CLASS="mel">
+keyframe -q -sl -vc pSphere1_translateY;  <SPAN CLASS="comment">// or $animCurves[1] from above</SPAN>
+// Result: 1 //
+
+keyframe -q -sl -tc pSphere1_translateY;  <SPAN CLASS="comment">// or $animCurves[1] from above</SPAN>
+// Result: 60 //
+</PRE>
+
+<P>Editing the selected key is a bit more involved.  You need to edit the key
+by its index, but you cannot query the selected index.  Thus, you must query
+the selected time/value, iterate the curve looking for said key, then write. Here is
+where it becomes necessary to specify the target animCurve, so as to avoid
+modifying a key an identical time or value, but on a curve animating a
+different channel.</P>
+
+<PRE CLASS="mel">
+float $allTimes[] = `keyframe -q -timeChange $animCurves[0]`;
+float $allValues[] = `keyframe -q -valueChange $animCurves[0]`;
+
+<SPAN CLASS="comment">// Set selected key value to 0.2</SPAN>
+for ( $i = 0; $i < `size $allTimes`; $i++ )
+{
+  if ( ( $allTimes[$i] == $selectTime[0] ) &&
+       ( $allValues[$i] == $selectValue[0] ) )
+  {
+    keyframe -e -index $i -valueChange 0.2 $animCurves[0];
+  }
+}
+</PRE>
+
+<P>In summary, use &lsquo;<CODE>keyframe -q -sl -name</CODE>&rsquo; to find the
+selected curves, and store these names in an array.  Then, specify each
+curve name in the &lsquo;<CODE>-tc</CODE>&rsquo; and &lsquo;<CODE>-vc</CODE>&rsquo; queries to determine which keys are
+selected for each curve.  Don't grab them all using &lsquo;<CODE>keyframe -q -sl -tc</CODE>&rsquo;
+unless you really want to perform a global edit across all selected curves.</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.066.html">How do I control the Graph Editor's Outliner and Graph panels?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>05 August 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

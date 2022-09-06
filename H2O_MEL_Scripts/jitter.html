@@ -1,0 +1,39 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · jitter</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">jitter</P>
+
+<H3>Function</H3>
+
+<IMG SRC="jitter.gif" ALT="Jitter UI" HEIGHT=242 WIDTH=327 ALIGN=RIGHT>
+
+<P>Applies random transform to all selected models or components.</P>
+
+<H3>Usage</H3>
+
+<P>The Jitter window allows you to enter the maximum X, Y and Z distance
+for the jitter. The translation on each axis will be within the range of
+-(axis) to +(axis). For example, if you enter 1.0 for X, the model or component
+will translate a maximum of -1.0 and a maximum of 1.0 along the X axis.
+</P>
+
+<P>You may choose to perform the translations based on the model's local
+Object Space, or in World Space. </P>
+
+<P>To re-seed the random number generator, scroll the Seed slider, or enter
+a new seed value in the Seed input field. A new seed will be applied only
+when this value is changed, and not for every jitter.</P>
+
+<P>And finally (the easy part) -- click the 'Jitter' button to perform
+the jitter operation. </P>
+
+<P>Lattice components are listed a little differently when queried in Maya, so I've added a
+<SPAN CLASS="ui">Jitter Lattice</SPAN> button specifically for the purpose of jittering Lattice Points.</P>
+
+<!-- footer --></BODY>
+</HTML>

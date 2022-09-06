@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#11</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #11</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.010.html">Previous</a> &middot; <a href="mel.012.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I strip the "new-line-character" off of the end of my string variable?</h2>
+<!-- How do I strip the "new-line-character" off of the end of my string variable? -->
+
+<P>When reading a DOS file where each line ends with a CR+LF pair, the ‘<CODE>fgetline</CODE>’ command knows to strip the LF, but fails to string the CR.  This is a problem I've run into as well.</P>
+
+<P>You can use the ‘<CODE>match</CODE>’ command with a regular expression to strip a CR and/or LF from the end of a text string.</P>
+
+<P>The escape sequence that matches a LF is "<CODE>\n</CODE>", that which matches a CR is "<CODE>\r</CODE>".  Armed with this:</P>
+
+<PRE CLASS=mel>
+$string = match( "^[^(\r\n)]*", $string );
+</PRE>
+
+<P>What this does is matches all characters starting at the beginning of a string which is not a CR or LF character, reassigning the results to <CODE>$string</CODE>.  This command is quick to execute, and safe to use even if there are no LF or CR characters in the string.</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

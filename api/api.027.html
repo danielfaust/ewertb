@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#27</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #27</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.026.html">Previous</a> &middot; <a href="api.028.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I access a MEL variable from the API?</h2>
+<!-- How do I access a MEL variable from the API?  -->
+
+<p>There are a few ways to transfer values from MEL to a plug-in:</p>
+
+<ol>
+<li>
+<p>The correct way (in my opinion) is to construct a MEL command, derived from MPxNode,
+which accepts the value as an argument and assigns it appropriately within
+your plug-in.</p>
+
+<PRE CLASS="mel">
+float $myValue = 3.14;
+
+myCommand -value $myValue;
+</PRE>
+
+<p>When "myCommand" is parsed it will recognize the '-value' flag and assign
+the specified value to a class variable. This API variable could be static as
+well, if you wish for the value to be persistent.</p>
+</li>
+
+<li>
+<p>Assign the value to an attribute on a dependency node, then read the
+attribute from the API.</p>
+</li>
+
+<li>
+<p>Assign the value to an <a href="../mel/mel.012.html">optionVar</A>, and then read the optionVar from the
+API.</p>
+</li>
+
+<li>
+<p>Write the value to a disk file, and read the disk file from the API.</p>
+</li>
+
+<li>
+<p>All of the above are "push" methods; the MEL programmer is responsible for
+writing the variable to a specific location for the API to obtain its value.</p>
+
+<p>One "pull" method which doesn't require (much) preparation from the MEL side
+is to capture the result argument from the MGlobal::executeCommand() method:</p>
+
+<PRE>
+MGlobal::executeCommand( const MString&amp; command, double&amp; result,
+                         bool displayEnabled, bool undoEnabled )
+</PRE>
+
+<p>One caveat: The variable you need to transfer to the API will need to be in
+MEL's global declaration space. <SPAN CLASS="remark">Globals are evil, so use sparingly.</SPAN></p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// in MEL, declared as a global.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+global float $gToAPI = 3.14;
+</PRE>
+
+<PRE CLASS="api">
+<SPAN CLASS="comment">// in API</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+void get_value_from_mel( const MString& var, double& fromMEL )
+{
+  <SPAN CLASS="comment">// Assembled, the command looks like this:</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  <SPAN CLASS="comment">//   proc float _floatToAPI() { global float $gToAPI; return $gToAPI; } _floatToAPI();</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  MString fromMELCmd( "proc float _floatToAPI() { global float $" );
+  fromMELCmd += var;
+  fromMELCmd += "; return $";
+  fromMELCmd += var;
+  fromMELCmd += "; } _floatToAPI();";
+
+  MGlobal::executeCommand( fromMELCmd, fromMEL );
+}
+
+double valueFromMEL;
+get_value_from_mel( MString( "gToAPI" ), valueFromMEL );
+</PRE>
+</li>
+</ol>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="/mel/mel.012.html">How do I save preferences for my scripts so they are recalled in subsequent sessions?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->12 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

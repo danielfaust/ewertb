@@ -1,0 +1,209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#71</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #71</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.070.html">Previous</a> &middot; <a href="mel.072.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine what Blind Data types are defined and assigned?</h2>
+<!-- How do I determine what Blind Data types are defined and assigned? -->
+
+<P>MEL includes '<SPAN CLASS="mel">blindDataType</SPAN>', '<SPAN CLASS="mel">polyBlindData</SPAN>'
+and '<SPAN CLASS="mel">polyQueryBlindData</SPAN>' commands
+to control and query Blind Data.  It is these commands which are used by Maya's
+Blind Data Editor.  To fully understand how and why Blind Data does what it does
+it's useful to know how Maya stores Blind Data within a scene.</P>
+
+<P>When you create a Blind Data Type in the Blind Data Editor, Maya creates a
+&lsquo;<CODE>blindDataTemplate</CODE>&rsquo; node with this information.
+The "<CODE>.typeID</CODE>" is a native attributes of this node, and any
+attributes you create for the Type are added as Extra Attributes to this node.</P>
+
+<P>When you assign this Blind Data Type to a poly object, Maya creates a
+&lsquo;<CODE>polyBlindData</CODE>&rsquo; node, assigned with the ID for the Type,
+and attaches it upstream of the object.  The assignment data is written as attributes to
+this node.</P>
+
+<BR>
+<DIV CLASS="heading">
+<P>blindDataTemplate</P>
+</DIV>
+
+<P>To find the nodes representing which Blind Data Types are currently
+defined in the scene:</P>
+
+<PRE CLASS="mel">
+ls -type "blindDataTemplate";
+</PRE>
+
+Example:
+
+<PRE CLASS="mel">
+string $blindDataTemplates[] = `ls -type "blindDataTemplate"`;
+
+for ( $template in $blindDataTemplates )
+{
+  int $id = `getAttr ( $template + ".typeId" )`;
+
+  print ( "Blind Data ID #" + $id + " found.\n" );
+};
+</PRE>
+
+<PRE>
+Blind Data ID #1222 found.
+Blind Data ID #9001 found.
+</PRE>
+
+The configuration for the Blind Data type is defined via its compound attribute
+".bdUserInfo".  You can use this attribute to determine the association type for
+the Blind Data, for example.
+
+<PRE CLASS="mel">
+string $blindDataTemplates[] = `ls -type "blindDataTemplate"`;
+
+for ( $template in $blindDataTemplates )
+{
+  int $id = `getAttr ( $template + ".typeId" )`;
+
+  print ( "Blind Data ID #" + $id + " found.\n" );
+
+  <SPAN CLASS="comment">// Get configuration info for this Blind Data</SPAN>
+  int $compoundSize = `getAttr -size ( $template + ".bdui" )`;
+
+  string $userInfoName;
+  string $userInfoValue;
+  string $attrInfoName;
+  string $attrInfoValue;
+
+  for ( $i = 0; $i < $compoundSize; $i++ )
+  {
+    <SPAN CLASS="comment">// String assignments expanded for clarity</SPAN>
+
+    <SPAN CLASS="comment">// start with node</SPAN>
+    $attrInfoName = $template;
+    <SPAN CLASS="comment">// extend to array element for .bdUserInfo</SPAN>
+    $attrInfoName += ( ".bdui[" + $i + "]" );
+    <SPAN CLASS="comment">// extend to .bdUserInfoName</SPAN>
+    $attrInfoName += ( ".bdun" );
+
+    $userInfoName = `getAttr $attrInfoName`;
+
+    <SPAN CLASS="comment">// start with node</SPAN>
+    $attrInfoValue = $template;
+    <SPAN CLASS="comment">// extend to array element for .bdUserInfo</SPAN>
+    $attrInfoValue += ( ".bdui[" + $i + "]" );
+    <SPAN CLASS="comment">// extend to .bdUserInfoValue</SPAN>
+    $attrInfoValue += ( ".bduv" );
+
+    $userInfoValue = `getAttr $attrInfoValue`;
+
+    <SPAN CLASS="comment">// Skip if name is blank</SPAN>
+    if ( $userInfoName != "" )
+    {
+      print ( $userInfoName + " = \"" + $userInfoValue + "\"\n" );
+    }
+  }
+
+  print "\n";
+};
+</PRE>
+
+<PRE>
+Blind Data ID #1222 found.
+typeTag = "groupID"
+assocType = "vertex"
+freeSet = "1"
+dataCount = "1"
+group = "int"
+
+Blind Data ID #9001 found.
+typeTag = "collisionType"
+assocType = "object"
+freeSet = "1"
+dataCount = "1"
+sector = "int"
+</PRE>
+
+
+<BR>
+<DIV CLASS="heading">
+<P>polyBlindData</P>
+</DIV>
+
+<P>To find the nodes representing Blind Data that has been assigned to polymesh components:</P>
+
+<PRE CLASS="mel">
+ls -type "polyBlindData";
+// Result: polyBlindData1 polyBlindData2 //
+</PRE>
+
+<P>You'll need to do a bit more work to determine to which objects this
+polyBlindData is assigned.  These nodes are part of the object's upstream graph,
+so you can use the listConnections MEL command to trace downstream from the
+polyBlindData node until you find the object at the end of the chain.</P>
+
+<P>If the Blind Data assignment is part of the object's Construction History then
+it will be networked from the &lsquo;<CODE>polyBlindData.outMesh</CODE>&rsquo; attribute to the object's
+&lsquo;<CODE>.inMesh</CODE>&rsquo;.  If the Construction History has been collapsed then it will be
+networked from the &lsquo;<CODE>polyBlindData.message</CODE>&rsquo; attribute into the object's
+&lsquo;<CODE>.blindDataNodes[]</CODE>&rsquo; array attribute.</P>
+
+<PRE CLASS="mel">
+listConnections -shapes true -plugs true polyBlindData2.message;
+// Result: pCylinderShape1.blindDataNodes[0] //
+</PRE>
+
+<BR>
+<DIV CLASS="heading">
+<P>Object-Level Blind Data</P>
+</DIV>
+
+<P>The &lsquo;<CODE>polyBlindData</CODE>&rsquo; nodes are used for component-level Blind Data on polygon objects, but not for object-level
+Blind Data.  Objects are assigned Blind Data via a custom attribute.  The name
+of the attribute is "<CODE>BlindData####</CODE>" where "<CODE>####</CODE>" is the Type ID for the Blind
+Data.</P>
+
+<PRE CLASS="mel">
+listAttr -ud pCylinderShape1;
+// Result: BlindData9001 collisionAttr //
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> As of Maya v4.0 the '<SPAN CLASS="mel">polyQueryBlindData</SPAN>' MEL
+command is able to query the object-level Blind Data it creates. In previous
+versions of Maya it is not possible to query object-level Blind Data. Remember
+that you must specify (or select) the <EM>shape</EM> node to successfully
+retrieve Blind Data with an "object" association type.</P>
+
+
+
+<P CLASS="rcomment"><DATE>Friday, August 31, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

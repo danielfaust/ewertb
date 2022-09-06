@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#48</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #48</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.047.html">Previous</a> &middot; <a href="mel.049.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I toggle the visibility of the Model panels' menu bars?</h2>
+<!-- How do I toggle the visibility of the Model panels' menu bars? -->
+
+<P>The command that Maya uses to toggle the panel menuBars is:</P>
+
+<PRE CLASS="mel">
+toggleMenuBarsInPanels
+</PRE>
+
+<P>This is found in the MEL script:</P>
+
+<DIV CLASS="in">
+<CODE>&lt;MAYA_INSTALL_DIR&gt;\scripts\startup\createPrefWndUI.mel</CODE>
+</DIV>
+
+<P>Frankly, this function doesn't make sense.  It's self-described as a toggle,
+yet requires a 'true'/'false' argument to actually set the state.  Weird.</P>
+
+<P>To implement your own toggle:</P>
+
+<PRE CLASS="mel">
+global proc actuallyToggleMenuBarsInPanels()
+{
+  global int $gUseMenusInPanels;
+  toggleMenuBarsInPanels( !$gUseMenusInPanels );
+}
+</PRE>
+
+<P>Call your ‘<CODE>actuallyToggleMenuBarsInPanels</CODE>’ procedure to alternate between
+menus / no-menus in panels.  This effect will be stored as the user's global
+preference.</P>
+
+<div class="sidebar">
+<P>Yes, this does use a stored state value and assumes it accurately reflects the
+current state of the UI.  While I'm not a fan of coding assumptions such as this,
+there is no query mechanism for the &lsquo;<CODE>toggleMenuBarsInPanels</CODE>&rsquo;
+function so we gotta take what we can get.</P>
+</div>
+
+<P>If you want to toggle the menuBar for <EM>only</EM> the active panel:</P>
+
+<PRE CLASS="mel">
+global proc toggleMenuBarInPanelWithFocus()
+{
+  string $panel = `getPanel -withFocus`;
+  panel -e -mbv ( !`panel -q -mbv $panel` ) $panel;
+}
+</PRE>
+
+<P>This is performed in-place and will not affect the user's preference.</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.089.html">How can I use a single hotkey to toggle a ‘Show’ Option (or other mode)?</a></li>
+<li class="howto"><a href="mel.045.html">How do I toggle playback between "Normal" and "Free" while playback is running?  It only seems to take effect when I restart playback at the beginning.</a></li>
+<li class="howto"><a href="mel.047.html">How do I toggle between 'Hide UI Elements' and 'Show UI Elements?'</a></li>
+<li class="howto"><a href="mel.067.html">How do I control the visibility for the currently active Display Layer?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Monday, May 21, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

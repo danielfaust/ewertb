@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#06</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #06</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.005.html">Previous</a> &middot; <a href="mel.007.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I get the global or world-space coordinates of an object or component?</h2>
+<!-- How do I get the global or world-space coordinates of an object or component? -->
+<P>Querying the global, or world-space, coordinates of an object and component can be achieved with the same MEL command: ‘<CODE>xform</CODE>’</P>
+
+<P>Say you have one object parented to another.  The child object is offset from the parent, and the parent is moved and rotated in its own local space.  How do you determine the global position of the child?</P>
+
+<PRE CLASS="mel">
+// Create two objects for the purpose of this example
+string $sphereA[] = `polySphere -r 1 -sx 16 -sy 8 -ax 0 1 0 -tx 1`;
+string $sphere = $sphereA[0];
+
+string $cubeA[] = ` polyCube -w 1 -h 1 -d 1 -sx 1 -sy 1 -sz 1 -ax 0 1 0 -tx 1`;
+string $cube = $cubeA[0];
+
+// Move the cube to some arbitrary location
+move 1.23 3.14 5.55 $cube;
+
+// Parent the cube to the sphere;
+parent $cube $sphere;
+
+// Move and rotate the sphere in some arbitrary fashion
+move 8.22 4.87 9.99 $sphere;
+rotate 12 34 45 $sphere;
+
+// Now, where's the cube??
+// Use the 'xform' command with the -worldSpace flag to -query -translation:
+float $position[3] = `xform -worldSpace -query -translation $cube`;
+
+print ( "Cube's location in world-space: { " +
+   $position[0] + ", " + $position[1] + ", " + $position[2] + " }\n" );
+
+// And to prove it, place a locator at the cube's center:
+spaceLocator -p $position[0] $position[1] $position[2] -name "centerOfCube";
+</PRE>
+
+
+<P>If you look at the coordinates of a vertex or CV in the Attribute Editor from Maya's UI, it will often report a position of {0, 0, 0} for all points.  This is because you are getting the coordinate of the component based on the local coordinate space for the component.  You may think this is truly less than useful -- I know I did -- but there is some method behind Maya's madness.</P>
+
+<P>Try this:</P>
+
+<P>Make a nurbsSphere with construction history.  Select a CV.  Open the Attribute Editor and expand the "CVs (click to show)" area.  Note that all CVs have a location of {0, 0, 0}.  They have no offset from the input of the 'makeNurbSphere' node.</P>
+
+<P>Tweak one of the CVs by moving it.  Now its local coordinates will be slightly offset, but all the others will remain at their local origin.</P>
+
+<P>Now delete history for the sphere and look again.  Since the CVs' local space is not being acquired from the '<CODE>makeNurbSphere</CODE>' node, but rather from the object itself, the coordinate of each CV is relative to the center of the sphere.  But yes, they are "local space" coordinates and not "world space."</P>
+
+<P>To get the world-space coordinates for the CV, use the '<CODE>xform</CODE>' command using the '-worldSpace' flag:</P>
+
+<PRE CLASS=mel>
+xform -ws -q -t nurbsSphere1.cv[4][3] ;
+// Result: 0.4612167 0.9553883 -0.7423176 //
+</PRE>
+
+<P>The '<CODE>&minus;ws</CODE>' flag instructs the command to return "world space" coordinates.</P>
+
+<P>This works for polygon vertices as well:</P>
+
+<PRE CLASS=mel>
+float $coords[] = `xform -ws -q -t pSphereShape1.vtx[14]`;
+// Result: 0.3535534 -0.9238795 0.1464466 //
+</PRE>
+
+<P>The '<CODE>xform</CODE>' command is great for all sorts of simple voodoo.  Check it out in the docs.</P>
+
+<P CLASS="rcomment"><DATE>05 August 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

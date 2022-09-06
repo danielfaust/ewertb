@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#86</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #86</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.085.html">Previous</a> &middot; <a href="mel.087.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I force a window to open to a specific size or location?</h2>
+<!-- How do I force a window to open to a specific size or location? -->
+
+<P>The &lsquo;<CODE>-width</CODE>&rsquo;, &lsquo;<CODE>-height</CODE>&rsquo;, &lsquo;<CODE>-topEdge</CODE>&rsquo; and &lsquo;<CODE>-leftEdge</CODE>&rsquo;
+parameters used with a "window" command are used only when the window is opened for the first time. After
+that Maya uses the last-used dimensions stored in your user preferences.</P>
+
+<div class="sidebar">
+
+<p class="sans"><SPAN CLASS="note">Note:</SPAN> This is dependent on your Preferences setting:</P>
+
+<PRE>
+<SPAN CLASS="ui">Window -&gt; Settings/Preferences -&gt; Preferences -&gt;</SPAN>
+
+    <SPAN CLASS="ui">Interface -&gt; Window -&gt; Remember Size and Position</SPAN>
+</PRE>
+
+<P class="sans">If this option is ON, Maya behaves as described above. If this option is
+OFF, then the parameters will enforce the window size each time it is
+created.</P>
+
+<P class="sans">You can find this preference stored in the "windowPrefs.mel" file in your
+preferences folder, which is typically:</P>
+
+<div class="in">
+<table>
+<tr><td class="heading">Windows 2000/XP</td><td class="content"><CODE>C:\Documents and Settings\<i>&lt;your login name&gt;</i>\My Documents\maya\<i>&lt;maya version&gt;</i>\prefs\</CODE></td></tr>
+<tr><td class="heading">UNIX/Linux</td><td class="content"><CODE>/usr/people/<i>&lt;your login name&gt;</i>/maya/<i>&lt;maya version&gt;</i>/prefs/</CODE></td></tr>
+<tr><td class="heading">Mac OS X</td><td class="content"><CODE>/Users/<i>&lt;your user name&gt;</i>/Library/Preferences/Alias/maya/<i>&lt;maya version&gt;</i>/prefs/</CODE></td></tr>
+</table>
+</div>
+
+</div>
+
+<P>All is not lost, however. You can work around this in one of two ways:</P>
+
+<OL>
+<LI>Disallow resizing of the window by using the "-sizeable false" flag. Of course, this
+affects only size (&lsquo;<CODE>-width</CODE>&rsquo; and &lsquo;<CODE>-height</CODE>&rsquo; parameters), and not position.<BR>
+
+<PRE CLASS="mel">
+window -sizeable false -width 100 -height 100 myWindow;
+columnLayout;
+
+  <SPAN CLASS="comment">// Add controls here</SPAN>
+
+  setParent ..;
+
+showWindow myWindow;
+</PRE>
+</LI>
+
+<LI>Tweak the window back to its desired dimensions after it is created.<BR>
+
+<PRE CLASS="mel">
+window myWindow;
+columnLayout;
+
+  <SPAN CLASS="comment">// Add controls here</SPAN>
+
+  setParent ..;
+
+<SPAN CLASS="comment">// Enforce dimensions</SPAN>
+window -e -width 100 -height 100 myWindow;
+
+showWindow myWindow;
+</PRE>
+</LI>
+</OL>
+
+<P><SPAN CLASS="note">Disclaimer:</SPAN> You should only force these parameters when it is crucial to do so, or when it
+markedly improves workflow. Circumventing user preferences is prone to annoy the users
+of your tools.</P>
+
+<P CLASS="rcomment"><!-- DATE -->11 May 2003</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

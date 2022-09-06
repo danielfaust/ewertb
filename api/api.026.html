@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#26</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #26</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.025.html">Previous</a> &middot; <a href="api.027.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I use MSyntax in query mode, and still allow the user to specify an argument for a flag?</h2>
+<!-- How can I use MSyntax in query mode, and still allow the user to specify an argument for a flag? -->
+
+<p>When specifying the MSyntax for a MPxCommand plug-in you can choose to
+enable query mode for the syntax object via the MSyntax::enableQuery()
+method. This is all well and good, but for one apparent limitation:
+When the syntax is parsed, all flags which are queried merely indicate they've
+been used, but do not communicate any argument values the user may have
+specified.  For example:</p>
+
+<PRE CLASS="mel">
+myCommand -mode "foo";
+</PRE>
+
+<p>You can parse this command with code similar to the following:</p>
+
+<PRE CLASS="api">
+if ( argParser.isFlagSet( MODE_FLAG ) )
+{
+  MString argValue;
+  argParser.getFlagArgument( MODE_FLAG, 0, argValue );
+}
+</PRE>
+
+<p>The string "foo", specified for the flag '-mode', will be returned in the MString <CODE>argValue</CODE>.</p>
+
+<p>However, if the user enters the following:</p>
+
+<PRE CLASS="mel">
+myCommand -q -mode "foo";
+</PRE>
+
+<p>Here the query mode trumps the argument; the parser indicates only that it
+was invoked in query mode and that the '-mode' flag was specified. It does
+not provide the "foo" argument value for the '-mode' flag.</p>
+
+<p>However, if you place an argument <em>before</em> the query
+flag you can benefit from both behaviors:</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Specify '-mode' flag _before_ '-query' flag.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+myCommand -mode "foo" -q;
+</PRE>
+
+<p>Here the MSyntax object still indicates that it's in query mode, <em>and</em> the
+'-mode' flag provides its "foo" argument.</p>
+
+<p>This also explains why you'll find some of Maya's native commands being
+fussy about where the '-q' flag is specified; e.g.:</P>
+
+<PRE CLASS="mel">
+particleInstancer -name "instancer" -q -scale "particle"`;
+
+skinPercent -transform joint3 -q skinCluster1 shape.cv[100];
+</PRE>
+
+<P CLASS="rcomment"><!-- DATE -->12 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2004 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

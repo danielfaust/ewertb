@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#14</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #14</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.012.html">Previous</a> &middot; <a href="api.015.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I get accurate weights for a rigid bind - many Vertices report as having a weight of 1.0 but not all of them are members of the skin?</h2>
+<!-- How do I get accurate weights for a rigid bind - many Vertices report as having a weight of 1.0 but not all of them are members of the skin? -->
+
+<P>Yep.. I came across this problem as well.  Seems to be a bug in reporting the weights for the Cluster components.</P>
+
+<P>I solved it by maintaining a MSelectionList of the Cluster membership and,
+within my iteration, rejected components which aren't actually a member of the
+Cluster.</P>
+
+<P>Here's an excerpt:</P>
+
+<PRE CLASS="api">
+<SPAN CLASS="comment">// obCluster: DG node of apiType MFn::kClusterFilter or MFn::kJointCluster.</SPAN>
+<SPAN CLASS="comment">// obMembers: Storage for Cluster membership.</SPAN>
+MStatus exportClusters::GetClusterMembership( MObject & obCluster, MSelectionList & obMembers )
+{
+  MStatus                               status = MS::kSuccess;
+
+  obMembers.clear();
+
+  MItDependencyGraph                    itGraph( obCluster, MFn::kSet );
+
+  if ( itGraph.isDone() )
+  {
+    <SPAN CLASS="comment">// Throw an exception if no Set found.</SPAN>
+    THROWERROR( MStatus( MS::kFailure ), "No Set available for GetClusterMembership" );
+  }
+
+  MFnSet                          fnSet( itGraph.thisNode(), &status );
+
+  if ( status == MS::kSuccess )
+  {
+    <SPAN CLASS="comment">// Get membership of set.</SPAN>
+    status = fnSet.getMembers( obMembers, true );
+  }
+
+  return status;
+}
+
+<SPAN CLASS="comment">// -----------------------------------------------------</SPAN>
+<SPAN CLASS="comment">// BEGIN EXCERPT FROM ::GetClusterWeights()</SPAN>
+
+<SPAN CLASS="comment">// obCluster: DG node of apiType MFn::kClusterFilter or MFn::kJointCluster.</SPAN>
+exportClusters::GetClusterWeights( MObject & obCluster )
+{
+
+  <SPAN CLASS="comment">// ...</SPAN>
+
+  MFnWeightGeometryFilter             fnCluster( obCluster );
+
+  <SPAN CLASS="comment">// Cache Cluster membership as MSelectionList</SPAN>
+  <SPAN CLASS="comment">// for rejection of invalid weight results below.</SPAN>
+
+  MSelectionList                      obMembers;
+  GetClusterMembership( obCluster, obMembers );
+
+  <SPAN CLASS="comment">// Loop through the geometries affected by this Cluster.</SPAN>
+
+  unsigned                            nGeometryInCluster;
+
+  nGeometryInCluster =  fnCluster.numOutputConnections();
+
+  for ( size_t ii = 0; ii < nGeometryInCluster; ++ii )
+  {
+    MDagPath                          skinPath;
+    unsigned int                      index;
+
+    index = fnCluster.indexForOutputConnection( ii, &status );
+    if ( status != MS::kSuccess )
+      continue;
+
+    <SPAN CLASS="comment">// Get the dag path for this geometry.</SPAN>
+    status = fnCluster.getPathAtIndex(index,skinPath);
+    if ( status != MS::kSuccess )
+      continue;
+
+    <SPAN CLASS="comment">// iterate through the components of this geometry</SPAN>
+    MItGeometry                       gIter(skinPath);
+
+    <SPAN CLASS="comment">// Print out the path name of the skin, vertexCount & influenceCount.</SPAN>
+    for ( <SPAN CLASS="comment">/* nothing */</SPAN> ; !gIter.isDone(); gIter.next() )
+    {
+      MObject comp = gIter.component(&status);
+      if ( status != MS::kSuccess )
+        continue;
+
+      <SPAN CLASS="comment">// Get the weights for this vertex (one per influence object).</SPAN>
+      MFloatArray                 wts;
+
+      status = fnCluster.getWeights( skinPath, comp, wts );
+      if ( status != MS::kSuccess )
+        continue;
+
+      if ( wts.length() > 1 )
+      {
+        <SPAN CLASS="comment">// I've never seen this happen.. </SPAN>
+        THROWERROR( status, "Not expecting more than a single weight value!" );
+      }
+
+      <SPAN CLASS="comment">// *** NOTE: Here's the problem ***</SPAN>
+
+      <SPAN CLASS="comment">// MFnGeometryFilter::getWeights() returns a weight of 1.0 if</SPAN>
+      <SPAN CLASS="comment">// a component is NOT a member of the Cluster!  Use membership of</SPAN>
+      <SPAN CLASS="comment">// MSelectionList to reject invalid weights.</SPAN>
+
+      if ( !obMembers.hasItem( skinPath, comp ) )
+      {
+        <SPAN CLASS="comment">// The weighting reported for this component does not represent this Cluster.</SPAN>
+        continue;
+      }
+
+      <SPAN CLASS="comment">// Output the weight data for this vertex</SPAN>
+      cout << gIter.index() << ": " << wts[0] << endl;
+
+    }
+  }
+
+  <SPAN CLASS="comment">// ...</SPAN>
+
+}
+</PRE>
+
+<P CLASS="rcomment"><DATE>Wednesday, June 13, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

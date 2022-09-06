@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#43</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #43</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.042.html">Previous</a> &middot; <a href="mel.044.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I get the assigned Shading Group for an object or face component?</h2>
+<!-- How do I get the assigned Shading Group for an object or face component? -->
+
+<P CLASS="in">To determine which Shading Group is assigned to an object, trace downstream
+of the object's shape node for all 'shadingEngine' nodes (a.k.a. Shading Groups).</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// ////////////////////////////////////////////////////////////////////</SPAN>
+<SPAN CLASS="comment">//  getSGsFromShape</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Description: Returns an array of the Shading Groups (shadingEngine </SPAN>
+<SPAN CLASS="comment">//  nodes) responsible for shading the specified shape node.</SPAN>
+
+proc string[] getSGsFromShape( string $shape )
+{
+  string $shadingEngines[];
+
+  if ( `objExists $shape` )
+  {
+    string $dest[] = `listConnections -destination true -source false
+      -plugs false -type "shadingEngine" $shape`;
+
+    <SPAN CLASS="comment">// listConnections can return duplicates within its list.</SPAN>
+    <SPAN CLASS="comment">// The select below is a quick trick to avoid dupes in the </SPAN>
+    <SPAN CLASS="comment">// returned array.</SPAN>
+    if ( size( $dest ) )
+    {
+      string $select[] = `ls -sl`;
+      select -r -ne $dest;
+      $shadingEngines = `ls -sl`;
+      select -r $select;
+    }
+  }
+
+  return $shadingEngines;
+}
+</PRE>
+
+<DIV CLASS="heading">
+<P>Getting the Assigned Shading Group for a Face Component</P>
+</DIV>
+
+<P CLASS="in">Get a list of all Shading Groups in your scene and query the membership
+for each set to check if the target component is shaded by that shader.</P>
+
+<PRE CLASS="mel">
+proc string getFacetSG( string $facet )
+<SPAN CLASS="comment">// Input (string) - facet component to query (e.g. "pSphere1.f[0]")</SPAN>
+<SPAN CLASS="comment">// Result (string) - Shading Group shading facet (e.g. "lambert2SG")</SPAN>
+{
+  string $facetSG = "";
+
+  <SPAN CLASS="comment">// Get array of all Shading Groups</SPAN>
+  string $shadingGroups[] = `ls -type shadingEngine`;
+
+  for ( $shadingGroup in $shadingGroups )
+  {
+    <SPAN CLASS="comment">// If this facet is a member of the shading set for this</SPAN>
+    <SPAN CLASS="comment">// Shading Group, tag this as the facet's shader</SPAN>
+    if ( `sets -isMember $shadingGroup $facet` )
+    {
+      $facetSG = $shadingGroup;
+      break;
+    }
+  }
+
+  return $facetSG;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.091.html">How do I determine which Shading Group is associated with a Material?</a></li>
+<li class="howto"><a href="mel.092.html">How do I determine which Material or File Texture is associated with a Shading Group?</a></li>
+<li class="howto"><a href="mel.104.html">How do I assign an object or face component to a material?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Friday, September 14, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

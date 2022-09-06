@@ -1,0 +1,193 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#66</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #66</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.065.html">Previous</a> &middot; <a href="mel.067.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I control the Graph Editor's Outliner and Graph panels?</h2>
+<!-- How do I control the Graph Editor's Outliner and Graph panels? -->
+
+<P>The Graph Editor is defined as a scriptedPanelType in the MEL script:</P>
+
+<PRE>
+\AW\Maya3.0\scripts\startup\initScriptedPanels.mel
+</PRE>
+
+<P>and created in:</P>
+
+<PRE>
+\AW\Maya3.0\scripts\others\graphEditorPanel.mel
+</PRE>
+
+<P>It is a pairing of an outlinerEditor and an animCurveEditor.  The contents
+of the Graph Editor editors are controlled via selectionConnections.
+Here's a rundown of how they work:</P>
+
+<UL>
+<LI><P>The outlinerEditor has for its -mainListConnection the
+global "graphEditorList".  A "mainListConnection" controls which items
+are listed in an editor.</P></LI>
+
+<LI><P>The outlinerEditor has for its -selectionConnection a
+selectionConnection object that is created when the GraphEditor's
+scriptedPanel is created.  This "broadcasts" to the
+animCurveEditor which items have been selected in the Outliner,
+and the animCurveEditor alters its contents accordingly.</P></LI>
+
+<LI><P>As inferred above, the animCurveEditor has for its -mainListConnection
+the outlinerEditor's selectionConnection.  Select an item in the
+outlinerEditor and «shazam!» there it is in the animCurveEditor.</P></LI>
+
+</UL>
+
+<P>So, to get and set the items selected via the Graph Editor, you need to
+control the items in the -selectionConnection for its Outliner.  This will
+have the reciprocal effect of "selecting" an item in Graph Editor's
+animCurveEditor, thanks to the direct relationship that exists.</P>
+
+<P>Firstly, you need to know how to get at the objects in the Graph Editor:</P>
+
+<P>The Graph Editor's scriptedPanelType is "graphEditor":</P>
+
+<PRE CLASS="mel">
+getPanel -scriptType "graphEditor";
+// Result: graphEditor1 //
+</PRE>
+
+<P>This is the scripted panel, not its editor(s).  Now take a snoop into the
+"graphEditorPanel.mel" script.  Note that Alias hardcodes the names of the
+Graph Editor's editors with:</P>
+
+<PRE CLASS="mel">
+string $graphEd = ($whichPanel + "GraphEd");
+string $outlineEd = ($whichPanel + "OutlineEd");
+string $outlineConn = ($whichPanel + "FromOutliner");
+</PRE>
+
+<P>From top to bottom:  the animCurveEditor, the outlinerEditor and the
+selectionConnection used by the outlinerEditor.  The $whichPanel variable
+will be the name of the scripted panel's main control; e.g.</P>
+
+<PRE CLASS="mel">
+scriptedPanel -q -control graphEditor1;
+// Result: graphEditor1Window|TearOffPane|graphEditor1 //
+</PRE>
+
+<P><SPAN CLASS="note">Note</SPAN> that this will only return a valid result when the GraphEditor is
+visible.</P>
+
+<P>To cut to the chase, you can reasonably assume that the names will be:</P>
+
+<PRE>
+      animCurveEditor: "graphEditor1GraphEd"
+       outlinerEditor: "graphEditor1OutlineEd"
+  selectionConnection: "graphEditor1FromOutliner"
+</PRE>
+
+<P><SPAN CLASS="heading">Examples</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>Determine what objects are listed in the Graph Editor's Outliner:</P>
+
+<PRE CLASS="mel">
+string $graphEditorObjects[] = `selectionConnection -q -object graphEditorList`;
+</PRE>
+
+<P>Determine what objects are selected in the Graph Editor's Outliner:</P>
+
+<PRE CLASS="mel">
+string $graphEditorSelection[] = `selectionConnection -q -object graphEditor1FromOutliner`;
+</PRE>
+
+<P>You can use this to replace Maya's global selection so the item
+  becomes active in the Channel Box:</P>
+
+<PRE CLASS="mel">
+select $graphEditorSelection;
+</PRE>
+
+<P>To clear the selection of the Graph Editor:</P>
+
+<PRE CLASS="mel">
+selectionConnection -e -clear graphEditor1FromOutliner;
+</PRE>
+
+<P>To select all objects in the Graph Editor:</P>
+
+<PRE CLASS="mel">
+string $graphEditorObjects[] = `selectionConnection -q -object graphEditorList`;
+
+for ( $object in $graphEditorObjects )
+{
+  selectionConnection -e -select $object graphEditor1FromOutliner;
+}
+</PRE>
+
+<P>To replace the contents of the Graph Editor with pSphere1 and display
+  its .translateY channel in the animCurveEditor:</P>
+
+<PRE CLASS="mel">
+select -r pSphere1;   <SPAN CLASS="comment">// Maya's global selection controls contents</SPAN>
+                      <SPAN CLASS="comment">// of Graph Editor's Outliner </SPAN>
+
+selectionConnection -e -clear graphEditor1FromOutliner;
+selectionConnection -e -select pSphere1.translateY graphEditor1FromOutliner;
+</PRE>
+
+<P>To select items in the animCurveEditor, use the 'selectKey' MEL
+  command:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Select the sphere's .translateY channel in the graph </SPAN>
+selectKey pSphere1_translateY;
+
+<SPAN CLASS="comment">// Clear the graph selection </SPAN>
+selectKey -clear;
+
+<SPAN CLASS="comment">// Select key range 112 through 180 for the .translateY channel.</SPAN>
+<SPAN CLASS="comment">// Note you'll have to deduce the name for the controlling animCurve.</SPAN>
+selectKey -add -t "112:180" pSphere1_translateY ;
+</PRE>
+
+</DIV>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.084.html">How do I query which keyframes are selected in the Graph Editor or Dope Sheet?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>06 March 2003</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

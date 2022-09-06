@@ -1,0 +1,30 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · selectShapes</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">selectShapes</P>
+
+<H3>Function</H3>
+
+<P>Selects the shape nodes for all selected transform nodes.  All transform nodes are then unselected.  Any additional selected shape nodes remain selected.</P>
+
+<P><SPAN CLASS="note">Tip!</SPAN>  To obtain the list of selected shape nodes -- including shape nodes associated with selected transforms -- in one quick step, use the following MEL command:</P>
+
+<PRE CLASS="mel">
+ls -sl -dag -lf;
+</PRE>
+
+<P>To replace this script with a one-line MEL command, use the following:</P>
+
+<PRE CLASS="mel">
+select -r `ls -sl -dag -lf`;
+</PRE>
+
+<P><I>Thanks to Julian Mann for alerting me to this technique!</I></P>
+
+<!-- footer --></BODY>
+</HTML>

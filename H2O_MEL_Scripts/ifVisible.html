@@ -1,0 +1,48 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · ifVisible</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">ifVisible</P>
+
+<H3>Function</H3>
+
+<P>This script is designed to be used as an <I>itemFilter</I> for the ‘<CODE>lsThroughFilter</CODE>’ MEL command. It filters the input list to return only those objects
+which are currently Visible.  Heirarchal visibility
+is computed -- if a node's parent is not visible,
+it won't be either.<P>
+
+<H3>Usage</H3>
+
+<P>First, prepare the itemFilter. You only have to do this once per Maya session.</P>
+
+<PRE CLASS="mel">
+itemFilter -byScript ifVisible ifVisible;
+</PRE>
+
+<P>You may then use the filter with the ‘<CODE>lsThroughFilter</CODE>’ MEL command:</P>
+
+<PRE CLASS="mel">
+lsThroughFilter ifVisible;
+</PRE>
+
+<P>See Maya's documentation on itemFilters for more information.</P>
+
+<H3>Related Scripts</H3>
+
+<P CLASS="in">
+<!--
+<A HREF="ifAnimated.html">ifAnimated</A><BR>
+<A HREF="ifCanTranslate.html">ifCanTranslate</A><BR>
+<A HREF="ifOrientConstraint.html">ifOrientConstraint</A><BR>
+<A HREF="ifPointConstraint.html">ifPointConstraint</A><BR>
+-->
+<A HREF="ifDegree1.html">ifDegree1</A><BR>
+<A HREF="ifTemplate.html">ifTemplate</A><BR>
+</P>
+
+<!-- footer --></BODY>
+</HTML>

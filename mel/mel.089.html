@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#89</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #89</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.088.html">Previous</a> &middot; <a href="mel.090.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I use a single hotkey to toggle a ‘Show’ Option (or other mode)?</h2>
+<!-- How can I use a single hotkey to toggle a ‘Show’ Option (or other mode)? -->
+
+<P>The typical way is to do an XOR of the current state, e.g.:</P>
+
+<PRE CLASS="mel">
+$state = ( $state || 1 ) && !( $state && 1 );
+</PRE>
+
+<P><SPAN CLASS="comment">(longhand used because Maya doesn't have an XOR function)</SPAN></P>
+
+<P>In the simple case of an on|off state, this is done by prepending a NOT operator ('!' in MEL):</P>
+
+<PRE CLASS="mel">
+$newstate = !$oldstate;
+</PRE>
+
+<P>So, to toggle the visibility of Joints in the current modelPanel, the MEL is
+as follows:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Find panel with focus</SPAN>
+$currentPanel = `getPanel -withFocus`;
+
+<SPAN CLASS="comment">// Assert that the current panel is a modelPanel</SPAN>
+string $panelType = `getPanel -to $currentPanel`;
+if ($panelType == "modelPanel")
+{
+  <SPAN CLASS="comment">// Toggle the state of the Joint visibility</SPAN>
+  modelEditor -e -joints ( !`modelEditor -q -joints $currentPanel` ) $currentPanel;
+
+  <SPAN CLASS="comment">// or...</SPAN>
+
+  <SPAN CLASS="comment">// Toggle the state of the X-Ray mode</SPAN>
+  modelEditor -e -xray ( !`modelEditor -q -xray $currentPanel` ) $currentPanel;
+}
+</PRE>
+
+<P>If your state needs to toggle between 0 (zero) and a value other than one:</P>
+
+<PRE CLASS="mel">
+$newstate = !$oldstate * $setValue;
+</PRE>
+
+So, to toggle between 0 and 2:
+
+<PRE CLASS="mel">
+int $state = 0;
+int $setValue = 2;
+
+$state = !$state * $setValue;
+// Result: 2 //
+$state = !$state * $setValue;
+// Result: 0 //
+</PRE>
+
+If your state needs to toggle between two non-zero values, 3 and 5 for example:
+
+<PRE CLASS="mel">
+int $state;
+int $stateLoValue = 3;
+int $stateOffset = 2;  // difference between lo and hi values
+
+$state = ( !( $state - $stateLoValue ) * $stateOffset ) + $stateLoValue;
+// Result: 3 //
+$state = ( !( $state - $stateLoValue ) * $stateOffset ) + $stateLoValue;
+// Result: 5 //
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.045.html">How do I toggle playback between "Normal" and "Free" while playback is running?  It only seems to take effect when I restart playback at the beginning.</a></li>
+<li class="howto"><a href="mel.047.html">How do I toggle between 'Hide UI Elements' and 'Show UI Elements?'</a></li>
+<li class="howto"><a href="mel.048.html">How do I toggle the visibility of the Model panels' menu bars?</a></li>
+<li class="howto"><a href="mel.067.html">How do I control the visibility for the currently active Display Layer?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Monday, May 21, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

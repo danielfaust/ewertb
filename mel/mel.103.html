@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#103</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #103</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.102.html">Previous</a> &middot; <a href="mel.104.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I create a shading network that connects a Shading Group, a material and a texture?</h2>
+<!-- How do I create a shading network that connects a Shading Group, a material and a texture? -->
+
+<p>Consider the following shading network:</p>
+
+<p><img src="images/fileShader.gif" width="720" height="148" alt="HyperShade"></p>
+
+<p>This network comprises a Lambert material (and its Shading Group), to which a file texture node is connected to
+its '.color' attribute. A place2dTexture node is connected to allow for editing the texture placement.</p>
+
+<p>The first thing to create is the Material node. This can be a "lambert", or "blinn", or whatever. Each has its own attributes that you may wish to connect.
+Some, like '.color', are common to all materials.</p>
+
+<p>The command to create a shading node, such as a material, is slightly different than for other nodes. While you can use the
+"createNode" command for these as well, it is more convenient to use the "<b>shadingNode</b>" command, as this takes care of
+registering the nodes for Maya's rendering editors, such as the Hypershade.
+
+<p>The "shadingNode" command offers several modes for creating nodes:</p>
+
+<pre>
+Synopsis: shadingNode [flags] String
+Flags:
+  -al -asLight
+ -app -asPostProcess
+  -as -asShader
+  -at -asTexture
+  -au -asUtility
+</pre>
+
+<p>A "lambert" node is classified as a shader. You can query the classification string for a shader node using the
+"getClassification" MEL command. This query is not necessary for constructing the shading network; it is offered
+here only to clarify the example.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Query the classification string for Maya's "lambert" node.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+getClassification lambert;
+// Result: shader/surface //
+</PRE>
+
+<p>Therefore, in this case the '<B>-asShader</B>' flag is specified when creating the material.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Create a Lambert Material</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $material = `shadingNode -asShader lambert -name "mayaLogo"`;
+</PRE>
+
+<p>The Shading Group manages membership to the material. It is created as a renderable set using the "<b>sets</b>" command.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Create a Shading Group</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $SG = `sets -renderable true -noSurfaceShader true -empty -name "mayaLogoSG"`;
+
+<SPAN CLASS="comment">// Connect the material to the Shading Group.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+connectAttr -f ( $material + ".outColor" ) ( $SG + ".surfaceShader" );
+</PRE>
+
+<p>The file node provides a texture image for any color attribute. In this case, it is connected to the Lambert's '.color' input.
+Again, the "<b>shadingNode</b>" command is used to create renderable texture nodes. A "file" node is classified as a texture,
+so the '<B>-asTexture</B>' flag is specified in this case.</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// Query the classification string for Maya's "file" node.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+getClassification file;
+// Result: texture/2d //
+</PRE>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Create a file texture node</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $fileNode = `shadingNode -asTexture file -name "mayaLogo_bmp"`;
+
+<SPAN CLASS="comment">// Connect it to the material color</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+connectAttr -f ( $fileNode + ".outColor" ) ( $material + ".color" );
+</PRE>
+
+<p>The image loaded by a file texture node is referenced by its filepath, which is assigned to the '.fileTextureName' string attribute.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Assign filepath to '.fileTextureName' attribute.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $filepath = "C:/AW/ewertb/projects/default/sourceimages/mayaLogo.bmp";
+setAttr -type "string" ( $fileNode + ".fileTextureName" ) $filepath;
+</PRE>
+
+<p>The place2dTexture node is optional. It is not required for the shading network to function properly.
+As above, the "<b>shadingNode</b>" command is used to create a placement node, this time specifying the
+'<B>-asUtility</B>' flag.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Query the classification string for Maya's "place2dTexture" node.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+getClassification place2dTexture;
+// Result: utility/general/placement/2d //
+</PRE>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// A convenience procedure for connecting common attributes between two nodes.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+proc connect( string $attr, string $place, string $file )
+{
+  connectAttr -f ( $place + "." + $attr ) ( $file + "." + $attr );
+}
+
+string $place2d = ( "place_" + $fileNode );
+$place2d = `shadingNode -asUtility place2dTexture -name $place2d`;
+
+<SPAN CLASS="comment">// Use convenience command to connect attributes which share </SPAN>
+<SPAN CLASS="comment">// their names for both the placement and file nodes.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+connect "coverage"       $place2d $fileNode;
+connect "translateFrame" $place2d $fileNode;
+connect "rotateFrame"    $place2d $fileNode;
+connect "mirror"         $place2d $fileNode;
+connect "stagger"        $place2d $fileNode;
+connect "wrapU"          $place2d $fileNode;
+connect "wrapV"          $place2d $fileNode;
+connect "repeatUV"       $place2d $fileNode;
+connect "offset"         $place2d $fileNode;
+connect "rotateUV"       $place2d $fileNode;
+
+<SPAN CLASS="comment">// These two are named differently.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+connectAttr -f ( $place2d + ".outUV" ) ( $fileNode + ".uv" );
+connectAttr -f ( $place2d + ".outUvFilterSize" ) ( $fileNode + ".uvFilterSize" );
+
+</PRE>
+<p>Placement nodes add unnecessary clutter to the Hypershade if they're not actually used, so apply them sparingly. If you're creating a network from
+a script or your own UI, provide an option for the user as to whether to create the placement node. Alternately, you can
+query Maya's own preference for this, which is stored in the optionVar "createTexturesWithPlacement":</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Determine if user prefers a placement node connected to a new texture node.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+int $createPlacement = `optionVar -q createTexturesWithPlacement`;
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.104.html">How do I assign an object or face component to a material?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->04 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

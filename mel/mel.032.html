@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#32</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #32</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.031.html">Previous</a> &middot; <a href="mel.033.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I create a Lambert shading network given the path to the image file on disk?</h2>
+<!-- How do I create a Lambert shading network given the path to the image file on disk? -->
+
+<P>Here's an example procedure that performs the necessary steps.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// To support new place2dTexture architecture in Maya v4.5</SPAN>
+proc float mayaVersion()
+{
+  float $version = (float)`about -v`;
+  return $version;
+}
+
+<SPAN CLASS="comment">// A utility procedure to ease the connecting of two plugs with the same name</SPAN>
+proc connect( string $attr, string $place, string $file )
+{
+  connectAttr -f ( $place + "." + $attr ) ( $file + "." + $attr );
+}
+
+global proc makeShader( string $file )
+{
+<SPAN CLASS="comment">  // Create a Lambert Material, with Shading Group</SPAN>
+  string $material = `shadingNode -asShader lambert -name myLambert`;
+  string $SG = `sets -renderable true -noSurfaceShader true -empty -name myLambertSG`;
+  connectAttr -f ( $material + ".outColor" ) ( $SG + ".surfaceShader" );
+
+<SPAN CLASS="comment">  // Create a File Texture and link to Material color</SPAN>
+  string $fileNode = `shadingNode -asTexture file -name myFile`;
+  connectAttr -f ( $fileNode + ".outColor" ) ( $material + ".color" );
+
+<SPAN CLASS="comment">  // Assign file to File Texture Name</SPAN>
+  setAttr -type "string" ( $fileNode + ".fileTextureName" ) $file;
+
+<SPAN CLASS="comment">  // If you want a place2dTexture node, include the following</SPAN>
+  string $placeName = ( "place_" + $fileNode );
+  $placeName = `shadingNode -asUtility place2dTexture -name $placeName`;
+
+<SPAN CLASS="comment">  // Connect necessary plugs from place2dTexture node</SPAN>
+<SPAN CLASS="comment">  // Note: These utilize the connect() proc defined above</SPAN>
+  connect "coverage" $placeName $fileNode;
+  connect "translateFrame" $placeName $fileNode;
+  connect "rotateFrame" $placeName $fileNode;
+  connect "stagger" $placeName $fileNode;
+  connect "wrapU" $placeName $fileNode;
+  connect "wrapV" $placeName $fileNode;
+  connect "repeatUV" $placeName $fileNode;
+  connect "offset" $placeName $fileNode;
+  connect "rotateUV" $placeName $fileNode;
+
+<SPAN CLASS="comment">  // Maya v4.5 splits the '.mirror' attribute into</SPAN>
+<SPAN CLASS="comment">  // 'mirrorU' and '.mirrorV'</SPAN>
+  if ( mayaVersion() < 4.5 )
+  {
+    connect "mirror" $placeName $fileNode;
+  }
+  else
+  {
+    connect "mirrorU" $placeName $fileNode;
+    connect "mirrorV" $placeName $fileNode;
+  }
+
+<SPAN CLASS="comment">  // connect the placement UV plugs to the file node</SPAN>
+  connectAttr -f ( $placeName + ".outUV" ) ( $fileNode + ".uv" );
+  connectAttr -f ( $placeName + ".outUvFilterSize" ) ( $fileNode + ".uvFilterSize" );
+}
+</PRE>
+
+<P>To use, call 'makeShader' with the name of the image file; e.g.:</P>
+
+<PRE CLASS="mel">
+makeShader "D:/projects/images/scalySkin.iff";
+</PRE>
+
+<P CLASS="rcomment"><DATE>22 December 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

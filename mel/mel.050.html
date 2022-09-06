@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#50</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #50</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.049.html">Previous</a> &middot; <a href="mel.051.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I control the Grid display settings via MEL?</h2>
+<!-- How do I control the Grid display settings via MEL? -->
+
+<p>The MEL command to do this is, predictably:</p>
+
+<PRE CLASS="mel">
+grid
+</PRE>
+
+<P>Be careful when analyzing the flags for this command.  The '-size' flag, which you may expect to control the Grid Spacing,
+is actually equivalent to the "<SPAN CLASS="ui">Extent</SPAN>" setting in the Options panel.  Also be aware that "<SPAN CLASS="ui">Extent</SPAN>" effects only non-orthographic views.</P>
+
+<P>After setting the grid display settings with the MEL command the values
+in the Grid Options panel do not update with the new values,
+even if you close and re-open the panel.  This is because the values in the
+options panel are derived from optionVars and not from the actual grid
+settings (tsk tsk A|w!).</P>
+
+<P>Due to the way the ‘<CODE>performGridOptions.mel</CODE>’ script is designed (oh my gawd,
+what a contrived mess it is!) there is no easy-to-call function to get
+things in sync.  You must set the appropriate optionVar after applying your
+own grid settings and then call the <CODE>gridSetup()</CODE> function with an (somewhat)
+arbitrary UI control name.  Since the <CODE>gridSetup()</CODE> does no error-checking to
+assert the existence of the UI controls it is modifying (by its design, this
+is somewhat forgivable), you should provide this assertion yourself:</P>
+
+<P><SPAN CLASS="heading">Grid Spacing (a.k.a. </SPAN><SPAN CLASS="ui">Grid</SPAN>)</SPAN></P>
+
+<PRE CLASS="mel">
+float $gridSpacing = 30.48;
+grid -spacing $gridSpacing;
+optionVar -fv gridSpacing $gridSpacing;
+if ( `floatFieldGrp -q -exists gridSpacingField` )
+      gridSetup( "OptionBoxWindow", 0 );
+</PRE>
+
+<P><SPAN CLASS="heading">Grid Divisions (a.k.a. </SPAN><SPAN CLASS="ui">Subdivisions</SPAN>)</SPAN></P>
+
+<PRE CLASS="mel">
+float $gridDivisions = 2;
+grid -size $gridDivisions;
+optionVar -fv gridDivisions $gridDivisions;
+if ( `intSliderGrp -q -exists gridDivisionsField` )
+  gridSetup( "OptionBoxWindow", 0 );
+</PRE>
+
+<P><SPAN CLASS="heading">Grid Size (a.k.a. </SPAN><SPAN CLASS="ui">Extent</SPAN>)</SPAN></P>
+
+<PRE CLASS="mel">
+float $gridSize = 16;
+grid -size $gridSize;
+optionVar -fv gridSize $gridSize;
+if ( `floatFieldGrp -q -exists gridSizeField` )
+  gridSetup( "OptionBoxWindow", 0 );
+</PRE>
+
+<P><SPAN CLASS="heading">Grid Style</SPAN></P>
+
+<PRE CLASS="mel">
+int $gridStyle = 2;  // "Grid" style
+grid -style $gridStyle;
+optionVar -fv gridStyle $gridStyle;
+if ( `radioButtonGrp -q -exists gridStyleButtonGrp` )
+  gridSetup( "OptionBoxWindow", 0 );
+</PRE>
+
+<P CLASS="rcomment"><DATE>Tuesday, December 05, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

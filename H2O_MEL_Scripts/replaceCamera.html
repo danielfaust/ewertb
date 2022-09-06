@@ -1,0 +1,37 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · replaceCamera</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">replaceCamera</P>
+
+<H3>Preamble</H3>
+
+<P>I occasionally have the occurance where a camera can "go funky" on me and behave erratically while tumbling; the camera refuses to stay focused on the desired elements.  For example, performing a Frame Selected would properly frame the selected object, as soon as I begin a Tumble the object disappears from view.</P>
+
+<P>I narrowed this down to (possibly) a corruption of the camera transform's World Rotate and World Scale Pivots, but I haven't find a way to restore these to "normal" operation.  So, I chose to simply replace the camera with a brand new one.</P>
+
+<H3>Function</H3>
+
+<P>This script replaces the specified camera, copying the position, rotation and visibility from the original.  All other attributes assume the defaults for a new camera.</P>
+
+<H3>Usage</H3>
+
+<PRE>
+replaceCamera «camera»;
+</PRE>
+
+Where <CODE>«camera»</CODE> is the name of the camera to replace, e.g. "persp".</P>
+
+<H3>Example</H3>
+
+<PRE CLASS="mel">
+replaceCamera persp;
+// Result: Camera successfully replaced. //
+</PRE>
+
+<!-- footer --></BODY>
+</HTML>

@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#06</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #06</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.005.html">Previous</a> &middot; <a href="api.007.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I "constrain" my custom manipulator to the position of another manipulator within the same MPxManipContainer?</h2>
+<!-- How do I "constrain" my custom manipulator to the position of another manipulator within the same MPxManipContainer? -->
+
+<P>For the first manipulator (the one you want to "follow"), perform the steps outlined in <A HREF="api.005.html">How do I "constrain" my custom manipulator so it moves with its parent node?</A></P>
+
+<P>Add the following:</P>
+
+<PRE CLASS="api">
+void wanderPointManip::draw(M3dView & view,
+           const MDagPath & path,
+           M3dView::DisplayStyle style,
+           M3dView::DisplayStatus status)
+{
+
+  <SPAN CLASS="comment">// ...</SPAN>
+
+  <SPAN CLASS="comment">// Get the index to the CurrentPoint of the manipulator you want to follow</SPAN>
+  unsigned currentPointIndex = leaderManipFn.currentPointIndex( &mstat );
+
+  <SPAN CLASS="comment">// Create a MPoint object to hold the coordinates of the CurrentPoint</SPAN>
+  MPoint currentPoint;
+  getConverterManipValue( currentPointIndex, currentPoint );
+
+  <SPAN CLASS="comment">// Set the "follower" manipulator's StartPoint to the "leader" manipulator's CurrentPoint</SPAN>
+  followerManipFn.setStartPoint( currentPoint );
+
+  <SPAN CLASS="comment">// ...</SPAN>
+
+  <SPAN CLASS="comment">// Do the above _before_ calling the parent 'draw' function to ensure</SPAN>
+  <SPAN CLASS="comment">// that the manip generates the desired results without needing to be "refreshed"</SPAN>
+  MPxManipContainer::draw(view, path, style, status);
+
+
+}
+</PRE>
+
+<P>Stir, and enjoy.</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.005.html">How do I "constrain" my custom manipulator so it moves with its parent node?</a></li>
+</ul>
+</div>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

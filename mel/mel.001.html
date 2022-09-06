@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#01</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #01</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.000.html">Previous</a> &middot; <a href="mel.002.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do you find out all these things about MEL?  I can't find some things in the documentation!</h2>
+<!-- How do you find out all these things about MEL?  I can't find some things in the documentation! -->
+
+<P>Believe it or not, I always recommend Maya's MEL documentation to learn the syntax: bookmark the "<CODE>MEL Functions: Alphabetical</CODE>" page.  Check out all of the MEL commands available. Browse the DG node docs as well to get a sense of the internal workings and relationships.</P>
+
+<P>Also, I snoop a lot.  I scan and search the "internal" MEL scripts that activate tools, perform commands, create windows and dialogs.</P>
+
+<P>Turn on the "<SPAN CLASS="ui">Echo All Commands</SPAN>" option in
+the Script Editor and find out what commands are executed as Maya
+performs an action you are curious about.  Be aware, however, that
+many commands you see echoed in the Script Editor are not actual
+"commands" but are in fact ancillary procedures implemented through
+MEL.   The documentation only lists those functions which are built
+into Maya's kernal and not those written in MEL.</P>
+
+<P>Many of these MEL procedures commonly used by Maya are not the "primary"
+function of their script file and cannot be tracked simply by looking for a MEL script
+of the same name.  An example of this is ‘<CODE>PolySelectConvert</CODE>’.</P>
+
+<P>If you turn on <SPAN CLASS="ui">Echo All Commands</SPAN> and select the menu item:</P>
+
+<PRE>
+<SPAN CLASS="ui">Polygons -> Selection -> Convert Selection To Faces </SPAN>
+</PRE>
+
+<P>You will see the following command echoed to the Script Editor:</P>
+
+<PRE CLASS="mel">
+PolySelectConvert 1
+</PRE>
+
+<P>This is not a Maya command and thus it is not documented.  Additionally, in Maya v2.5
+this is not the "primary" function of a script file named "PolySelectConvert.mel".
+The procedure is found in:</P>
+
+<PRE>
+&lt;MAYA_INSTALL_DIR&gt;/scripts/startup/PolygonsMenu.mel
+</PRE>
+
+<P>Scanning this script reveals that the actual command that is doing the
+work is in fact:</P>
+
+<PRE CLASS="mel">
+polyListComponentConversion
+</PRE>
+
+<P>That <EM>is</EM> a Maya command and is documented.</P>
+
+<P CLASS="anno">Just for the record, in Maya v3 the <CODE>PolySelectConvert</CODE> procedure has earned its own MEL script.</P>
+
+<P>The ‘<CODE>whatIs</CODE>’ MEL command can assist in tracking the
+source of these commands.  It tells you whether the queried procedure
+is an internal command or a script, and if the latter, in which file
+the script resides:</P>
+
+<PRE CLASS="mel">
+whatIs PolySelectConvert;
+// Result: Script found in: D:/AW/Maya2.5/scripts/startup/PolygonsMenu.mel //
+</PRE>
+
+<PRE CLASS="mel">
+whatIs PolySelectConvert;
+// Result: Script found in: D:/AW/Maya3.0/scripts/others/PolySelectConvert.mel //
+</PRE>
+
+<P>Failing this, it may be necessary to search through all of Maya's installed MEL
+scripts with some form of "<SPAN CLASS="ui">Find In Files</SPAN>"
+function to find where and how a procedure is implemented (I use <A
+HREF="http://www.textpad.com">TextPad</A> and its <SPAN CLASS="ui">
+Search Files</SPAN> function).  Useful search criteria for this search may be the procedure name,
+arguments used by Maya when calling the procedure, or a text label used within one
+of Maya's menus or windows.  Matches found from this text can reveal what
+procedures are involved with a command or UI control.</P>
+
+<P>I get a <EM>lot</EM> from Maya Mailing Lists as well.  You can browse the Maya ML Archives at:</P>
+
+<DIV CLASS="in">
+<P>« <A HREF="http://www.highend3d.com/maya/archive/">http://www.highend3d.com/maya/archive/</A> »</P>
+</DIV>
+
+<P>A final thought:  Sometimes what you need is not documented.. at
+least not literally.  It's all a matter of understanding how Maya's
+command pipeline works, being nosy, and tracking down what's really
+doing the work.</P>
+
+<P CLASS="rcomment"><DATE>Monday, December 17, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

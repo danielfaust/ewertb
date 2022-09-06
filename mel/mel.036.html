@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#36</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #36</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.035.html">Previous</a> &middot; <a href="mel.037.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I ensure that a polygon face component is planar?</h2>
+<!-- How can I ensure that a polygon face component is planar? -->
+
+<OL>
+  <LI><P>When creating polygons, enable the <SPAN CLASS="ui">‘<CODE>Polygons -&gt; Tool Options -&gt; Keep New Faces Planar</CODE>’</SPAN> menu option.</P></LI>
+  <LI><P>Create triangles, or Triangulate quads and <I>n</I>&minus;gons.  Triangles are planar by definition.</LI></P>
+</OL>
+
+<P>But of course you knew that.  Here's what you were really looking for:</P>
+
+<BR>
+
+<P>To "generate" planar faces from existing geometry, select one or more faces and execute the following:</P>
+
+<PRE CLASS="mel">
+global proc planarizeFacets()
+{
+  string $facets[] = `filterExpand -sm 34`;
+
+  if ( size( $facets ) )
+  {
+    polyMoveFacet -localScaleZ 0.0 $facets;
+  }
+}
+</PRE>
+
+<P><SPAN CLASS="note">NOTE:</SPAN> This will not guarantee that all faces are planar!  Planarizing one face will drag with it the vertices shared by adjacent faces, likely making
+them non-planar.  Planarizing the adjacent face(s) will again drag these vertices, likely making the original face non-planar.  It's a vicious circle.</P>
+
+<BR>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.005.html">How do I get the normal vector for a polygon face or vertex?</a></li>
+<li class="howto"><a href="mel.090.html">How can I determine if a polygon face component is planar?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Tuesday, December 05, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

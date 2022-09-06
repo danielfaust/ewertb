@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#11</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #11</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.010.html">Previous</a> &middot; <a href="api.012.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I use MDGModifier so I can get reliable Undo/Redo?</h2>
+<!-- How do I use MDGModifier so I can get reliable Undo/Redo? -->
+
+<P>I've had several logistical problems with MDGModifiers, exclusively with its
+<SPAN CLASS="api">::undo()</SPAN> and <SPAN CLASS="api">::redo()</SPAN> mechanism.  After <EM>much</EM> trial and error on the topic
+I've come to the following conclusions:</P>
+
+<P>There are times when you may have to perform a <SPAN CLASS="api">::doIt()</SPAN>
+in the middle of your MDGModifier modification so the scene state is valid for
+further operations. For example, if you use <SPAN CLASS="api">MDGModifier::create()</SPAN>,
+you will need to <SPAN CLASS="api">::doIt()</SPAN> so this node exists if
+you wish to perform any edits using a class other than
+MDGModifier (finding an MPlug on your new node, for instance).</P>
+
+<P CLASS="warning">Do not continue to use a MDGModifier object
+after you have called its ::doIt() method!</P>
+
+<P>My "Golden Rule" for MDGModifier is now the following:</P>
+
+<div class="in">
+<P><SPAN CLASS="sans">"Execute <SPAN CLASS="api">::doIt()</SPAN> as soon as I need to update the state of the scene, then
+<EM>immediately</EM> allocate another MDGModifier for further edits.  Continue,
+rinse, repeat."</SPAN></P>
+</div>
+
+<P>All allocated MDGModifier nodes go onto a stack.  The stack in undone in
+FILO order, and redone in FIFO order.</P>
+
+<PRE CLASS="api">
+class MyCommand : public MPxNode
+{
+private:
+  typedef std::vector&lt;MDGModifier*&gt;::const_iterator redoIter;
+  typedef std::vector&lt;MDGModifier*&gt;::const_reverse_iterator undoIter;
+  std::vector&lt;MDGModifier*&gt; mUndo;
+};
+
+MStatus MyCommand::doIt()
+{
+  MStatus status = MS::kSuccess;
+
+  MDGModifier* modifier = NULL;
+
+  <SPAN CLASS="comment">// Allocate a new modifier and add to undo</SPAN>
+  modifier = new MDGModifier;
+  mUndo.push_back( modifier );
+
+  <SPAN CLASS="comment">// populate modifier here...</SPAN>
+
+  status = modifier.doIt();
+  modifier = NULL;  <SPAN CLASS="comment">// now don't touch!</SPAN>
+
+  <SPAN CLASS="comment">// Allocate another new modifier and add to undo</SPAN>
+  modifier = new MDGModifier;
+  mUndo.push_back( modifier );
+
+  <SPAN CLASS="comment">// populate modifier here...</SPAN>
+
+  status = modifier.doIt();
+  modifier = NULL;  <SPAN CLASS="comment">// now don't touch!</SPAN>
+
+  return status;
+}
+
+MStatus MyCommand::redoIt()
+{
+  MStatus status = MS::kSuccess;
+
+  redoIter d;
+  for ( d = mUndo.begin(); ( status == MS::kSuccess ) &amp;&amp; ( d != mUndo.end() ); d++ )
+  {
+    status = (*d)-&gt;doIt();
+  }
+
+  return status;
+}
+
+MStatus MyCommand::undoIt()
+{
+  MStatus status = MS::kSuccess;
+
+  undoIter u;
+  for ( u = mUndo.rbegin(); ( status == MS::kSuccess ) &amp;&amp; ( u != mUndo.rend() ); u++ )
+  {
+    status = (*u)-&gt;undoIt();
+  }
+
+  return status;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.022.html">How do I generate construction history on a mesh node?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->02 February 2003</P>
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

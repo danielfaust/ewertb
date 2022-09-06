@@ -1,0 +1,256 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · matrixPlayground</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">matrixPlayground</P>
+
+<IMG SRC="matrixPlayground.gif" WIDTH="233" HEIGHT="427" ALT="Matrix Playground" BORDER="0" ALIGN="right">
+
+<H3>Function</H3>
+
+<P>Everything you wanted to know and do with matrices.  Handles 3×3 and 4×4 matrix calculations.</P>
+
+<H3>Usage</H3>
+
+<DIV CLASS="heading">
+<P>Matrix Dimensions</P>
+</DIV>
+
+<DIV CLASS="in">
+<P>Choose whether to work with <SPAN CLASS="ui">3×3</SPAN> matrices or <SPAN CLASS="ui">4×4</SPAN> matrices.  The UI will rebuild itself with matrices of the chosen size.</P>
+
+  <P><SPAN CLASS="note">Note:</SPAN> Changing the Matrix Dimensions will clear all results and fill all matrices with an Identity Matrix.</P>
+
+</DIV>
+
+<DIV CLASS="heading">
+<P>Matrix A</P>
+</DIV>
+
+<DIV CLASS="in">
+Use Matrix A to enter in the "primary" matrix of your calculations, and for single-matrix calculations (such as the <SPAN CLASS="ui">Matrix Functions</SPAN> and <SPAN CLASS="ui">Trigonometry</SPAN>, described below).
+</DIV>
+
+<DIV CLASS="heading">
+<P>Matrix Functions</P>
+</DIV>
+
+<DIV CLASS="in">
+<P CLASS="ui">Trace</P>
+
+  <DIV CLASS="in">
+  <P>Calculate the Trace of Matrix A.  The result is displayed in the field to the right of this control.  The Trace of a Matrix is the sum of the diagonal elements:</P>
+
+  <P CLASS="in"><A HREF="http://mathworld.wolfram.com/TraceMatrix.html"><IMG SRC="matrix_t2img11.gif" WIDTH="108" HEIGHT="53" BORDER="0"></A></P>
+  </DIV>
+
+<P CLASS="ui">Determinant</P>
+
+  <DIV CLASS="in">
+  <P>Calculate the Determinant of Matrix A.  The result is displayed in the field to the right of this control.  The Determinant of a Matrix is defined as:</P>
+
+  <P CLASS="in"><A HREF="http://mathworld.wolfram.com/Determinant.html"><IMG SRC="matrix_d1img1217.gif" WIDTH="109" HEIGHT="44" BORDER="0"></A></P>
+  
+  The Determinant of a 4×4 matrix is derived using <A HREF="http://www.math.hmc.edu/calculus/tutorials/matrixalgebra/">Laplace Expansion</A>.
+  </DIV>
+
+<P CLASS="ui">Transpose</P>
+
+  <DIV CLASS="in">
+  <P>Calculate the Transpose of Matrix A.  The result is displayed as <SPAN CLASS="ui">Matrix C</SPAN>.  The Transpose of a Matrix is derived by swapping the rows and columns.</P>
+
+  </DIV>
+
+<P CLASS="ui">Adjoint</P>
+
+  <DIV CLASS="in">
+  <P>Calculate the Adjoint of Matrix A.  The result is displayed as <SPAN CLASS="ui">Matrix C</SPAN>.  The Adjoint of a Matrix is derived as the Transpose of a matrix whereby each element is the <A HREF="http://forum.swarthmore.edu/dr.math/problems/miranda1.27.98.html">cofactor</A> of the element in the original matrix.</P>
+  </DIV>
+
+<P CLASS="ui">Inverse</P>
+
+  <DIV CLASS="in">
+  <P>Calculate the Inverse of Matrix A.  The result is displayed as <SPAN CLASS="ui">Matrix C</SPAN>.  The Inverse of a Matrix is derived by taking the <A HREF="http://forum.swarthmore.edu/dr.math/problems/miranda1.27.98.html">inverse of the matrix Determinant and multiplying it by the Adjoint matrix</A>:</P>
+
+  <P CLASS="in"><A HREF="http://forum.swarthmore.edu/dr.math/problems/miranda1.27.98.html"><IMG SRC="matrix_inverse.gif" WIDTH="84" HEIGHT="16" BORDER="0"></A></P>
+  
+  </DIV>
+
+</DIV>
+
+<DIV CLASS="heading">
+<P>Trigonometry</P>
+</DIV>
+
+<P>The Trigonometry functions allow you to rotate Matrix A about one of the primary axes.  Enter the amount of the rotation in the field provided and press <SPAN CLASS="ui">Rotate</SPAN> to perform the calculation.  The result is displayed as <SPAN CLASS="ui">Matrix C</SPAN>.</P>
+
+<DIV CLASS="in">
+<P CLASS="ui">Rotate Axis</P>
+
+  <DIV CLASS="in">
+  
+  <P>Specify the axis upon which the rotation will be performed.</P>
+  
+  <P>X Axis rotation:</P>
+  
+  <P CLASS="in"><IMG SRC="matrix_xRotation.gif" WIDTH="139" HEIGHT="62" ALT="Matrix X Rotation" VALIGN="top" BORDER="0"></P>
+
+  <P>Y Axis rotation:</P>
+  
+  <P CLASS="in"><IMG SRC="matrix_yRotation.gif" WIDTH="139" HEIGHT="62" ALT="Matrix Y Rotation" BORDER="0"></P>
+
+  <P>Z Axis rotation:</P>
+  
+  <P CLASS="in"><IMG SRC="matrix_zRotation.gif" WIDTH="139" HEIGHT="62" ALT="Matrix Z Rotation" BORDER="0"></P>
+
+  <P><SPAN CLASS="note">Note:</SPAN> These rotation matrices may seem transposed to what is typically documented.  They are correct, however, for their implementation within Maya, specifically for the <SPAN CLASS="ui">Acquire Matrix</SPAN> and <SPAN CLASS="ui">Apply Matrix</SPAN> functions described below.</P>
+  
+  </DIV>
+  
+<P CLASS="ui">deg | rad</P>
+
+  <DIV CLASS="in">
+  <P>Choose whether the rotation value is specified in degrees or radians.</P>
+  </DIV>
+
+</DIV>
+
+<DIV CLASS="heading">
+<P>Matrix B</P>
+</DIV>
+
+<DIV CLASS="in">
+Use Matrix B to enter the second matrix for <SPAN CLASS="ui">Sum</SPAN> and <SPAN CLASS="ui">Product</SPAN> calculations, as described below.
+</DIV>
+
+<DIV CLASS="in">
+<P CLASS="ui">Sum (A+B)</P>
+
+  <DIV CLASS="in">
+  <P>Calculate the Sum of <SPAN CLASS="ui">Matrix A</SPAN> and <SPAN CLASS="ui">Matrix B</SPAN>.  The Sum is derived by adding the elements of A and B with the same indices:</P>
+
+  <P CLASS="in"><A HREF="http://mathworld.wolfram.com/MatrixAddition.html"><IMG SRC="matrix_sum.gif" WIDTH="95" HEIGHT="17" BORDER="0"></A></P>
+  
+  </DIV>
+  
+<P CLASS="ui">Product (A*B)</P>
+
+  <DIV CLASS="in">
+  <P>Calculate the Product of <SPAN CLASS="ui">Matrix A</SPAN> and <SPAN CLASS="ui">Matrix B</SPAN>.  The Product is derived by generating, for each element, the sum of the products for all elements of that element's row and column:</P>
+
+  <P CLASS="in"><A HREF="http://mathworld.wolfram.com/MatrixMultiplication.html"><IMG SRC="matrix_product.gif" WIDTH="79" HEIGHT="17" BORDER="0"></A></P>
+  
+  </DIV>
+  
+</DIV>
+ 
+<DIV CLASS="heading">
+<P>Matrix C</P>
+</DIV>
+
+<DIV CLASS="in">
+Matrix C is used to hold the results for calculations that return a matrix result; e.g. <SPAN CLASS="ui">Transpose</SPAN>, <SPAN CLASS="ui">Adjoint</SPAN>, <SPAN CLASS="ui">Inverse</SPAN>, <SPAN CLASS="ui">Sum</SPAN> and <SPAN CLASS="ui">Product</SPAN>.
+
+<P CLASS="ui">Echo Results</P>
+
+<P>This allows you to automatically echo the results generated for Matrix C to one or both of the input matrices.  This allows you to more quickly assess the results of multiple transformations.</P>
+
+  <DIV CLASS="in">
+  <P CLASS="ui">Echo Results to Matrix A</P>
+  
+  <P CLASS="in">When Matrix C is evaluated immediately copy the results for Matrix C into <SPAN CLASS="ui">Matrix A</SPAN>.</P>
+  
+  <P CLASS="ui">Echo Results to Matrix B</P>
+  
+  <P CLASS="in">When Matrix C is evaluated immediately copy the results for Matrix C into <SPAN CLASS="ui">Matrix B</SPAN>.</P>
+  
+  </DIV>
+
+</DIV>
+  
+<BR CLEAR="all">
+
+<DIV CLASS="heading">
+<P>Context Menu</P>
+</DIV>
+
+<IMG SRC="matrixPlayground_menu.gif" WIDTH="138" HEIGHT="86" ALT="Matrix Context Menu" BORDER="0" HSPACE="16" ALIGN="left">
+
+<P>Each Matrix grid offers a popup menu which may be accessed by holding the right mouse-button (RMB).</P>
+
+<P>An example of this menu is depicted at left.</P>
+
+<BR CLEAR="all">
+<BR>
+
+<DIV CLASS="in">
+
+<P CLASS="ui">Make Identity</P>
+
+  <DIV CLASS="in">
+  <P>Fills the Matrix with the Identity Matrix; e.g.:</P>
+  
+  <P CLASS="in"><IMG SRC="matrix_identity.gif" WIDTH="92" HEIGHT="62" ALT="Identity Matrix" BORDER="0"></A></P>
+
+  <P>This menu item is not available for Matrix C.</P>
+  </DIV>
+
+<P CLASS="ui">Acquire from Selected</P>
+
+  <DIV CLASS="in">
+  <P>Fills the Matrix with the Transformation Matrix of the first object in Maya's selection list.</P>
+
+  <P>This menu item is not available for Matrix C.</P>
+  </DIV>
+
+<P CLASS="ui">Apply to Selected</P>
+
+  <DIV CLASS="in">
+  <P>Applies the Matrix as the Transformation Matrix to the first object in Maya's selection list.</P>
+  </DIV>
+  
+<P CLASS="ui">Copy To Matrix</P>
+
+  <DIV CLASS="in">
+  <P>Copies the current Matrix to the specified Matrix.  <SPAN CLASS="ui">Matrix A</SPAN> can be copied to <SPAN CLASS="ui">Matrix B</SPAN>; <SPAN CLASS="ui">Matrix B</SPAN> can be copied to <SPAN CLASS="ui">Matrix A</SPAN>; <SPAN CLASS="ui">Matrix C</SPAN> can be copied to <SPAN CLASS="ui">Matrix A</SPAN> and <SPAN CLASS="ui">Matrix B</SPAN>.</P>
+  </DIV>
+  
+<P CLASS="ui">Swap Matrix A & B</P>
+
+  <DIV CLASS="in">
+  <P>Swaps the elements for Matrix A and B.  Since matrix multiplication is not commutative (generally, AB is not equal to BA), this allows you to multiply the matrices (i.e. apply a transformation) in the reverse order.</P>
+
+  <P>This menu item is not available for Matrix C.</P>
+  </DIV>
+  
+</DIV>
+
+<DIV CLASS="in">
+</DIV>
+
+<BR CLEAR="all">
+
+<H3>References & Acknowledgements</H3>
+
+<DIV CLASS="in">
+
+  <P><A HREF="http://mathworld.wolfram.com">Eric Weisstein's World of Mathematics</A></P>
+
+  <P><A HREF="http://www.math.hmc.edu/calculus/">Harvey Mudd College Mathematics Department - Calculus</A></P>
+
+  <P><A HREF="http://mathforum.com/dr.math/">Ask Dr. Math</A></P>
+
+</DIV>
+
+<BR>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Tuesday, October 03, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

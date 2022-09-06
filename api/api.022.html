@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#22</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #22</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.021.html">Previous</a> &middot; <a href="api.023.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I generate construction history on a mesh node?</h2>
+<P>The first thing you'll want to do is to determine whether or not the mesh in question has
+construction history already. If history exists, you need only disconnect the plugs between
+the history node and the mesh, and insert your node.</p>
+
+<p>If there is no history, then you need
+to generate an <em>intermediate node</em> upstream of the mesh, and use its output to feed your node.</P>
+
+<div class="in">
+<DIV class="center">
+<table>
+<tr><td><img src="hasHistory.gif" width="295" height="30" alt="Has History"></td></tr>
+<tr><td><SPAN CLASS="caption">Node has construction history</SPAN><br></td></tr>
+
+<tr><td><img src="hasHistory2.gif" width="461" height="30" alt="Has History + Node"></td></tr>
+<tr><td><SPAN CLASS="caption">Break connections and insert node</SPAN><br></td></tr>
+
+<tr><td><br></td></tr>
+
+<tr><td><img src="noHistory.gif" width="130" height="30" alt="No History"></td></tr>
+<tr><td><SPAN CLASS="caption">No construction history</SPAN><br></td></tr>
+
+<tr><td><img src="noHistory2.gif" width="461" height="30" alt="Intermediate"></td></tr>
+<tr><td><SPAN CLASS="caption">Create intermediate and insert node</SPAN><br></td></tr>
+
+</table>
+</div>
+</div>
+
+<pre class="api">
+// **************************************************************************
+//  AddConstructionHistory
+// **************************************************************************
+/// Adds construction history to the specified mesh, if required.
+///
+/// If no construction history exists, then a copy of the specifed mesh is
+/// created using MFnMesh, and this new mesh is set to be an intermediate
+/// node. If history already exists for the mesh, no new nodes are created.
+///
+/// The plugs returned represent those between which you will insert any
+/// construction.
+///
+///   history.outMesh -&gt;  ( your node )  -&gt; mesh.inMesh
+///
+/// \note   It is assumed that you wish to insert a node immediately upstream
+///         of the specified mesh. If you provide a valid (MDGModifier*) then
+///         the plugs returned by this function are _disconnected_, even if
+///         they were connected at the point when this was called.
+///
+/// \param  mesh: The mesh to which you wish to add construction history.
+/// \param  outMeshPlug: The plug from which you will connect your
+///                      construction node; e.g.
+///                         outMeshPlug.outMesh -&gt; yourNode.inMesh
+/// \param  inMeshPlug: The plug on the mesh node to which you will connect
+///                     your construction node; e.g.:
+///                         yourNode.outMesh -&gt; mesh.inMesh
+/// \param  intermediate: The MObject for the intermediate node (a copy of
+///                       the specified mesh) that was created to introduce
+///                       construction history. This will be
+///                       MObject::kNullObj if the mesh already has history.
+/// \param  dg: Pointer to a MDGModifier. If non-NULL, and history already
+///             exists for the mesh, this holds the undo for the disconnect
+///             of the attributes from the history node to the mesh node.
+// **************************************************************************
+MStatus AddConstructionHistory( const MDagPath&amp; mesh,
+                                MPlug&amp; outMeshPlug,
+                                MPlug&amp; inMeshPlug,
+                                MObject&amp; intermediate,
+                                MDGModifier* dg )
+{
+    MStatus status;
+
+    intermediate = MObject::kNullObj;
+
+    MFnDependencyNode fnDependNode( mesh.node() );
+
+    <SPAN CLASS="comment">// Assign the '.inMesh' plug from the mesh node.</SPAN>
+    inMeshPlug = fnDependNode.findPlug( "inMesh" );
+
+    <SPAN CLASS="comment">// If the mesh has history, use it for the '.outMesh' plug.</SPAN>
+    MPlugArray cc;
+    inMeshPlug.connectedTo( cc, true /* asDst */, false );
+    if ( cc.length() &gt; 0 )
+    {
+        <SPAN CLASS="comment">// Assign the '.outMesh' plug from the node upstream of the mesh.</SPAN>
+        outMeshPlug = cc[0];
+
+        <SPAN CLASS="comment">// Disconnect the plugs.</SPAN>
+        if ( NULL != dg )
+        {
+            dg-&gt;disconnect( outMeshPlug, inMeshPlug );
+            status = dg-&gt;doIt();
+        }
+    }
+    else
+    {
+        <SPAN CLASS="comment">// Need to generate construction history on the mesh</SPAN>
+        MDagPath transform( mesh );
+        transform.pop();
+
+        MFnMesh fnMesh;
+        intermediate = fnMesh.copy ( mesh.node(), transform.node(), &amp;status );
+        if ( status != MS::kSuccess ) { status.perror( "FAILED to copy mesh node" ); return status; }
+
+        <SPAN CLASS="comment">// Set the copy to be an intermediate object</SPAN>
+        fnDependNode.setObject( intermediate );
+        MPlug intermediatePlug = fnDependNode.findPlug( "intermediateObject" );
+        intermediatePlug.setValue( true );
+
+        <SPAN CLASS="comment">// Assign the '.outMesh' plug from the intermediate node.</SPAN>
+        outMeshPlug = fnDependNode.findPlug( "outMesh" );
+    }
+
+    return status;
+}
+</pre>
+
+<P><SPAN CLASS="note">Note:</SPAN> This will <em>not</em> properly associate any per-face shading assignments on the mesh if the intermediate
+node is created. If you need per-face shading assignments you must collapse this new construction history and then
+assign the shading groups. <SPAN CLASS="remark">(More on this in an upcoming How-To…)</SPAN></P>
+
+<H3>Undo</H3>
+
+<P>MDGModifier does not offer an interface for duplicating a node, so we use MFnMesh::copy()
+instead.</P>
+
+<p><SPAN CLASS="remark">(OK, I suppose you could try MDGModifier::commandToExecute( "duplicate" ), but then you have
+to go through hoops to determine the name of the node that was created as the duplicate, and you'll likely end up
+with latent shader connections (and whatever else), whereas MFnMesh::copy() gives us a clean shape
+with no baggage.)</SPAN></P>
+
+<P>Bottom line: Because this doesn't use MDGModifier to construct the node, you cannot rely on
+MDGModifier to track its undo. The work done in your undoIt() method then has two tasks:</P>
+
+<ol>
+<li><p>Undo the MDGModifier tasks.</p></li>
+<li><p>Delete the intermediate mesh node (if it was created)</p></li>
+</ol>
+
+<P>For my undo I typically keep an array or container of (MDGModifier*) objects for undo. A class using a
+similar system would look something like this:</P>
+
+<PRE CLASS="api">
+class MyCommand : public MPxCommand
+{
+    private:
+
+        <SPAN CLASS="comment">// The stack of undo to perform.</SPAN>
+        std::vector&lt;MDGModifier*&gt; mUndo;
+
+        <SPAN CLASS="comment">// The intermediate mesh.</SPAN>
+        MDagPath mIntermediateMesh;
+        bool mHasMeshUndo;
+};
+</PRE>
+
+<P>Here's the undoIt() method which undoes a modifier stack and deletes an intermediate mesh. Because the intermediate
+mesh may not have been created (and thus won't need to be undone) a (bool) is used to indicate when the insertion of
+construction history created the node.</P>
+
+<PRE CLASS="api">
+MStatus MyCommand::undoIt( void )
+{
+    MStatus status;
+
+    std::vector&lt;MDGModifier*&gt;::reverse_iterator riter;
+    for ( riter = mUndo.rbegin(); riter != mUndo.rend(); ++riter )
+    {
+        (*riter)-&gt;undoIt();
+        delete (*riter);
+    }
+    <SPAN CLASS="comment">// We're not reusing the undo for redo.</SPAN>
+    mUndo.clear();
+
+    if ( mHasMeshUndo )
+    {
+        MGlobal::deleteNode( mIntermediateMesh );
+        mHasMeshUndo = false;
+    }
+
+    return status;
+}
+</PRE>
+
+<H3>Redo</H3>
+
+<P>Another repercussion of using MFnMesh::copy() is that you cannot rely on MDGModifer for your redo.
+Each time the command is undone and redone, the DAG path (and associated MObject) for the intermediate
+mesh node will be different. Any cached MDGModifier::connect() calls referring to the intermediate mesh
+will fail when you attempt to redo the modifier, because the node it needs will not exist.
+For cases like this I simply resort to using MPxCommand::redoIt() to perform all the work,
+rebuilding the undo stack each time.</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.011.html">How do I use MDGModifier so I can get reliable Undo/Redo?</a></li>
+</ul>
+</div>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

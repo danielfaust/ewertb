@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#21</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #21</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.020.html">Previous</a> &middot; <a href="mel.022.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do you center a button (or any other UI control) in a layout?</h2>
+<!-- How do you center a button (or any other UI control) in a layout? -->
+
+<P>To do this is not difficult, but arguably it is a bit more work than it could be.</P>
+
+<P>A UI control must be attached to something else; it will float freely in the UI if its attachment is <CODE>"None"</CODE>.  There is no <CODE>"center"</CODE> alignment as is common with the contents of a control.</P>
+
+<P>In the columnLayout or rowLayout, attachments are defined using the ‘<CODE>&minus;columnAttach</CODE>’ and ‘<CODE>&minus;rowAttach</CODE>’ attributes.  But honestly, I never use those, and they wouldn't give you any centering abilities, anyway.</P>
+
+<P>Your best bet for getting what you want is to use a formLayout.  Granted, there is no magic "center button" feature for this, either, but you can achieve the same thing using the attachment commands:</P>
+
+<PRE CLASS="mel">
+window;
+  string $form = `formLayout`;
+    string $button = `button -label "Centered Button"`;
+    setParent ..;
+
+  formLayout -e
+    -attachPosition  $button    left    0  25
+    -attachPosition  $button    right   0  75
+      $form;
+
+showWindow;
+</PRE>
+
+<P>Here I've attached the left and right sides of the button an equal distance from each side of the form.  A formLayout has, by default, 100 divisions.  This layout leaves 25 units of space on each side, effectively centering the button.</P>
+
+<P>Please refer to:</P>
+
+<DIV CLASS="in">
+<A HREF="formLayout/index.html">Tutorial: Using formLayout</A>
+</DIV>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

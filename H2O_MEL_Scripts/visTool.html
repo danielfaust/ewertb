@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · visTool</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">visTool</P>
+
+<H3>Function</H3>
+
+<P><IMG SRC="visTool.gif" ALT="visTool" WIDTH=411 HEIGHT=283 ALIGN="right"></P>
+
+<P>After hiding and/or templating various nodes, I sometimes end up with a
+visible transform node with an invisible shape, or a shape that is templated
+while its transform is not.  Attempting to show these objects can be a little
+tedious because toggling the transform node will not restore
+the shape's visibility.  In this case it involves selecting the shape node, determining
+if it's visible, making it visibile if it isn't, and then doing the same for the
+transform.  Too much time.</P>
+
+<H3>Usage</H3>
+
+<P CLASS="ui">Visibility-&gt;Transforms-&gt;Show</P>
+<P CLASS="in">Makes all transform nodes visible.</P>
+
+<P CLASS="ui">Visibility-&gt;Shapes-&gt;Show</P>
+<P CLASS="in">Makes all shape nodes visible.</P>
+
+<P CLASS="ui">Visibility-&gt;Display Layers-&gt;Show</P>
+<P CLASS="in">Makes all Display Layers visible.</P>
+
+<P CLASS="ui">Visibility-&gt;Transforms-&gt;Hide</P>
+<P CLASS="in">Hides all transform nodes.</P>
+
+<P CLASS="ui">Visibility-&gt;Shapes-&gt;Hide</P>
+<P CLASS="in">Hides all shape nodes.</P>
+
+<P CLASS="ui">Visibility-&gt;Display Layers-&gt;Hide</P>
+<P CLASS="in">Hides all Display Layers.</P>
+
+<P CLASS="ui">Template-&gt;Transforms-&gt;Template</P>
+<P CLASS="in">Templates all transform nodes.</P>
+
+<P CLASS="ui">Template-&gt;Shapes-&gt;Template</P>
+<P CLASS="in">Templates all shape nodes.</P>
+
+<P CLASS="ui">Template-&gt;Transforms-&gt;Normal</P>
+<P CLASS="in">Restores (un-Templates) all transform nodes.</P>
+
+<P CLASS="ui">Template-&gt;Shapes-&gt;Normal</P>
+<P CLASS="in">Restores (un-Templates) all shape nodes.</P>
+
+<P CLASS="ui">Template-&gt;Display Layers-&gt;Standard</P>
+<P CLASS="in">Sets the display type of all Display Layers to Standard</P>
+
+<P CLASS="ui">Template-&gt;Display Layers-&gt;Template</P>
+<P CLASS="in">Sets the display type of all Display Layers to Template</P>
+
+<P CLASS="ui">Template-&gt;Display Layers-&gt;Reference</P>
+<P CLASS="in">Sets the display type of all Display Layers to Reference</P>
+
+<P CLASS="ui">Visibility-&gt;Show&nbspOnly&nbsp;Selected</P>
+<P CLASS="in">Hides all unselected objects.</P>
+
+<P CLASS="ui">Visibility-&gt;Clean</P> 
+<P CLASS="in">Scans all shape nodes in the scene file.
+If a shape node is invisible and if its immediate parent is a transform node which is also
+invisible, then the visibility for the shape node is restored.</P>
+
+<P CLASS="ui">Template-&gt;Clean</P>
+<P CLASS="in">This function follows the same process as above, but
+resets the template attribute.</P>
+
+<P CLASS="in">The Clean function was, in theory, supposed to be more useful that it
+actually is.  In practise, I found that in almost all cases the
+<SPAN CLASS="ui">Visibility-&gt;Shapes-&gt;Show</SPAN> function was required, or at least did what
+I needed.  But since the code was already written, I left it in.</P>
+
+<P CLASS="ui">Reset All</P>
+Restore and resets all transform and shape nodes to visible and normal status, and sets all Display Layers to Visible and Standard display type.
+This turns on all ‘<CODE>.visibility</CODE>’ attributes and turns off
+all ‘<CODE>.template</CODE>’ attributes.
+
+<H3>Requirements</H3>
+
+<P>The Show Only Selected function requires that you have the following MEL
+script installed:</P>
+
+<P CLASS="in"><SPAN CLASS="mel">showOnlySelected.mel</SPAN></P>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Thursday, September 07, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

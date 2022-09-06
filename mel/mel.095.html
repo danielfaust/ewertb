@@ -1,0 +1,468 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#95</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #95</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.094.html">Previous</a> &middot; <a href="mel.096.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">Introduction To MEL</h2>
+<P>You only have to use Maya for a few minutes to become acquainted with MEL, the embedded scripting language Maya uses.  Every function Maya performs is echoed in a MEL command whether it be a simple selection, adjusting Soft Body weights or programming a complex shader network.  You’ll soon realize that it is necessary to delve deep into this integral system to harness Maya’s power.</P>
+
+<P CLASS="anno"><SPAN CLASS="note">Note:</SPAN> This article was originally written in November 1998.  Maya has changed a lot since then, and I apologize for any information appearing below that is now out-of-date.  I accept any comments or questions to:  <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A></P>
+
+<BR>
+<H3>Working with MEL Scripts</H3>
+
+<P>You will no doubt want to write your own MEL scripts and functions as your Maya projects progress. Many MEL authors have generously made their scripts available for download from the internet.  To take advantage of  these new scripts you must install them properly so Maya can make them available in your working environment.</P>
+
+<P>MEL scripts are normally installed in the ‘scripts’ directory in your Maya home directory.  Under IRIX this is:</P>
+
+
+<DIV CLASS="in">
+<PRE>
+/usr/people/<SPAN CLASS="arg">&lt;username&gt;</SPAN>/maya/scripts/
+</PRE>
+</DIV>
+
+<P>Under NT this is:</P>
+
+<DIV CLASS="in">
+<PRE>
+<SPAN CLASS="arg">&lt;drive&gt;</SPAN>:\aw\<SPAN CLASS="arg">&lt;username&gt;</SPAN>\maya\scripts\
+</PRE>
+</DIV>
+
+<P>Maya does not scan any subdirectories within this folder.  It is possible to specify additional directories for storing MEL scripts by setting the <CODE>MAYA_SCRIPT_PATH</CODE> environment variable.</P>
+
+<P>To write effective MEL scripts it is important to know how they are handled within Maya.  The first time you enter a MEL command Maya scans your script directories for a script file that matches the name of the command.  For example, if you enter ‘<CODE>showOnlySelected</CODE>’ Maya will try and find the script ‘<CODE>showOnlySelected.mel</CODE>.’  Within this script will be a global procedure of the same name; it will look like this:</P>
+
+<PRE CLASS="mel">
+global proc showOnlySelected()
+{
+   // MEL commands for this script go here
+}
+
+</PRE>
+
+<P>All of the above criteria are necessary for Maya to be able to execute the command.  </P>
+
+<P>After the script is loaded Maya will remember it and run it from memory.  If you make any changes to the script after it has been loaded you will have to tell Maya to re-read the file from disk using the ‘<CODE>source</CODE>’ command:</P>
+
+<PRE CLASS="mel">
+source showOnlySelected;
+</PRE>
+
+<P>You do not need to specify the ‘<CODE>.mel</CODE>’ extension. Maya knows you are sourcing a MEL script and will reload the new contents.</P>
+
+<P>When writing your own scripts, follow these simple guidelines:</P>
+
+<OL CLASS="sans">
+  <LI><P>The main function of the script must be declared as a global procedure with ‘<CODE>global&nbsp;proc&nbsp;&lt;<I>function_name&gt;</I></CODE>’. </P></LI>
+
+  <LI><P>Name the script using the same name as the main function.  If your main function is ‘<CODE>global&nbsp;proc&nbsp;makeBingo()</CODE>’ then name your script ‘<CODE>makeBingo.mel</CODE>’.</P></LI>
+
+  <LI><P>Add as many other functions to the script as necessary.  Only use the ‘<CODE>global</CODE>’ declaration when it is necessary — global functions use more resources.  If a procedure is used to perform a function initiated from a UI (such as the command for a button press) it must be a global procedure.</P></LI>
+</OL>
+
+<BR>
+<H3>Parsing the Selection List</H3>
+
+<P>One of the MEL functions you will need most often is also one of the easiest to use.  Most MEL scripts interact with the user's current selection.  Your scripts will have to be able to determine what objects are selected and, in some cases, what types of objects they are and how they relate to other elements within the scene.</P>
+
+<P>It is easy to get the current selection list using MEL.  Simply use the ‘<CODE>ls</CODE>’ command with the ‘<CODE>select</CODE>’ flag, abbreviated as ‘<CODE>&minus;sl</CODE>’:</P>
+
+<PRE CLASS="mel">
+string $select[] = `ls -sl`;
+</PRE>
+
+<P>If your script changes the active selection you may wish to restore it when it is appropriate to do so.  Keep the array you obtained with '<CODE>ls -sl</CODE>' and pass it to the ‘<CODE>select</CODE>’ command just before your script exits:</P>
+
+<PRE CLASS="mel">
+select -r $select;
+</PRE>
+
+<P>The ‘<CODE>ls -sl</CODE>’ command returns a string array that lists all of the selected elements.  If nothing is selected, the array is empty and has a size of zero.  Else, the array contains ‘<I>n</I>’ elements, where ‘<I>n</I>’ is equal to the number of selected objects.  In all cases, even if ‘<CODE>ls</CODE>’ returns only a single string, it is still returned as an array.</P>
+
+<P>To process each node in the selection list you can use a variation of the <CODE>for</CODE> loop that is specialized for use with arrays:</P>
+
+<PRE CLASS="mel">
+for ( $node in $select )     // process each selection
+{
+   <SPAN CLASS="comment">/* … */</SPAN>
+}
+</PRE>
+
+<P>Maya automatically declares <CODE>$node</CODE> as a string datatype; you may option to do this yourself in advance but it is not required.</P>
+
+<P>On the first pass, <CODE>$node</CODE> is equal to <CODE>$select[0]</CODE>; on the second pass, <CODE>$node</CODE> is <CODE>$select[1]</CODE>, and so on. This method also has the advantage of handling a zero selection without any additional work on your part.  If <CODE>$select[]</CODE> is empty, the <CODE>for()</CODE> loop does not execute.</P>
+
+<P>While the &quot;+&quot; operation may be used with the string datatype it is not allowed on a string array.  That means you cannot directly add something to the selection list like this:</P>
+
+<PRE CLASS="mel">
+$select = $select + "selectThisToo";
+// Error: Illegal operation "+" on data of type string[]. //
+</PRE>
+
+<P>The correct way to do this is to determine the number of items in the array using the ‘<CODE>size</CODE>’ function and then writing the new element after the last one:</P>
+
+<PRE CLASS="mel">
+int $lastSelect = size( $select );
+$select[ $lastSelect ] = "selectThisToo";
+</PRE>
+
+<P>The ‘<CODE>ls</CODE>’ command is extremely useful, but it does not provide any indication as to what type of elements are in the selection list.  In many cases you will need to process only NURBS objects, or only particle groups, or textures and shading groups. Do not allow your scripts to assume the user will always pick the proper object type.  Check the selection list and provide the proper warnings and assistance dialogs if the selection cannot be processed.</P>
+
+<P>You can use the ‘<CODE>ls</CODE>’ command to list only one or more specific types of objects.  The ‘<CODE>&minus;type</CODE>’ flag restricts the list to the named types.</P>
+
+<PRE CLASS="mel">
+ls -sl;
+// Result: pSphereShape1 nurbsSphereShape1 emitterShape1 //
+
+ls -sl -type "nurbsSurface";
+// Result: nurbsSphereShape1 //
+
+ls -sl -type "mesh";
+// Result: pSphereShape1 //
+
+ls -sl -type "nurbsSurface" -type "pointEmitter";
+// Result: nurbsSphereShape1 emitterShape1 //
+</PRE>
+
+<P>Note that in this example the user has explicitly selected the shape nodes for each object.  The ‘<CODE>&minus;type</CODE>’ flag will not infer the selection of a shape node from its transform node, nor vice versa.  There are other ways to achieve this - read on.</P>
+
+<P>There are several methods of determining an object’s type without restricting the list results.  One of the easiest ways is to check each item is using either the ‘<CODE>nodeType</CODE>’ or ‘<CODE>objectType</CODE>’ command.  Both of these commands return very similar results and, in some cases, can be used interchangeably.  The ‘<CODE>objectType</CODE>’ command has an additional option which allows it to return a Boolean result if the object’s type matches a specified type.</P>
+
+<PRE CLASS="mel">
+string $select[] = `ls -sl`;
+// Result: pSphereShape1 nurbsSphereShape1 //
+
+nodeType "pSphereShape1";
+// Result: mesh //
+
+nodeType "nurbsSphereShape1"
+// Results: nurbsSurface //
+
+objectType -isType "nurbsSurface" nurbsSphereShape1;
+// Result: 1 //
+</PRE>
+
+<P>By using these checks you can verify that your script can process the types of objects selected.  You should ignore types not supported by your script, if possible, or alert the user as to the requirements of your script.</P>
+
+<P>In the example above both nodes listed were shape nodes.  Unfortunately, you cannot assume that the selection list will always cooperate and give you the shape nodes when you need them.  Very often you will be given the transform node instead.</P>
+
+<P>Compare the results below:</P>
+
+<PRE CLASS="mel">
+string $select[] = `ls -sl`;
+// Result: pSphere1 nurbsSphere1 //
+
+nodeType "pSphere1";
+// Result: transform //
+
+nodeType "nurbsSphere1"
+// Results: transform //
+</PRE>
+
+<P>That’s hardly helpful for determining if you are being given a polygon object, a NURBS object, or even a camera.  In this case it will be necessary to find the shape node yourself.</P>
+
+<P>Use the ‘<CODE>listRelatives</CODE>’ command to retrieve the shape nodes that are associated with a transform.  There can be more than one shape node associated with a transform; like the ‘<CODE>ls</CODE>’ command, ‘<CODE>listRelatives</CODE>’ returns a string array.</P>
+
+<PRE CLASS="mel">
+string $relatives[] = `listRelatives -shapes "pSphere1"`;
+// Result: pSphereShape1 //
+</PRE>
+
+<P>Be careful - attempting to retrieve the shape relatives for a shape node will result in an empty array:</P>
+
+<PRE CLASS="mel">
+listRelatives -shapes "pSphereShape1";
+// Result: //
+</PRE>
+
+<P>A favorite trick of Paul Anand from Alias|wavefront is to use the ‘<CODE>pickWalk</CODE>’ command to traverse to the shape node:</P>
+
+<PRE CLASS="mel">
+pickWalk -d down;
+</PRE>
+
+<P>If the current node is the transform node this drops down a level to the shape node.  It the shape node is already selected then it remains selected.  This method changes the active selection; be sure to restore it when you’re done.</P>
+
+<P>A convenient method for obtaining the list of shape nodes for the selected objects is using the combination of ‘<CODE>&minus;dagObjects</CODE>’ and ‘<CODE>&minus;leaf</CODE>’ flags for the ‘<CODE>ls</CODE>’ command:</P>
+
+<PRE CLASS="mel">
+ls -sl;
+// Result: pCube1 pSphereShape1 //
+ls -sl -dag -lf;
+// Result: pCubeShape1 pSphereShape1 //
+</PRE>
+
+<P CLASS="anno">(Thanks to Julian Mann for alerting me to this technique!)</P>
+
+<P>There is another approach, similar to the ‘<CODE>ls -type</CODE>’ flag, to assure that the list Maya provides contains only the required types of objects.  The lesser-known ‘<CODE>filterExpand</CODE>’ command works similarly to the ‘<CODE>ls -type</CODE>’ command but overcomes the limitation expressed above.  Even if you have selected the transform node for the required object type ‘<CODE>filterExpand</CODE>’ will match the selection criteria and include the object in the resulting list.</P>
+
+<P>The ‘<CODE>filterExpand</CODE>’ command is provided with a numerical mask which restricts the items returned to a specified type. </P>
+
+<PRE CLASS="mel">
+string $select[] = `ls -sl`;
+// Result: pSphere1 nurbsSphereShape1 //
+
+filterExpand -selectionMask 12;   // Poly Mesh
+// Result: pSphere1 //
+
+filterExpand -selectionMask 10;   // Nurbs Surfaces
+// Result: nurbsSphere1;
+</PRE>
+
+<P>The '<CODE>filterExpand</CODE>' command returns the <I>transform</I> node even if the selection list includes the explicit selection of the shape node.</P>
+
+<P>Another advantage to this command is that it will expand the range selections to individual items.  This makes it considerably easier to parse component selections.  Maya normally compresses adjacent component selections using a &quot;<CODE>[<I>s</I>:<I>e</I>]</CODE>&quot; format, where ‘<I><CODE>s</I></CODE>’ indicates the start of the range and ‘<I><CODE>e</I></CODE>’ indicates its end.  While this makes lists much more readable it does make them hellishly complex to deal with inside of a script.  Compare the results below:</P>
+
+<PRE CLASS="mel">
+ls -sl;
+// Result: nurbsSphereShape1.cv[4][3:5] //
+
+filterExpand -sm 28   // Control Vertices (CVs)
+// Result: nurbsSphere1.cv[4][3] nurbsSphere1.cv[4][4] nurbsSphere1.cv[4][5] //
+</PRE>
+
+<P>Maya’s documentation suggests that the ‘<CODE>filterExpand</CODE>’ command does not include masks for polygon component selections.  There are, in fact, Selection Masks for polygon components; however, for some reason A|W neglected to document them.  Here are some examples:</P>
+
+<DIV CLASS="page">
+<DIV CLASS="center">
+<TABLE BORDER="0">
+<TR><TD WIDTH="35%" ALIGN="center"><B>Selection Mask</B></TD> <TD WIDTH="65%" ALIGN="center"><B>Component Type</B></TD></TR>
+<TR><TD ALIGN="center">31</TD><TD ALIGN="center">Polygon Vertices</TD></TR>
+<TR><TD ALIGN="center">32</TD><TD ALIGN="center">Polygon Edges</TD></TR>
+<TR><TD ALIGN="center">34</TD><TD ALIGN="center">Polygon Facets</TD></TR>
+<TR><TD ALIGN="center">35</TD><TD ALIGN="center">Polygon UV Map Coordinates</TD></TR>
+<TR><TD ALIGN="center">46</TD><TD ALIGN="center">Lattice Points</TD></TR>
+<TR><TD ALIGN="center">47</TD><TD ALIGN="center">Particle Components</TD></TR>
+<TR><TD ALIGN="center">70</TD><TD ALIGN="center">Polygon VtxFace</TD></TR>
+</TABLE>
+</DIV>
+</DIV>
+
+<P>You can use the <A HREF="../H2O_MEL_Scripts/index.html">H2O MEL Script</A> ‘<CODE>findFilterExpand.mel</CODE>’ to aid in finding these undocumented Selection Mask values.</P>
+
+<P CLASS="anno"><SPAN CLASS="note">Note:</SPAN>  As of Maya v3 the filterExpand selectionMasks are finally included in the on-line documentation</P>
+
+<BR><H3>Traversing Scene Hierarchies</H3>
+
+<P>In addition to knowing what types of objects are selected it is often important to know how they relate to other scene elements.  A single transform node can control many underlying nodes.  When working with skeletons it will be necessary to be aware of which joints are above or below others joints.  </P>
+
+<P>There are two approaches to determining hierarchy information - the important difference between the two methods is that the latter alters the active selection, whereas the former does not.</P>
+
+<P>To retrieve a list of all of the children of an object:</P>
+
+<PRE CLASS="mel">
+string $children[] = `listRelatives -children pSphere1`;
+</PRE>
+
+<P>To determine the parent for an object:</P>
+
+<PRE CLASS="mel">
+string $parent[] = `listRelatives -parent pSphere1`;
+</PRE>
+
+<P>The ‘<CODE>listRelatives</CODE>’ command does not alter the current selection. In contrast, the ‘<CODE>pickWalk</CODE>’ command does change the active selection but it also conveniently returns a string array that describes the newly selected elements.</P>
+
+<P>To select the next or previous object at the same level:</P>
+
+<PRE CLASS="mel">
+// Pick next object on same level
+string newSelect[] = `pickWalk -direction right`;
+
+// Pick previous object on same level
+string newSelect[] = `pickWalk -direction left`;
+</PRE>
+
+<P>To select the object up or down a level from the current selection:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Move down to and select child</SPAN>
+string newSelect[] = `pickWalk -direction down`;
+
+<SPAN CLASS="comment">// Move up to and select parent</SPAN>
+string newSelect[] = `pickWalk -direction up`;
+</PRE>
+
+<BR><H3>Finding Specific Scene Information</H3>
+
+<P>In many cases it will sufficient to allow the user's actions to determine the list of objects to act upon.  In others you will want to find a specific item in the scene, or to determine if the user has yet created it.  Determining whether a named object or an object type exists is easy; determining the same of an attribute for an object requires a little more work.</P>
+
+<P>To determine if an object exists within the scene, simply use the name as a pattern for the 'ls' command.  For example, in one of my scripts I needed to create a new node to store some custom data.  However, there is no need to create a node if it already exists, and attempting to do so will result in a decorated node (ie. Maya will append a number to the end of the name).</P>
+
+<P>The test is simple:</P>
+
+<PRE CLASS="mel">
+if ( `objExists "recallData"` )
+{
+   <SPAN CLASS="comment">// The data node exists</SPAN>
+}
+</PRE>
+
+<P>The ‘<CODE>objExists</CODE>’ command returns a value of 1 if the object exists, otherwise it returns 0.</P>
+
+<P>For a more specific test the ‘<CODE>ls</CODE>’ command can be used.  When used with the ‘<CODE>&minus;type</CODE>’ flag ‘<CODE>ls</CODE>’ can be used to determine if a particular type of node has been created.  For example, to determine if there any trims performed on the scene’s NURBS geometry:</P>
+
+<PRE CLASS="mel">
+if ( size( `ls -type trim` ) &gt; 0 )
+{
+   <SPAN CLASS="comment">// Trim performed on NURBS geometry</SPAN>
+}
+</PRE>
+
+<P>The ‘<CODE>ls</CODE>’ command returns a string array that contains all nodes of type &quot;trim.&quot;  If no nodes exist of this type, the array is empty and has a size of 0.</P>
+
+<P>Maya provides the animator the ability to add custom attributes to any object. As for the default attributes you retrieve the value for your custom attributes using the ‘<CODE>getAttr’</CODE> command. However, attempting to get the value for an attribute that does not exist will result in an error which will unceremoniously terminate the user’s script.</P>
+
+<PRE CLASS="mel">
+float $myAttr = `getAttr pSphere1.noAttr`;
+// Error: No object matches name: pSphere1.noAttr //
+</PRE>
+
+<P>For this reason it is important to verify the existence of a custom attribute before attempting to query or assign any values.  Maya's '<CODE>attributeQuery</CODE>' command is used to retrieve the status of an attribute.  For example, to determine if the custom attribute '<CODE>toeCurl</CODE>' exists for the '<CODE>leftFoot</CODE>' object:</P>
+
+<PRE CLASS="mel">
+if ( `attributeQuery -node "leftFoot" -exists "toeCurl"` )
+{
+  <SPAN CLASS="comment">// Safe to use 'toeCurl' attribute</SPAN>
+}
+</PRE>
+
+<P>The '<CODE>attributeQuery</CODE>' command can also be used to determine the minimum and maximum value that was defined for the attribute when it was created.  The result is returned as a float array.</P>
+
+<PRE CLASS="mel">
+addAttr -ln "blink" -at double -min 0 -max 100 -dv 0 eyeRight;
+attributeQuery -node "eyeRight" -range "blink";
+// Result: 0 100 //
+</PRE>
+
+<P>Unfortunately, you cannot use this method to change the value range for the attribute.</P>
+
+<BR>
+<H3>10 Tips For Writing Better MEL Scripts</H3>
+
+<OL CLASS="sans">
+
+<LI><P>When appropriate, restore the user’s selection list.</P></LI>
+
+<LI><P>Always check the object types in the selection list.  Don’t assume the user will always pick what you expect.  Ignore inappropriate types where reasonable.  Inform the user what the script expects.</P></LI>
+
+<LI><P>Include a section of comments at the beginning of the script to explain its function and usage.  If your script requires parameters, document exactly what is needed for the script to run properly.</P></LI>
+
+<LI><P>Allow as much flexibility as possible for the script’s input.  For example, if the script requires that the user select object or component type use the techniques described above to determine if the selection matches the criteria - even if this means pick-walking down from a transform or manually parsing a component selection.</P></LI>
+
+<LI><P>Always parent your scriptJobs to your main UI window.  This will ensure that the scriptJob is deleted when it is no longer needed.</P></LI>
+
+<LI><P>Before you create a window always check if the window already exists.  If it does you can either skip its creation and simply perform a ‘<CODE>showWindow</CODE>’ or, if necessary, delete the window and rebuild it.  Use the ‘<CODE>window -exists</CODE>’ command to check for an existing window:</P></LI>
+
+<PRE CLASS="mel">
+if ( `window -exists myWindowName` )
+   deleteUI myWindowName;
+</PRE>
+
+  <LI><P>Whenever you need to concatenate two strings, or a string and a value, you can simply add them together within parenthesis just as if you were printing them:</P></LI>
+
+<PRE CLASS="mel">
+string $objectName = "nurbsSphere";
+
+print ( $objectName + ".rotateY" );
+// Result: nurbsSphere.rotateY //
+
+float $ry = `getAttr ( $objectName + ".rotateY" )`;
+// Result: 45.0 //
+</PRE>
+
+<LI><P>If you are writing a script that is selecting isoparms or a point on a surface you may often by plagued by the repetitive warning message:</P></LI>
+
+<PRE CLASS="mel">
+// Warning:  Some items cannot be moved //
+</PRE>
+
+<P>This is caused by an active manipulator tool such as the Move Tool.  To avoid these messages while your script is running instruct Maya to drop the tool before performing your selections:</P>
+
+<PRE CLASS="mel">
+global string $gSelect;   <SPAN CLASS="comment">// Sacred Select Tool</SPAN>
+setToolTo $gSelect;
+</PRE>
+
+<LI><P>Don’t litter your script with global strings for the names of your UI elements.  Instead, pick descriptive and unique names for the elements and reference them by that name in your support procedures.  </P></LI>
+
+<PRE CLASS="mel">
+proc getValue()
+{
+   int $number = `intField -q -value int_recallItemsInList`;
+}
+
+global proc recall()
+{
+   <SPAN CLASS="comment">/* … */</SPAN>
+   intField int_recallItemsInList;
+   <SPAN CLASS="comment">/* … */</SPAN>
+}
+</PRE>
+
+<P>You could also pass the names for your UI widgets as a parameter to other functions.  If you do this make sure to document the purpose of the parameter and also the origin of the UI element.</P>
+
+<PRE CLASS="mel">
+proc getValue( string $field )
+<SPAN CLASS="comment">// Parameters: $field = intField that holds value;</SPAN>
+<SPAN CLASS="comment">//             defined in global proc recall()</SPAN>
+{
+   int $number = `intField -q -value $field`;
+}
+
+global proc recall()
+{
+   <SPAN CLASS="comment">/* … */</SPAN>
+   string $field = `intField`;
+   // Must build $field into command, and encapsulate in quotes
+   intField -e -changeCommand ( "getValue( \"" + $field + "\" )" ) $field;
+   <SPAN CLASS="comment">/* … */</SPAN>
+}
+</PRE>
+
+<LI><P>As you are developing your scripts you will likely need to frequently fix bugs and tweak their behavior. However, once Maya has loaded your script it will not automatically check to see if it has been changed and needs to be reloaded.  To speed things up create a temporary Shelf Item that re-sources the script and then calls its main function.  If your script is named &quot;<CODE>recall.mel</CODE>&quot; then enter the following into the Script Editor:</P></LI>
+
+<PRE CLASS="mel">
+// Update and execute Recall script
+source recall;
+recall;
+</PRE>
+
+<P>Highlight these three lines and drag them to a new Shelf item.  Now with a quick click of a Shelf Tool Maya will integrate the changes you’ve made and execute the result.  The comment is included to provide a description of the Shelf Tool in the Feedback Line whenever you move the mouse over the icon, as demonstrated by the Rhonda Graphics team at SIGGRAPH’98.</P>
+
+</OL>
+
+<P CLASS="rcomment"><DATE>Tuesday, December 05, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

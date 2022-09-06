@@ -1,0 +1,36 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · findFilterExpand</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">findFilterExpand</P>
+
+<H3>Function</H3>
+
+<P>A highly elegant method of determining if the current
+selection type may be parsed with the ‘<CODE>filterExpand</CODE>’
+command.  Several selectionMask values are undocumented.</P>
+
+<H3>Usage</H3>
+
+<P>Pick anything (such as Lattice Points) and run this script.
+The output will indicate any selectionMask values that match
+the selection type.</P>
+
+<P>Example output:</P>
+
+<PRE CLASS="mel">
+46:
+ffd1Lattice.pt[0][2][1]
+ffd1Lattice.pt[0][3][1]
+</PRE>
+
+<H3>Limitations</H3>
+
+<P>Only values of 0 - 256 (inclusive) are evaluated.</P>
+
+<!-- footer --></BODY>
+</HTML>

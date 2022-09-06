@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#92</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #92</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.091.html">Previous</a> &middot; <a href="mel.093.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine which Material or File Texture is associated with a Shading Group?</h2>
+<!-- How do I determine which Material or File Texture is associated with a Shading Group? -->
+
+<P CLASS="in">Trace upstream from the
+Shading Group to the Material then to the File Texture.  To get the name of the image file
+assigned to the File Texture, query the file node's '.fileTextureName' attribute.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// ////////////////////////////////////////////////////////////////////</SPAN>
+<SPAN CLASS="comment">//  getMaterialFromSG</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Description: Returns the Material node feeing the '.surfaceShader'</SPAN>
+<SPAN CLASS="comment">//  attribute of the specified Shading Group node (shadingEngine).</SPAN>
+
+proc string getMaterialFromSG( string $SG )
+{
+  string $material = "";
+
+  if ( "shadingEngine" == `nodeType $SG` &amp;&amp;
+    `connectionInfo -id ( $SG + ".surfaceShader" )` )
+  {
+    $material = rootNode( `connectionInfo -sfd
+      ( $SG + ".surfaceShader" )` );
+  }
+
+  return $material;
+}
+</PRE>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// ////////////////////////////////////////////////////////</SPAN>
+<SPAN CLASS="comment">//   getTextureFromMaterial</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Description: Returns the File Texture node feeding the '.color'</SPAN>
+<SPAN CLASS="comment">//   attribute of the specified Material node</SPAN>
+
+proc string getTextureFromMaterial( string $material )
+{
+  string $texture = "";
+
+  string $class[] = getClassification( `nodeType $material` );
+
+  if ( "shader/surface" == $class[0] &amp;&amp; `connectionInfo -id
+       ( $material + ".color" )` )
+  {
+    $texture = rootNode( `connectionInfo -sfd ( $material + ".color" )` );
+  }
+
+  return $texture;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.091.html">How do I determine which Shading Group is associated with a Material?</a></li>
+<li class="howto"><a href="mel.043.html">How do I get the assigned Shading Group for an object or face component?</a></li>
+<li class="howto"><a href="mel.103.html">How do I create a shading network that connects a Shading Group, a material and a texture?</a></li>
+<li class="howto"><a href="mel.104.html">How do I assign an object or face component to a material?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Friday, September 14, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

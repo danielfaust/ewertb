@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#41</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #41</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.040.html">Previous</a> &middot; <a href="mel.042.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I replicate the Frame Selected and Frame All hotkey functions in MEL?</h2>
+<!-- How do I replicate the Frame Selected and Frame All hotkey functions in MEL? -->
+
+<p>Maya's built-in command for this is viewFit.  You will need the object(s)
+in the selection list to be able to frame only specific items in the view.</p>
+
+<p>For example, to "frame selected" only "pSphere1" in the current camera view:</p>
+
+<PRE CLASS="mel">
+select -r pSphere1;
+viewFit;
+</PRE>
+
+<p>To "frame all" in the current camera view:</p>
+
+<PRE CLASS="mel">
+viewFit -all;
+</PRE>
+
+<P>The internal MEL script that Maya calls with the ‘<CODE>f</CODE>’ or ‘<CODE>a</CODE>’ key is
+"<CODE>fitPanel.mel</CODE>".  It takes a string argument -- either "<CODE>&minus;all</CODE>" or "<CODE>&minus;selected</CODE>"
+(although anything other than "<CODE>&minus;all</CODE>" counts as "<CODE>&minus;selected</CODE>").</P>
+
+<P>This script takes care of the differences between the model views and the various editors/panels.  These editors have their own commands for framing selected items.</P>
+
+<P>To conclude, the script command you would want to include in your scripts is:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Frame selected only in panel under mouse pointer</SPAN>
+fitPanel -selected;
+</PRE>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Frame all in panel under mouse pointer</SPAN>
+fitPanel -all;
+</PRE>
+
+<P>The ‘<CODE>fitPanel</CODE>’ procedure uses the panel under the mouse pointer, irregardless of whether it has active focus.</P>
+
+<BR>
+
+<DIV CLASS="heading">
+<P>Framing Control For Arbitrary Panels</P>
+</DIV>
+
+What if you want to perform a "fit" for a specific panel instead of relying on the user to float the mouse pointer in your direction?  In this case, you will need to:
+
+<OL>
+  <LI><P>Find the instance(s) of the panel currently available.</P></LI>
+  <LI><P>Determine which instance is the one you want to process.</P></LI>
+  <LI><P>Use the panel type's command syntax to perform the necessary view fit.</P></LI>
+</OL>
+
+<P>Some of these steps are utilized in the "<CODE>fitPanel.mel</CODE>" script, and these are the reasons for this function.</P>
+
+<BR>
+
+<DIV CLASS="heading">
+<P>Examples</P>
+</DIV>
+
+<P><SPAN CLASS="ui"><B>Perspective Camera</B> (or any Camera, really)</SPAN></P>
+
+<DIV CLASS="in">
+  <P>Conveniently, we don't have to bother with the first two steps here.  When dealing with a camera view you can use the 'viewFit' command which accepts the name of a camera.</P>
+
+  <OL>
+    <LI>
+    <P><SPAN CLASS="comment">Find the instance(s) of the panel currently available.</SPAN></P>
+    </LI>
+
+    <LI>
+    <P><SPAN CLASS="comment">Determine which instance is the one you want to process.</SPAN></P>
+    </LI>
+
+    <LI>
+    <P>Use that panel's type's command syntax to perform the necessary view fit.</P>
+
+  <PRE CLASS="mel">
+  <SPAN CLASS="comment">// Frame the selected items in the persp camera view</SPAN>
+  viewFit persp;
+  </PRE>
+
+    </LI>
+  </OL>
+</DIV>
+
+<P><SPAN CLASS="ui"><B>HyperGraph</B></SPAN></P>
+
+<DIV CLASS="in">
+  <OL>
+    <LI>
+    <P>Find the instance(s) of the panel currently available.</P>
+    </LI>
+
+  <PRE CLASS="mel">
+  string $hyperGraphPanels[] = `getPanel -scriptType hyperGraphPanel`;
+  // Result: hyperGraphPanel1 hyperGraphPanel2 //
+  </PRE>
+
+  <LI>
+    <P>Determine which instance is the one you want to process.</P>
+
+    <P>The main HyperGraph panel is labelled "Hypergraph"; tearoff copies are named "Hyper Graph Panel 2", etc.</P>
+    </LI>
+
+  <PRE CLASS="mel">
+  string $mainHyperGraph = "";
+  for ( $panel in $hyperGraphPanels )
+  {
+    <SPAN CLASS="comment">// Looking for the main HyperGraph panel</SPAN>
+    if ( "Hypergraph" == `scriptedPanel -q -label $panel` )
+    {
+      $mainHyperGraph = $panel;
+      break;
+    }
+  }
+  // Result: hyperGraphPanel1 //
+  </PRE>
+
+    <LI>
+    <P>Use that panel's type's command syntax to perform the necessary view fit.</P>
+
+    <P>In the case of the HyperGraph the MEL command used is ‘<CODE>hyperGraph</CODE>’.  However, its use here requires a little trickery.  The HyperGraph you live and work with is actually a ‘<CODE>hyperPanel</CODE>’ object within a <CODE>scriptedPanel</CODE>.  The name we have found is the scriptedPanel.  By convention Maya names the hyperPanel editor by appending the string "HyperGraphEd" to the name of the panel.</P>
+
+  <PRE CLASS="mel">
+  <SPAN CLASS="comment">// Assert that we've found our desired HyperGraph panel</SPAN>
+  if ( "" != $mainHyperGraph )
+  {
+    string $hyperGraphEditor = ( $mainHyperGraph + "HyperGraphEd" );
+    <SPAN CLASS="comment">// Frame selected items in the HyperGraph</SPAN>
+    hyperGraph -e -frame $hyperGraphEditor;
+
+    <SPAN CLASS="comment">// To frame all items the command syntax is:</SPAN>
+    <SPAN CLASS="comment">// hyperGraph -e -frameGraph ...</SPAN>
+  }
+  </PRE>
+
+    </LI>
+
+  </OL>
+
+  <P><SPAN CLASS="note">Note</SPAN>: You use the same technique to frame the selected items in the HyperShade Editor.  You would use the ‘<CODE>hyperGraph</CODE>’ command, but would append the string "HyperShadeEd" instead of "HyperGraphEd".</P>
+
+</DIV>
+
+<P><SPAN CLASS="ui"><B>Graph Editor</B></SPAN></P>
+
+<DIV CLASS="in">
+  <P>The Graph Editor is also a scriptedPanel:</P>
+
+  <OL>
+    <LI>
+    <P>Find the instance(s) of the panel currently available.</P>
+    </LI>
+
+  <PRE CLASS="mel">
+  string $graphEditors[] = `getPanel -scriptType graphEditor`;
+  // Result: graphEditor1 graphEditor2 //
+  </PRE>
+
+  <LI>
+    <P>Determine which instance is the one you want to process.</P>
+
+    <P>The main Graph Editor is labelled "Graph Editor"; tearoff copies are named "Graph Editor 2", etc.</P>
+    </LI>
+
+  <PRE CLASS="mel">
+  string $mainGraphEditor = "";
+  for ( $panel in $graphEditors )
+  {
+    <SPAN CLASS="comment">// Looking for the main Graph Editor</SPAN>
+    if ( "Graph Editor" == `scriptedPanel -q -label $panel` )
+    {
+      $mainGraphEditor = $panel;
+      break;
+    }
+  }
+  // Result: graphEditor1 //
+  </PRE>
+
+    <LI>
+    <P>Use that panel's type's command syntax to perform the necessary view fit.</P>
+
+    <P>Again, similar trickery as the Graph Editor is presented as a scriptedPanel and Maya identifies the embedded editor by appending to its name the string "GraphEd".  This time the panel is accessed by the MEL command ‘<CODE>animCurveEditor</CODE>’.</P>
+
+  <PRE CLASS="mel">
+  if ( "" != $mainGraphEditor )
+  {
+    string $graphEditor = ( $mainGraphEditor + "GraphEd" );
+    animCurveEditor -e -lookAt selected $graphEditor;
+
+    <SPAN CLASS="comment">// To frame all items the command syntax is:</SPAN>
+    <SPAN CLASS="comment">// animCurveEditor -e -lookAt all ...</SPAN>
+  }
+  </PRE>
+
+    </LI>
+
+  </OL>
+</DIV>
+
+<P><SPAN CLASS="note">NOTE</SPAN>: All of this from Maya v2.5.1.  No idea if any of this changed for v3.0</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.042.html">How do I find/close Maya's editor windows -- the Dope Sheet and Graph Editor, for example?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Friday, September 29, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

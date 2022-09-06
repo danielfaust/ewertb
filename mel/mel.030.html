@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#30</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #30</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.029.html">Previous</a> &middot; <a href="mel.031.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I create and edit Shelf buttons?</h2>
+<!-- How do I create and edit Shelf buttons? -->
+
+<P>First, you need to find the name of the official ‘shelfLayout’ which
+comprises Maya's own Shelf.  This is easy -- Maya stores the UI identity of
+the Main Shelf in the global string variable <CODE>$gShelfTopLevel</CODE>:</P>
+
+<PRE CLASS="mel">
+global string $gShelfTopLevel;
+print $gShelfTopLevel;
+// Result: MayaWindow|mayaMainWindowForm|formLayout2|formLayout22|ShelfLayout //
+</PRE>
+
+<P>This is a little deceptive, as this is <I>not</I> a shelfLayout, but rather a
+tabLayout; it's the tabLayout that provides you with the ability to create
+multiple, tabulated categories of Shelves.</P>
+
+<P>The "child array" of the tabLayout will give you an array of shelfLayouts
+that contain your tools:</P>
+
+<PRE CLASS="mel">
+// Get the array of Shelves (the row of tabs you see in Maya)
+tabLayout -q -childArray $gShelfTopLevel;
+// Result: Animation Colouring Polygon Primitives Render Tools //
+
+// Now get the actual contents of the "Polygon" Shelf
+shelfLayout -q -childArray "Polygon";
+// Result: toolButton2 toolButton3 shelfButton54 shelfButton55 //
+</PRE>
+
+<P>Note that if you wish to edit an item from a Shelf you must determine
+whether the item is a "shelfButton" or a "toolButton", as you require a
+different command to query the parameters of each.</P>
+
+<PRE CLASS="mel">
+objectTypeUI "toolButton2";
+// Result: toolButton //
+
+// This is a toolButton - must use ‘toolButton’ to query
+// which Tool is activated by this button.
+toolButton -q -tool "toolButton2";
+// Result: polyCreateFacetCtx1 //
+
+objectTypeUI "shelfButton54";
+// Result: shelfButton //
+
+// This is a shelfButton - must use ‘shelfButton’ to query
+// the command string for this button.
+shelfButton -q -command "shelfButton54";
+// Result: performPolyCollapse 0 //
+</PRE>
+
+<P>To add your own button to a shelf, use the ‘shelfButton’ command, specifying
+the desired shelfLayout as the parent for the button.</P>
+
+<P>For an example of a complete Shelf Button definition, load up your Shelves
+Preference file into a text editor.  The Preference file will be a MEL
+script named with the prefix <CODE>"shelf_"</CODE> plus the name of the Shelf, and a
+<CODE>".mel"</CODE> extension.  For example:</P>
+
+<PRE>
+%MAYA_APP_DIR%\2.5\prefs\shelves\shelf_Polygon.mel
+</PRE>
+
+
+<P>The definition stored for "shelfButton54" above is:</P>
+
+<PRE>
+shelfButton
+   -enable 1
+   -width 34
+   -height 34
+   -manage 1
+   -visible 1
+   -annotation "Collapse: Collapse the selected edges or faces"
+   -label "Collapse"
+   -image1 "polyCollapseEdge.xpm"
+   -style "iconOnly"
+   -command "performPolyCollapse 0"
+;
+</PRE>
+
+<P>For a simple example, if you wanted to add a button to the "Tools" Shelf
+that cleared the selection list:</P>
+
+<PRE CLASS="mel">
+global string $gShelfTopLevel;
+
+string $shelves[] = `tabLayout -q -childArray $gShelfTopLevel`;
+// Result: Animation Colouring Polygon Primitives Render Tools //
+
+// Note: $shelves[5] == "Tools"
+
+// Now add the button
+string $myButton = `shelfButton
+     -parent $shelves[5]           // Set parent Shelf as "Tools"
+     -enable 1
+     -width 34
+     -height 34
+     -manage 1
+     -visible 1
+     -annotation "Clear the selection list"
+     -label "Select None"
+     -image1 "select.xpm"
+     -style "iconOnly"
+     -command "select -clear"`;
+</PRE>
+
+<P>Note that the command string can be as long as you need it, provided it is
+syntactically valid within the quotes.</P>
+
+<P>Use a string variable -- in this case <CODE>$myButton</CODE> -- to access the properties
+of your new button after it is created.</P>
+
+To delete the new Shelf button, use the ‘<CODE>deleteUI</CODE>’ command:
+
+<PRE CLASS="mel">
+deleteUI $myButton;
+</PRE>
+
+<P>If you need to delete one of your buttons afterward, without knowing the
+specific UI identity, you can query the child array of a shelfLayout looking
+for your specific command or label, or for a sub-string in either (such as a
+comment).</P>
+
+<PRE CLASS="mel">
+string $shelfButtons[] = `shelfLayout -q -childArray $shelves[5]`;
+
+for ( $button in $shelfButtons )
+{
+   string $label;
+
+   // Assert that this is a shelfButton
+   if ( `objectTypeUI -isType "shelfButton" $button` )
+   {
+      $label = `shelfButton -q -label $button`;
+
+      // If this button has the label we're looking for,
+      // delete the button.
+      if ( "Select None" == $label )
+         deleteUI $button;
+   }
+}
+</PRE>
+
+<P>After adding (or deleting) Shelf buttons, the new configuration will be
+saved with Maya's Shelf Preferences.  The options for saving Shelf
+Preferences can be set using:</P>
+
+<DIV CLASS="in">
+<P><SPAN CLASS="ui">Options -&gt; UI Preferences... -&gt; Shelf -&gt; Shelf Contents</SPAN></P>
+</DIV>
+
+<P>To explicitly save the Shelf Preferences, use the following:</P>
+
+<PRE CLASS="mel">
+global string $gShelfTopLevel;
+saveAllShelves $gShelfTopLevel;
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.059.html">How can I create a hotkey to cycle through the Shelf tabs?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Tuesday, March 20, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

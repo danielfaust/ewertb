@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#99</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #99</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.098.html">Previous</a> &middot; <a href="mel.100.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I query the field names from an enumerated attribute?</h2>
+<P>The '-enumName' flag for the "addAttr" command is queryable, and may be used to acquire a string for the labels of an enumerated attribute.</P>
+
+<P>Consider an enumeration created as follows:</P>
+
+<PRE CLASS="mel">
+addAttr -at "enum" -ln "myEnum" -enumName "solo=1:triplet=2:quintet=3" shape;
+</PRE>
+
+<P>To query the fields:</P>
+
+<PRE CLASS="mel">
+string $enumFields = `addAttr -q -enumName shape.myEnum`;
+// Result: solo=1:triplet:quintet //
+</PRE>
+
+<P>You can tokenize this string to extract an individual value.</P>
+
+<PRE CLASS="mel">
+string $tokens[];
+
+tokenize $enumFields ":" $tokens;
+// Result: { "solo=1", "triplet", "quintet" } //
+</PRE>
+
+<P>By default the first field of an enum will be associated with a value of 0 (zero) and subsequent fields will increment this value by one. However, Maya allows to you specify arbitrary field values, and you'll need to do a bit more processing to determine what values are associated with each field.</P>
+
+<PRE CLASS="mel">
+addAttr -at "enum" -ln "myOtherEnum" -enumName "first=2:second:third=5:other=0" shape;
+
+addAttr -q -enumName shape.myOtherEnum;
+// Result: other:first=2:second:third=5 //
+</PRE>
+
+<div class="sidebar">
+<p><SPAN CLASS="note">Note:</SPAN> Be aware that Alias cautions against specifying non-sequential field values like this as they may not appear correctly in the Channel Box. See the documentation for "addAttr" for more details.</p>
+</div>
+
+<P>The example above uses the following field/value associations:</P>
+
+<div class="in">
+<table width="160">
+<tr><td class="heading">Field</td><td class="heading">Value</td></tr>
+<tr><td class="content"><div class="center">other</div></td><td class="content"><div class="center">0</div></td></tr>
+<tr><td class="content"><div class="center">first</div></td><td class="content"><div class="center">2</div></td></tr>
+<tr><td class="content"><div class="center">second</div></td><td class="content"><div class="center">3</div></td></tr>
+<tr><td class="content"><div class="center">third</div></td><td class="content"><div class="center">5</div></td></tr>
+</table>
+</div>
+
+<P>The following MEL will generate the field values for the enumeration.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Query the enumeration fields from the enumerated attribute.</SPAN>
+string $enumFields = `addAttr -q -enumName shape.myOtherEnum`;
+
+<SPAN CLASS="comment">// Prepare string arrays for our tokenizing</SPAN>
+string $enumTokens[];
+string $fieldTokens[];
+
+<SPAN CLASS="comment">// Extract the fields from the enumeration string.</SPAN>
+tokenize $enumFields ":" $enumTokens;
+
+<SPAN CLASS="comment">// Print the field value for each.</SPAN>
+int $fieldValue = 0;
+for ( $token in $enumTokens )
+{
+  <SPAN CLASS="comment">// If this field specifies its own value, use it.</SPAN>
+  int $numTokens = `tokenize $token "=" $fieldTokens`;
+  if ( $numTokens &gt; 1 )
+  {
+    $fieldValue = $fieldTokens[1];
+  }
+
+  <SPAN CLASS="comment">// Print it.  </SPAN>
+  print ( "\"" + $fieldTokens[0] + "\" = " + $fieldValue + "\n" );
+
+  <SPAN CLASS="comment">// Increment field value as default for next enumeration.</SPAN>
+  $fieldValue++;
+}
+</PRE>
+
+<P>The result:</P>
+
+<PRE CLASS="mel">
+"other" = 0
+"first" = 2
+"second" = 3
+"third" = 5
+</PRE>
+
+<P>And for '.myEnum':</P>
+
+<PRE CLASS="mel">
+"solo" = 1
+"triplet" = 2
+"quintet" = 3
+</PRE>
+
+<P><SPAN CLASS="heading">Limitation</SPAN></P>
+
+<P>This technique may be used only for dynamic attributes. The "addAttr" command does not allow for querying the enumeration fields from a native Maya attribute:</P>
+
+<PRE CLASS="mel">
+getAttr -type locatorShape1.nodeState;
+// Result: enum //
+
+addAttr -q -enumName locatorShape1.nodeState;
+// Error: 'nodeState' is not a dynamic attribute of node 'locatorShape1'. //
+</PRE>
+
+<P><SPAN CLASS="heading">Acknowledgement</SPAN></P>
+
+<DIV CLASS="in">
+
+<P><SPAN CLASS="acknowledgement">Erick Miller</SPAN>, Digital Domain</P>
+
+</DIV>
+
+<P CLASS="rcomment"><!-- DATE -->28 Apr 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

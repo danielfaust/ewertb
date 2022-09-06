@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#77</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #77</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.076.html">Previous</a> &middot; <a href="mel.078.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I create a popup or Marking Menu that activates via mouse button but only when a hotkey is pressed?</h2>
+<!-- How do I create a popup or Marking Menu that activates via mouse button but only when a hotkey is pressed? -->
+
+<P>The key for generating a popup menu is in defining its parent control.
+It is the parent control which defines when the popup menu is active and can be made visible.
+Looking at Maya's own scripts reveals its use of the &lsquo;<CODE>viewPanes</CODE>&rsquo; layout as the parent
+for its Marking Menus.  This is the <CODE>paneLayout</CODE> Maya uses for its model views.</P>
+
+<PRE CLASS="mel">
+setParent viewPanes;
+// Result: MayaWindow|mayaMainWindowForm|formLayout3|viewPanes //
+</PRE>
+
+<P>If you are using your popup menu as an interactive modeling tool then this is a good choice.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> Controls can be assigned more than one popup menu, each bound to a different mouse button
+and key qualifier.</P>
+
+When assigning a hotkey to a popup menu you must assign two actions: one for <SPAN CLASS="ui">Press</SPAN> and one for <SPAN CLASS="ui">Release</SPAN>.
+The <SPAN CLASS="ui">Press</SPAN> action is typically the name of the MEL procedure that builds the menu:
+
+<PRE CLASS="mel">
+buildMyMM;
+</PRE>
+
+The <SPAN CLASS="ui">Release</SPAN> action is typically:
+
+<PRE CLASS="mel">
+if ( `popupMenu -exists tempMM` ) { deleteUI tempMM; }
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> It's a good idea to use the same name for all popup menus so only one is visible at a time.
+(Maya uses "<CODE>tempMM</CODE>".)</P>
+
+<P><SPAN CLASS="heading">Example Marking Menu</SPAN></P>
+
+<P><IMG SRC="markingMenu.gif" WIDTH="343" HEIGHT="91" ALT="Example Marking Menu" BORDER="0"></P>
+
+<PRE CLASS="mel">
+global proc doMyMM()
+{
+  <SPAN CLASS="comment">// Precaution in case tempMM was not destroyed</SPAN>
+  <SPAN CLASS="comment">// since its last invokation.</SPAN>
+  popupMenu -e -deleteAllItems tempMM;
+
+  <SPAN CLASS="comment">// Since this is a Marking Menu the -radialPosition</SPAN>
+  <SPAN CLASS="comment">// flag specifies menuItem's position on the menu.</SPAN>
+  menuItem -radialPosition "N" -l "Delete History"
+    -c "delete -ch";
+
+  menuItem -rp "E" -l "Freeze Transformations"
+    -c "makeIdentity -apply true";
+
+  menuItem -rp "S" -l "Delete All History"
+    -c "delete -all -ch";
+
+  menuItem -rp "W" -l "Center Pivot"
+    -c "xform -cp";
+
+  <SPAN CLASS="comment">// "Pop" the menu parent up one level.</SPAN>
+  setParent -m ..;
+}
+
+global proc buildMyMM()
+<SPAN CLASS="comment">// Creates a marking menu that allows the user to control</SPAN>
+<SPAN CLASS="comment">// History and pivot options.</SPAN>
+{
+  <SPAN CLASS="comment">// Reuse the name tempMM for the name of the menu, to</SPAN>
+  <SPAN CLASS="comment">// ensure that there's only one of these at any one time.</SPAN>
+  if( `popupMenu -exists tempMM` )
+  {
+      deleteUI tempMM;
+  }
+
+  <SPAN CLASS="comment">// Create the popupMenu.</SPAN>
+  <SPAN CLASS="comment">// Specify '-markingMenu true' to indicate a Marking Menu.</SPAN>
+  <SPAN CLASS="comment">// Use 'viewPanes' as the parent layout so it is active within the model views.</SPAN>
+  popupMenu -alt 0 -markingMenu true -b 1 -aob 1 -p viewPanes -pmc "doMyMM" tempMM;
+}
+</PRE>
+
+<P CLASS="in"><SPAN CLASS="ui">Press:</SPAN> <SPAN CLASS="mel">buildMyMM;</SPAN></P>
+
+<P CLASS="in"><SPAN CLASS="ui">Release:</SPAN> <SPAN CLASS="mel">if ( `popupMenu -exists tempMM` ) { deleteUI tempMM; }</SPAN></P>
+
+<P><SPAN CLASS="heading">Example Popup Menu</SPAN></P>
+
+<P><IMG SRC="popupMenu.gif" WIDTH="148" HEIGHT="69" ALT="Example popup menu" BORDER="0"></P>
+
+<PRE CLASS="mel">
+global proc doMyPopupMenu()
+{
+  <SPAN CLASS="comment">// Precaution in case tempMM was not destroyed</SPAN>
+  <SPAN CLASS="comment">// since its last invokation.</SPAN>
+  popupMenu -e -deleteAllItems tempMM;
+
+  menuItem -l "Delete History"
+    -c "delete -ch";
+
+  menuItem -l "Freeze Transformations"
+    -c "makeIdentity -apply true";
+
+  menuItem -l "Delete All History"
+    -c "delete -all -ch";
+
+  menuItem -l "Center Pivot"
+    -c "xform -cp";
+
+  <SPAN CLASS="comment">// "Pop" the menu parent up one level.</SPAN>
+  setParent -m ..;
+}
+
+global proc buildMyPopupMenu()
+{
+  <SPAN CLASS="comment">// Reuse the name tempMM for the name of the menu, to</SPAN>
+  <SPAN CLASS="comment">// ensure that there's only one of these at any one time.</SPAN>
+  if( `popupMenu -exists tempMM` )
+  {
+      deleteUI tempMM;
+  }
+
+  <SPAN CLASS="comment">// Create the popupMenu.</SPAN>
+  <SPAN CLASS="comment">// Specify '-markingMenu false'.</SPAN>
+  <SPAN CLASS="comment">// Use 'viewPanes' as the parent layout so it is active within the model views.</SPAN>
+  popupMenu -alt 0 -markingMenu false -b 1 -aob 1 -p viewPanes -pmc "doMyPopupMenu" tempMM;
+}
+</PRE>
+
+<P CLASS="in"><SPAN CLASS="ui">Press:</SPAN> <SPAN CLASS="mel">buildMyPopupMenu;</SPAN></P>
+
+<P CLASS="in"><SPAN CLASS="ui">Release:</SPAN> <SPAN CLASS="mel">if ( `popupMenu -exists tempMM` ) { deleteUI tempMM; }</SPAN></P>
+
+
+<P CLASS="rcomment"><DATE>Wednesday, October 24, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

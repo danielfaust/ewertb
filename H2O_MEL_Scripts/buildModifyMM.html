@@ -1,0 +1,30 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · buildModifyMM</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">buildModifyMM</P>
+
+<IMG SRC="buildModifyMM.gif" ALT="buildModifyMM" WIDTH=363 HEIGHT=103 ALIGN="right">
+
+<P>When mapped to a hotkey, builds a marking menu as depicted at right.</P>
+
+<P>The ‘<CODE>Press</CODE>’ assignment should be:</P>
+
+<DIV CLASS="ui">
+<P CLASS="in">
+buildModifyMM;
+</P></DIV>
+
+<P>The ‘<CODE>Release</CODE>’ assignment should be:</P>
+
+<DIV CLASS="ui">
+<P CLASS="in">
+if( `popupMenu -exists tempMM` ) { deleteUI tempMM; }
+</P></DIV>
+
+<!-- footer --></BODY>
+</HTML>

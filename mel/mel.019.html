@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#19</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #19</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.018.html">Previous</a> &middot; <a href="mel.020.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I determine if a camera other than the default cameras has been created if I don't know the name of the new camera?</h2>
+<!-- How can I determine if a camera other than the default cameras has been created if I don't know the name of the new camera? -->
+
+<P>By default Maya creates four cameras for a scene:</P>
+
+<PRE>
+persp
+front
+side
+top
+</PRE>
+
+<P>The first camera, ‘<CODE>persp</CODE>’ is non-orthographic, the remaining three are orthographic.</P>
+
+<P>It is not possible (without effort) to rename or delete these default cameras as they are flagged as read-only.  You can determine if a camera is read-only -- or rather if it's flagged as one of the default startup cameras -- by querying the ‘<CODE>&minus;startupCamera</CODE>’ flag using the ‘<CODE>camera</CODE>’ command:</P>
+
+<PRE CLASS="mel">
+camera -q -startupCamera persp;
+// Result: 1 //
+</PRE>
+
+<P>Knowing this, it is possible to get a list of all cameras, query each for the ‘<CODE>&minus;startupCamera</CODE>’ flag, and mark any others as a camera that the user has added.</P>
+
+<PRE CLASS="mel">
+proc string[] getExtraCameras()
+{
+  string $extraCameras[];
+  int $numExtraCameras = 0;
+
+  string $cameras[] = `ls -cameras`;
+
+  for ( $camera in $cameras )
+  {
+    // If this camera is not a startupCamera, add it to the array
+    if ( !`camera -q -startupCamera $camera` )
+      $extraCameras[$numExtraCameras++] = $camera;
+  }
+
+  return $extraCameras;
+}
+
+// Get a list of all non-startup cameras
+string $extraCameras[] = getExtraCameras();
+
+if ( size( $extraCameras ) )
+{
+  print ( "The following cameras have been added to the scene:\n" );
+  print $extraCameras;
+}
+else
+  print ( "No extra cameras added to the scene.\n" );
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

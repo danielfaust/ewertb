@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#12</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #12</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.011.html">Previous</a> &middot; <a href="api.014.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine when to use MDGContext over MGlobal::viewFrame()?</h2>
+<!-- How do I determine when to use MDGContext over MGlobal::viewFrame()? -->
+
+<P>If you read Maya's DevKit FAQ you'll find the nice little hint in there like so:</P>
+
+<PRE>
+You can ... perform a viewframe, to set the time, then query the
+attributes ... you are interested in via the getValue methods of the MPlug
+class. As you point out however, this is somewhat slow, since viewframe
+changes the global time.
+
+[or] You can create an instance of the MDGContext class initialized to the
+time you are interested in. This can be passed to the getValue method of
+the MPlug class... As much or as little of the dependencies as necessary
+will be reevaluated... Lots of dependencies on other nodes will make the
+evaluation slow. Otherwise it should be fast.
+</PRE>
+
+<P>The way I had interpreted this was:</P>
+
+<P><SPAN CLASS="api">MGlobal::viewFrame()</SPAN> will always be slow because it has to reevaluate the entire DG.  Under some cases <SPAN CLASS="api">MDGContext</SPAN> will be as slow as <SPAN CLASS="api">::viewFrame()</SPAN> but typically it should be faster.</P>
+
+<P>Whoa back tho'.  Not so much!  Take a gander at this real-life example:</P>
+
+<PRE CLASS="api">
+#if MAYA_VIEW_FRAME
+
+  MGlobal::viewFrame( obTime );
+
+  MFnMesh                      fnMesh( obDagPath, &status );
+
+#else
+
+  MFnDependencyNode            fnDependNode( obDagPath.node(), &status );
+
+  MPlug                        plugMesh;
+  MObject                      meshData;
+
+  plugMesh = fnDependNode.findPlug( MString( "outMesh" ), &status );
+
+  status = plugMesh.getValue( meshData, MDGContext( obTime ) );
+
+  MFnMesh                      fnMesh( meshData, &status );
+
+#endif
+
+  status = fnMesh.getPoints( aobPoints, MSpace::kObject );
+</PRE>
+
+<P>Now lets look at the performance of these:</P>
+
+<P>If <CODE>MAYA_VIEW_FRAME</CODE> is not defined - in other words I use the "optimal" <SPAN CLASS="api">MDGContext</SPAN> method, I get the results:</P>
+
+<PRE CLASS="api">
+%%                   TIME adding to ANIM: 399.03 seconds
+%%       --> time consumed by MDGContext: 395.994 seconds
+</PRE>
+
+<P>Now a run through the exact same object using <SPAN CLASS="api">::viewFrame()</SPAN>:</P>
+
+<PRE CLASS="api">
+%%                        TIME adding to ANIM: 41.58 seconds
+%%  --> time consumed by MGlobal::viewFrame(): 16.003 seconds
+</PRE>
+
+<P>This is exponentially more significant than I'd ever have imagined.  And now I can see why many suggest <SPAN CLASS="api">::viewFrame()</SPAN> over <SPAN CLASS="api">MDGContext</SPAN>.</P>
+
+<P><SPAN CLASS="heading">Putting The Results In Context</SPAN></P>
+
+<P>There is one important consideration to these results:  In both cases I shuffled Maya's UI to the background and monitored the Output Window.  By doing so, Maya skipped all redraw operations because none of its viewports were visible.</P>
+
+<P>If Maya's UI is visible (or, specifically, any panels that must be redrawn when Time changes) then a call to <SPAN CLASS="api">::viewFrame()</SPAN> will force a redraw within these panels.  This is what generates the performance penalty of the <SPAN CLASS="api">::viewFrame()</SPAN> call.  Had I been watching Maya's main window in the above time trials then they would both have generated similar results.</P>
+
+<P><SPAN CLASS="heading">Conclusions</SPAN></P>
+
+<P>If you expect Maya's UI to remain in front of other windows while you modify time values, <SPAN CLASS="api">MGlobal::viewFrame()</SPAN> may actually take more time to execute.</P>
+
+<P>However, you will <EM>always</EM> pay a penalty in performance by using <SPAN CLASS="api">MDGContext</SPAN> as it seems to force Maya to perform a "mental" redraw regardless.  You can avoid all unnecessary evaluation by using <SPAN CLASS="api">MGlobal::viewFrame()</SPAN> and shuffling Maya's UI to the background during the processing.</P>
+
+
+<P CLASS="rcomment"><DATE>Monday, May 21, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

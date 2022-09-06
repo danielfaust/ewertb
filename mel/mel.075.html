@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#75</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #75</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.074.html">Previous</a> &middot; <a href="mel.076.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I list all active values/connections in a compound array attribute, such as the &lsquo;.colorEntryList&rsquo; for a ramp texture, or the &lsquo;.inputs&rsquo; for a layeredShader node?</h2>
+<!-- How can I list all active values/connections in a compound array attribute, such as the &lsquo;.colorEntryList&rsquo; for a ramp texture, or the &lsquo;.inputs&rsquo; for a layeredShader node? -->
+
+<!--
+
+To: maya@ewertb.com
+Subject: Listing array attributes in mel
+From: alex kessaris <kessaris@gmail.com>
+Date: Mon, 3 Jan 2005 01:50:10 -0500
+
+Re: MEL How-To #75
+
+Mr. Ewert:
+ I am very grateful for your MEL reference online, I have used it
+quite more than once.. most recently for listing array attributes.  I
+would like to submit that there is a way to filter attributes based on
+string criteria, for instance to locate all the 'isVisible' attributes
+of a layered texture, you could evaluate:
+
+listAttr -multi -st "isVisible" "textureName.inputs"
+
+and it would return all attributes in the form:
+inputs[0].isVisible
+inputs[2].isVisible
+inputs[4].isVisible
+
+and so on.. skipping any missing ones.
+
+similarly:
+
+listAttr -multi -st "blendMode" "textureName.inputs" to get all the
+'blendMode" attributes.
+
+I hope you may find this helpful, it's nice to think I can possibly
+return the favour just a little bit.
+
+Warmest Regards,
+
+Alex Kessaris
+
+-->
+
+<P>Compound array attributes are a little tricky to manage.  There can be any number
+of valid values/connections to the array (and possibly zero), but it's not immediately
+obvious how to determine the correlation between the number of values and their indices.
+The values/connections are not necessarily assigned/connected in a linear order.</P>
+
+<P>The first thing you will try is something list this:</P>
+
+<PRE CLASS="mel">
+getAttr -size ramp1.colorEntryList;
+// Result: 3 //
+</PRE>
+
+<P>Unfortunately, this doesn't tell you everything you need to know.  This count is
+indeed the number of valid elements in the array; however, it does not mean that
+the array starts at &lsquo;<CODE>.colorEntryList[0]</CODE>&rsquo; and ends at &lsquo;<CODE>.colorEntryList[2]</CODE>&rsquo;.
+The first index might be &lsquo;<CODE>.colorEntryList[3]</CODE>&rsquo;, and the last index could be anything.</P>
+
+<P>To illustrate this phenomenon, create a ramp (which has three entries by default)
+and add a couple "color entry keys" to it.  Then delete the second-to-last key you added, leaving four
+entries.</P>
+
+<P>Now try:</P>
+
+<PRE CLASS="mel">
+getAttr -size ramp1.colorEntryList;
+// Result: 4 //
+</PRE>
+
+<P>This is as expected.  However, you'll notice that the Connection Editor lists the array as:</P>
+
+<PRE>
+Color Entry List[0]
+Color Entry List[1]
+Color Entry List[2]
+Color Entry List[4]   <SPAN CLASS="comment">// Skips colorEntryList[3]</SPAN>
+</PRE>
+
+<P>To add further annoyance, if you attempt to query &lsquo;<CODE>.colorEntryList[3]</CODE>&rsquo; at this
+point:</P>
+
+<PRE CLASS="mel">
+getAttr ramp1.colorEntryList[3].color;
+</PRE>
+
+<P>This will generate a new entry in the table -- one which will likely change the intended
+properties of the ramp.</P>
+
+<P>The easiest way I've found to obtain all of the <EM>active</EM> elements to an
+array attribute is via:</P>
+
+<PRE CLASS="mel">
+listAttr -multi "node.arrayAttr";
+</PRE>
+
+<P>This has the unfortunate side-effect of listing all of the children of the
+array.  In the case of a <CODE>layeredShader</CODE>:</P>
+
+<PRE CLASS="mel">
+string $multiAttr[] = `listAttr -multi ( $layeredShader + ".inputs" )`;
+
+// Result: inputs[3] inputs[3].color inputs[3].colorR inputs[3].colorG
+           inputs[3].colorB inputs[3].transparency
+           inputs[3].transparencyR inputs[3].transparencyG
+           inputs[3].transparencyB inputs[3].glowColor
+           inputs[3].glowColorR inputs[3].glowColorG
+           inputs[3].glowColorB inputs[4] inputs[4].color
+           inputs[4].colorR inputs[4].colorG inputs[4].colorB
+           inputs[4].transparency inputs[4].transparencyR
+           inputs[4].transparencyG inputs[4].transparencyB
+           inputs[4].glowColor inputs[4].glowColorR inputs[4].glowColorG
+           inputs[4].glowColorB //
+</PRE>
+
+<P><EM>Oi.</EM></P>
+
+<P>To weed out the chaff, I use the "<CODE>gmatch</CODE>" command to test for the specific
+attribute: &lsquo;<CODE>.color</CODE>&rsquo; in this case.</P>
+
+<P>With attribute in hand, use the "<CODE>listConnections</CODE>" command to trace the input
+attibute back to its source.</P>
+
+<P><SPAN CLASS="heading">"<CODE>ramp</CODE>" Example</SPAN></P>
+
+<P>The following MEL demonstrates how to retrieve the active colors for a ramp node's &lsquo;<CODE>.colorEntryList</CODE>&rsquo;:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Get all ramp textures nodes in this Scene.</SPAN>
+string $ramps[] = `ls -type "ramp"`;
+
+for ( $ramp in $ramps )
+{
+  print ( "Ramp: " + $ramp + "\n" );
+
+  <SPAN CLASS="comment">// Get a list of all active '.colorEntryList' array elements.</SPAN>
+  string $multiAttr[] = `listAttr -multi ( $ramp + ".colorEntryList" )`;
+
+  for ( $attr in $multiAttr )
+  {
+    <SPAN CLASS="comment">// Only concered with those ending with ".color".</SPAN>
+    if ( `gmatch $attr "*.color"` )
+    {
+      <SPAN CLASS="comment">// Found an active Color connection.</SPAN>
+      float $color[3] = `getAttr ( $ramp + "." + $attr )`;
+
+      <SPAN CLASS="comment">// Extract the index for the connection.</SPAN>
+      string $tokens[];
+      tokenize $attr "[]" $tokens;
+
+      print ( "  Color Entry " + $tokens[1] + ": { " + $color[0] + ", " + $color[1] + ", " + $color[2] + " }\n" );
+    }
+  }
+}
+</PRE>
+
+<P>Example output:</P>
+
+<PRE>
+Ramp: ramp1
+  Color Entry 0: { 1, 0, 0 }
+  Color Entry 2: { 0, 0, 1 }
+  Color Entry 3: { 0.9056821465, 0.6435719728, 0.9089999795 }
+</PRE>
+
+<P><SPAN CLASS="heading">"<CODE>layeredShader</CODE>" Example</SPAN></P>
+
+<P>The following traces the connections to each Material from a <CODE>layeredShader</CODE>:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Get all layeredShader nodes in this Scene.</SPAN>
+string $layeredShaders[] = `ls -type "layeredShader"`;
+
+for ( $ls in $layeredShaders )
+{
+  print ( "Layered Shader: " + $ls + "\n" );
+
+  <SPAN CLASS="comment">// Get a list of all active '.inputs' array elements.</SPAN>
+  string $multiAttr[] = `listAttr -multi ( $ls + ".inputs" )`;
+
+  for ( $attr in $multiAttr )
+  {
+    <SPAN CLASS="comment">// Only concered with those ending with ".color".</SPAN>
+    if ( `gmatch $attr "*.color"` )
+    {
+      <SPAN CLASS="comment">// Found an active Color connection.</SPAN>
+      <SPAN CLASS="comment">// The following retrieves the Material that feeds the</SPAN>
+      <SPAN CLASS="comment">// Color for this layer.</SPAN>
+      string $connect[] = `listConnections ( $ls + "." + $attr )`;
+
+      <SPAN CLASS="comment">// Extract the index for the connection.</SPAN>
+      string $tokens[];
+      tokenize $attr "[]" $tokens;
+
+      print ( "  Input " + $tokens[1] + " is connected to " + $connect[0] + ".\n" );
+    }
+  }
+}
+</PRE>
+
+<P>Example output:</P>
+
+<PRE>
+Layered Shader: layeredShader1
+  Input 1 is connected to Rufwood.
+  Input 2 is connected to meatwrap.
+</PRE>
+
+<P CLASS="rcomment"><DATE>Wednesday, October 10, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

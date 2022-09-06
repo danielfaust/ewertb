@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#33</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #33</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.032.html">Previous</a></td><td> <a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I select a new object that I've created using MDagModifier?</h2>
+<!-- How do I select a new object that I've created using MDagModifier? -->
+
+<p>When you create a node via MDagModifier, Maya doesn't automatically select the new node, as
+it would do using MEL's "createNode". For example:</p>
+
+<pre class="api">
+MDagModifier dagModifier;
+
+dagModifier.createNode( "locator", MObject::kNullObj );
+
+<SPAN CLASS="comment">// Node is created, but not automatically selected.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+dagModifier.doIt();
+</pre>
+
+<p>To select the node, your first instinct will be to use the returned MObject and add it to a
+MSelectionList:</p>
+
+<pre class="api">
+MObject newNode = dagModifier.createNode( "locator", MObject::kNullObj );
+status = dagModifier.doIt();
+
+MSelectionList list;
+list.add( newNode );
+
+MGlobal::setActiveSelectionList( list );
+</pre>
+
+<p>However, this doesn't work. In fact, you'll need to find the DAG path for the node, and add
+that to the MSelectionList:</p>
+
+<pre class="api">
+MObject newNode = dagModifier.createNode( "locator", MObject::kNullObj );
+status = dagModifier.doIt();
+
+MDagPath dagPath = MDagPath::getAPathTo( newNode );
+
+MSelectionList list;
+list.add( dagPath );
+
+MGlobal::setActiveSelectionList( list );
+</pre>
+
+
+<P CLASS="rcomment"><!-- DATE -->02 Apr 2006</P>
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2006 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <a href="http://www.autodesk.com">Autodesk</a> (formerly <A HREF="http://www.alias.com">Alias</A>)<br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,52 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · tearoffChannelBox</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">tearoffChannelBox</P>
+
+<IMG SRC="tearoffChannelBox.gif" WIDTH="209" HEIGHT="478" BORDER="0" ALIGN="right">
+
+<P>Maya provides the functionality for tearoff menus and windows.  However, two components
+of Maya's UI are notably void of this capability: the Channel Box and the
+Tool Shelf.</P>
+
+<P>Not any more.</P>
+
+<P>The "tearoffChannelBox" script, intuitively, creates a Channel Box window,
+as illustrated at right.</P>
+
+<H3>Requirements</H3>
+
+<P>This MEL script requires the support of the following:</P>
+
+<P CLASS="mel">generateTearoffChannelMenu.mel</P>
+  
+<P CLASS="in">This is essentially a verbatim copy of "<SPAN CLASS="mel"><A HREF="generateChannelMenu.html">generateChannelMenu</A></SPAN>," with the
+hard-coded "mainChannelBox" nodes renamed to "tearoffChannelBox".
+This allows the menus to update interactively.</P>
+  
+<P CLASS="mel">initChannelBox.mel</P>
+  
+<P CLASS="in">This is a standard startup MEL script; you should have this one.</P>
+  
+<H3>Caveats</H3>
+
+<P>This tear-off version of the Channel Box does not support the following functions:</P>
+
+<UL>
+  <LI><P>Manipulator Settings menu</P></LI>
+  <LI><P>Channel Names menu</P></LI>
+  <LI><P>Auto-detect and adjust for long/short/nice names</P></LI>
+</UL>
+
+<H3>Usage</H3>
+
+<P>Install both this script and "generateTearoffChannelMenu.mel" into your
+"<CODE>$HOME/maya/scripts/</CODE>" directory, then call this function.</P>
+
+<!-- footer --></BODY>
+</HTML>

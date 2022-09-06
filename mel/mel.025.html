@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#25</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #25</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.024.html">Previous</a> &middot; <a href="mel.026.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I control the display of Key Ticks in the Time Slider via MEL?</h2>
+<!-- How can I control the display of Key Ticks in the Time Slider via MEL? -->
+
+<P>The command syntax to control the display of the Key Ticks is as follows:</P>
+
+<PRE CLASS="mel">
+global string $gChannelBoxName;
+global string $gPlayBackSlider;
+
+<SPAN CLASS="comment">// No Key Ticks</SPAN>
+timeControl -e -showKeys none $gPlayBackSlider;
+
+<SPAN CLASS="comment">// Active Key Ticks</SPAN>
+timeControl -e -showKeys active $gPlayBackSlider;
+
+<SPAN CLASS="comment">// Key Ticks from Channel Box</SPAN>
+timeControl -e -showKeys $gChannelBoxName $gPlayBackSlider;
+</PRE>
+
+<P>To demonstrate their use in the form of a simple control window:</P>
+
+<DIV CLASS="in">
+<P><IMG SRC="showKeyTicks.gif" WIDTH="187" HEIGHT="75" ALT="Show Key Ticks"></P>
+</DIV>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// showKeyTicks.mel  v1.0  (18 Feb 2000)</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// MEL script for Maya</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//    Bryan Ewert</SPAN>
+<SPAN CLASS="comment">//    http://www.ewertb.com</SPAN>
+
+global proc eg_performShowKeyTicks( int $mode )
+{
+  <SPAN CLASS="comment">// Name of Time Slider</SPAN>
+  global string $gPlayBackSlider;
+
+  <SPAN CLASS="comment">// Name of Channel Box (for Channel Box mode)</SPAN>
+  global string $gChannelBoxName;
+
+  switch ( $mode )
+  {
+    case 0:
+      <SPAN CLASS="comment">// No Key Ticks</SPAN>
+      timeControl -e -showKeys none $gPlayBackSlider;
+      break;
+
+    case 1:
+      <SPAN CLASS="comment">// Active Key Ticks</SPAN>
+      timeControl -e -showKeys active $gPlayBackSlider;
+      break;
+
+    case 2:
+      <SPAN CLASS="comment">// Key Ticks from Channel Box</SPAN>
+      timeControl -e -showKeys $gChannelBoxName $gPlayBackSlider;
+      break;
+
+  }
+}
+
+global proc showKeyTicks()
+{
+  if ( `window -exists eg_showKeyTicks` )
+    deleteUI -window eg_showKeyTicks;
+
+  window -title "Show Key Ticks" eg_showKeyTicks;
+  columnLayout;
+
+    radioCollection;
+    radioButton -label "No Ticks"
+      -onc "eg_performShowKeyTicks(0)";
+    radioButton -label "Active Ticks"
+      -onc "eg_performShowKeyTicks(1)";
+    radioButton -label "Channel Box Ticks"
+      -onc "eg_performShowKeyTicks(2)";
+
+  showWindow;
+}
+</PRE>
+
+<P>Alternatively, you could just hotkey the command that brings up the Animation Timeline and Playback Preferences window:</P>
+
+<PRE CLASS="mel">
+preferencesWnd "timeline";
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

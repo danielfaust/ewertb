@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#62</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #62</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.061.html">Previous</a> &middot; <a href="mel.063.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I set defaults so Materials, Cameras, Layout views, et al. have my own settings every time I start a new scene?</h2>
+<!-- How do I set defaults so Materials, Cameras, Layout views, et al. have my own settings every time I start a new scene? -->
+
+<P>The usual place to store user preferences is in the "userSetup.mel" script.  However, this doesn't work
+for setting attributes of in-scene elements.  The <EM>last</EM> thing Maya does before it gives you control -
+and this is <EM>after</EM> your "userSetup.mel" is executed - is to perform  a &lsquo;<SPAN CLASS="mel">file -new</SPAN>&rsquo;,
+clearing the scene.  This annihilates any attributes you may try to set on Materials, Cameras and the like.</P>
+
+<P>It is possible to create a scriptJob which triggers off of the &lsquo;<CODE>NewSceneOpened</CODE>&rsquo;
+event.  This will execute a script both after the "userSetup.mel" commands <EM>and</EM> after Maya
+performs its scene clear.</P>
+
+<P>In your 'userSetup.mel' add the following line:</P>
+
+<PRE CLASS="mel">
+scriptJob -e NewSceneOpened defaultSceneUI;
+</PRE>
+
+<P>Now create a "defaultSceneUI.mel" script that contains the settings you prefer:</P>
+
+<PRE CLASS="mel">
+global proc defaultSceneUI()
+{
+  <SPAN CLASS="comment">// Set the colour of the initialShadingGroup to an Alias-like cyan</SPAN>
+  setAttr lambert1.color 0.0 0.667 1.0;
+
+  <SPAN CLASS="comment">// Set all Cameras' Far Clipping Plane to 100.0</SPAN>
+  string $cameras[] = `ls -type "camera"`;
+
+  for ( $camera in $cameras )
+  {
+    setAttr ( $camera + ".farClipPlane" ) 100.0;
+  }
+
+  <SPAN CLASS="comment">// Turn on the Polygon Statistics in Heads-up Display</SPAN>
+  if ( `optionVar -q polyCount` == 0 )
+    TogglePolygonCount;
+
+}
+</PRE>
+
+<P>Now every time you clear the scene the scriptJob will adjust the scene setup to your liking.</P>
+
+<P><SPAN CLASS="note">Note</SPAN>: this will not affect newly created items..
+only the ones that exist in Maya's initial scene configuration.</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.047.html">How do I toggle between 'Hide UI Elements' and 'Show UI Elements?'</a></li>
+<li class="howto"><a href="mel.063.html">How do I toggle the Polygon statistics in the Heads-up Display?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Wednesday, April 25, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

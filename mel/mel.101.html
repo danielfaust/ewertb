@@ -1,0 +1,401 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#101</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #101</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.100.html">Previous</a> &middot; <a href="mel.102.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I find a window and query its child layout and controls?</h2>
+<p>You can get a list of all MEL windows using the "lsUI" command, and filtering its results to display only windows with its '-type' flag:</p>
+
+<pre class="mel">
+string $allWindows[] = `lsUI -type "window"`;
+// Result: CommandWindow MayaWindow //
+</pre>
+
+<p>From this list you can query the string used as the title for each window:</p>
+
+<pre class="mel">
+window -q -title $allWindows[0];
+// Result: Script Editor //
+</pre>
+
+<p>If you want to go the other way - that is, knowing the title you want to find the window's UI name:</p>
+
+<pre class="mel">
+proc string findWindowByTitle( string $windowTitle )
+{
+  <SPAN CLASS="comment">// Default empty string to denote that no matching window was found.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $windowUI = "";
+  string $allWindows[] = `lsUI -type "window"`;
+
+  for ( $w in $allWindows )
+  {
+    <SPAN CLASS="comment">// Compare the specified title with that queried from each window.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    if ( $windowTitle == `window -q -title $w` )
+    {
+      <SPAN CLASS="comment">// Found it!</SPAN>
+      <SPAN CLASS="comment">//</SPAN>
+      $windowUI = $w;
+      break;
+    }
+  }
+
+  return $windowUI;
+}
+</pre>
+
+<p>An example run:</p>
+
+<pre class="mel">
+string $windowUI = findWindowByTitle( "Script Editor" );
+print ( "The window titled \"" + $windowTitle + "\" is: " + $windowUI + "\n" );
+
+// Result: The window titled "Script Editor" is: CommandWindow //
+</pre>
+
+<p>The next logical step is to use the name of the window UI to query its child controls. Here's where you
+run into a bit of a snag. The "window" command does not have the expected '-childArray' flag,
+and there's no direct way to query the layout or controls used in the window. Therefore, it is necessary
+to perform a reverse lookup to find the layout.</p>
+
+<pre class="mel">
+global proc string findWindowLayout( string $windowUI )
+{
+  <SPAN CLASS="comment">// Brute force: Get a list of all control layouts, and see which</SPAN>
+  <SPAN CLASS="comment">// is a child of the specified window.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $controls[] = `lsUI -l -controlLayouts`;
+
+  <SPAN CLASS="comment">// Create a wildcard pattern used by the "gmatch" command.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $pattern = $windowUI + "*";
+
+  <SPAN CLASS="comment">// Default empty string to denote that no matching layout was found.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $layout = "";
+
+  for ( $ui in $controls )
+  {
+    <SPAN CLASS="comment">// Compare the wildcard pattern against the name of this control.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    if ( `gmatch $ui $pattern` )
+    {
+      <SPAN CLASS="comment">// Found it!</SPAN>
+      <SPAN CLASS="comment">//</SPAN>
+      string $tokens[];
+      int $numTokens = `tokenize $ui "|" $tokens`;
+      if ( $numTokens &gt; 1 )
+      {
+        <SPAN CLASS="comment">// This returns a path to the control, specifying the window as the parent.</SPAN>
+        <SPAN CLASS="comment">// It's advisable to always reference UI controls by their full path.</SPAN>
+        <SPAN CLASS="comment">//</SPAN>
+        $layout = $tokens[0] + "|" + $tokens[1];
+
+        break;
+      }
+    }
+  }
+
+  return $layout;
+}
+</pre>
+
+
+<p>An example usage:</p>
+
+<pre class="mel">
+string $windowUI = "MayaWindow";
+string $layout = findWindowLayout( $windowUI );
+
+if ( "" != $layout )
+{
+  <SPAN CLASS="comment">// Found a layout.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  print ( "Layout for window \"" + $windowUI + "\": " + $layout + "\n" );
+
+  <SPAN CLASS="comment">// List the child controls.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $ca[] = `layout -q -ca $layout`;
+  print ( "Layout controls:\n" );
+
+  for ( $c in $ca )
+  {
+    <SPAN CLASS="comment">// Always expand UI control names to their full path.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    print ( $layout + "|" + $c + "\n" );
+  }
+}
+else
+{
+  print ( "Layout for \"" + $windowUI + "\" not found.\n" );
+}
+</pre>
+
+<pre>
+Layout for window "MayaWindow": MayaWindow|mayaMainWindowForm
+Layout controls:
+MayaWindow|mayaMainWindowForm|formLayout1
+MayaWindow|mayaMainWindowForm|formLayout2
+MayaWindow|mayaMainWindowForm|formLayout3
+MayaWindow|mayaMainWindowForm|TimeSliderForm
+MayaWindow|mayaMainWindowForm|formLayout4
+MayaWindow|mayaMainWindowForm|formLayout5
+MayaWindow|mayaMainWindowForm|formLayout6
+MayaWindow|mayaMainWindowForm|formLayout7
+</pre>
+
+<p>Now that you have each layout you can query each's children. You don't need to know the type
+of layout referred to by the path; you can use the generic "layout" command to query the child
+array.</p>
+
+<pre class="mel">
+string $ca[] = `layout -q -childArray $layout`;
+</pre>
+
+<p>Howver, if you want to query any properties for a layout that are specific to its type, the generic
+"layout" command will not suffice. Here you can use the "objectTypeUI" command to query the layout's type,
+followed by a series of queries (or edits) for the types you will support.</p>
+
+<pre class="mel">
+if ( `layout -q -exists $layout` )
+{
+  string $layoutType = `objectTypeUI $layout`;
+  
+  switch ( $layoutType )
+  {
+    case "formLayout":
+    {
+      <SPAN CLASS="comment">// Process with "formLayout" command.</SPAN>
+      <SPAN CLASS="comment">//</SPAN>
+      break;
+    }
+    case "frameLayout":
+    {
+      <SPAN CLASS="comment">// Process with "frameLayout" command.</SPAN>
+      <SPAN CLASS="comment">//</SPAN>
+      break;
+    }
+    case "shelfLayout":
+    {
+      <SPAN CLASS="comment">// Process with "shelfLayout" command.</SPAN>
+      <SPAN CLASS="comment">//</SPAN>
+      break;
+    }
+    default:
+    {
+      <SPAN CLASS="comment">// Not supported...</SPAN>
+    }
+}
+</pre>
+
+<p>Here's an example of using findWindowLayout() to print a hierarchical representation of
+the family of layouts that comprise Maya's main window:</p>
+
+<pre class="mel">
+proc printLayoutHierarchy( string $layout, string $parent, int $tab )
+{
+  string $bars = "| | | | | | | | | | | | | | | | | | | | | | | | | | | ";
+
+  <SPAN CLASS="comment">// Note: You _must_ specify the full path for a control in order to</SPAN>
+  <SPAN CLASS="comment">//       avoid ambiguous queries (and in this case, an infinite loop).</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $path = ( $parent + "|" + $layout );
+
+  if ( `layout -q -exists $path` )
+  {
+    <SPAN CLASS="comment">// Print a pseudo-tree representation.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    if ( $tab &gt; 1 ) print ( `substring $bars 1 (($tab-1)*2)` );
+    if ( $tab &gt; 0 ) print ( "+ " );
+    print ( $layout + "\n" );
+
+    <SPAN CLASS="comment">// Query the children of this layout.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    string $ca[] = `layout -q -ca $path`;
+
+    <SPAN CLASS="comment">// And recurse...</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    for ( $c in $ca )
+    {
+      printLayoutHierarchy( $c, $path, $tab+1 );
+    }
+  }
+}
+
+<SPAN CLASS="comment">// Find the path of the layout control for Maya's main window.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $windowUI = "MayaWindow";
+string $path = findWindowLayout( $windowUI );
+
+<SPAN CLASS="comment">// Split this into its path and layout name (short form).</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $layout = `match "[^|]*$" $path`;
+string $parent = `substitute "|[^|]*$" $path ""`;
+
+<SPAN CLASS="comment">// Build a hierarchical tree for this layout.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+printLayoutHierarchy( $layout, $parent, 0 );
+</pre>
+
+Here's an example of its output:
+
+<pre>
+mayaMainWindowForm
++ formLayout1
+| + formLayout12
+| | + formLayout13
+| | | + formLayout40
+| | | | + formLayout41
+| | | | | + presetForm
+| | | | | + masksForm
+| | | | | + selectMaskForm
+| | | | | | + hierarchyIcons
+| | | | | | | + hierPickMenuLayout
+| | | | | | + objectMaskIcons
+| | | | | | | + objPickMenuLayout
+| | | | | | + componentMaskIcons
+| | | | | | | + compPickMenuLayout
+| | | | | + snapIcons
+| | | | | + historyLayout
+| | | | | | + formLayout42
+| | | | | | + formLayout43
+| | | | + formLayout44
++ formLayout2
+| + formLayout14
+| | + formLayout15
+| | | + formLayout49
+| | | | + frameLayout4
+| | | | | + formLayout50
+| | | | + ShelfLayout
+| | | | | + Admin
+| | | | | + Animation
+| | | | | + Colouring
+| | | | | + Develop
+| | | | | + LevelTools
+| | | | | + Polygon
+| | | | | + Primitives
+| | | | | + Render
+| | | | | + Tools
+| | | | | + UI
++ formLayout3
+| + viewPanes
+| | + modelPanel1
+| | + modelPanel2
+| | + modelPanel3
+| | + modelPanel4
+| + formLayout8
+| | + formLayout26
+| | | + formLayout27
+| | | | + frameLayout6
+| | | | | + gridLayout2
+| | | | + frameLayout7
+| | | | | + ToolboxConfigurationGrid
+| | | | | | + ToolboxConfigurationForm
+| | | | | | | + ToolboxContentFrame0
+| | | | | | | + ToolboxContentFrame1
+| | | | | | | + ToolboxContentFrame2
+| | | | | | | + ToolboxContentFrame3
+| + formLayout9
+| | + formLayout28
+| | | + formLayout29
+| | | | + formLayout34
+| | | | | + AEmenuBarLayout
+| | | | | | + AErootLayout
+| | | | | | | + AENothingSelectedLayout
+| | | | | | | + AEbaseFormLayout
+| | | | | | | | + AEheaderLayout
+| | | | | | | | | + AEtabLayout
+| | | | | | | | + AEnodeNameHeaderLayout
+| | | | | | | | + AEcontrolFormLayout
+| | | | | | | + AEselectAndCloseButtonLayout
+| + formLayout10
+| | + formLayout30
+| | | + formLayout31
+| | | | + tabLayout1
+| | | | | + columnLayout1
+| + formLayout11
+| | + formLayout32
+| | | + formLayout33
+| | | | + formLayout35
+| | | | + ChannelsLayersPaneLayout
+| | | | | + formLayout36
+| | | | | | + menuBarLayout1
+| | | | | | | + frameLayout1
+| | | | | + formLayout37
+| | | | | | + menuBarLayout2
+| | | | | | | + formLayout38
+| | | | | | | | + DisplayLayerUITabLayout
+| | | | | | | | | + DisplayLayerTab
+| | | | | | | | | | + LayerEditorDisplayLayerLayout
+| | | | | | | | | + RenderLayerTab
+| | | | | | | | | | + LayerEditorRenderLayerLayout
+| | | | + formLayout39
++ TimeSliderForm
+| + formLayout16
+| | + formLayout17
+| | | + formLayout45
+| | | | + frameLayout2
+| | | | + gridLayout1
++ formLayout4
+| + formLayout18
+| | + formLayout19
+| | | + formLayout46
+| | | | + frameLayout3
+| | | | + formLayout47
++ formLayout5
+| + formLayout20
+| | + formLayout21
+| | | + formLayout48
+| | | | + commandLine1
++ formLayout6
+| + formLayout22
+| | + formLayout23
+| | | + frameLayout5
+| | | | + formLayout51
++ formLayout7
+| + formLayout24
+| | + formLayout25
+</pre>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.094.html">Useful Regular Expressions for MEL</a></li>
+<li class="howto"><a href="mel.106.html">How do I find the type of an anonymous MEL UI control?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->19 Feb 2005</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

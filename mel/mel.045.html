@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#45</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #45</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.044.html">Previous</a> &middot; <a href="mel.046.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I toggle playback between "Normal" and "Free" while playback is running?  It only seems to take effect when I restart playback at the beginning.</h2>
+<!-- How do I toggle playback between "Normal" and "Free" while playback is running?  It only seems to take effect when I restart playback at the beginning. -->
+
+<P>The trick is to stop and restart the playback within the MEL that toggles the Playback Option:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Is the animation currently playing?</SPAN>
+int $isPlaying = `play -q -state`;
+
+<SPAN CLASS="comment">// If so, stop.</SPAN>
+if ( $isPlaying )
+  play -state off;
+
+<SPAN CLASS="comment">// Toggle playback mode between "Free" and "Normal"</SPAN>
+playbackOptions -ps ( !`playbackOptions -q -ps` );
+
+<SPAN CLASS="comment">// If the animation was playing, resume playing with new mode</SPAN>
+if ( $isPlaying )
+  play -state on;
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.089.html">How can I use a single hotkey to toggle a ‘Show’ Option (or other mode)?</a></li>
+<li class="howto"><a href="mel.047.html">How do I toggle between 'Hide UI Elements' and 'Show UI Elements?'</a></li>
+<li class="howto"><a href="mel.048.html">How do I toggle the visibility of the Model panels' menu bars?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Monday, October 23, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#25</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #25</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.024.html">Previous</a> &middot; <a href="api.026.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I select components?</h2>
+<!-- How do I select components? -->
+
+<p>In Maya's API geometry components do not have a specific object type. Rather, they are
+communicated via the generic MObject data handle. For example, MSelectionList returns
+a component selection via the pairing of a MDagPath and an MObject:</p>
+
+<PRE CLASS="api">
+MSelectionList list;
+MDagPath dagPath;
+MObject component;
+
+list.getDagPath( 0, dagPath, component );
+</PRE>
+
+<p>The same is true for MItSelectionList:</p>
+
+<PRE CLASS="api">
+MItSelectionList itSelect( list );
+itSelect.getDagPath( dagPath, component );
+</PRE>
+
+<p>If you query the MObject returned by either of these two methods you will find that they identify
+their component association by their compatible function sets. You can query an individual function
+set using MObject::hasFn(), or get a human-readable list using MGlobal::getFunctionSetList().</p>
+
+<p>For example, a polygon vertex component lists the following function sets:</p>
+
+<PRE>
+[kBase, kComponent, kMeshComponent, kMeshVertComponent, kSingleIndexedComponent]
+</PRE>
+
+<p>A CV of a NURBS surface lists the following:</p>
+
+<PRE>
+[kBase, kComponent, kSurfaceCVComponent, kDoubleIndexedComponent]
+</PRE>
+
+<p>Knowing the compatible function set list for any component's MObject provides all of the
+information necessary to know how to select that component type.</p>
+
+Looking in the documentation for Maya's API you'll find the following class hierarchy:
+
+<ul>
+<li>MFnComponent<br>
+  <ul>
+  <li>MFnTripleIndexedComponent</li>
+  <li>MFnSingleIndexedComponent</li>
+  <li>MFnDoubleIndexedComponent</li>
+  </ul></li>
+</ul>
+
+<p>Using the function set list above we know that vertex components will be managed using MFnSingleIndexedComponent,
+and NURBS surface CVs using MFnDoubleIndexedComponent. This is further evident by the fact that vertex components
+are identified using a single index (e.g. pCube1.vtx[3]), and NURBS surface CVs by an index pair (e.g. nurbsSurface1.cv[0][1]).
+<SPAN CLASS="remark">(A lattice point is an example of a kTripleIndexedComponent.)</SPAN></p>
+
+<p>Additionally, we know that to create an object for vertex components we would use the component type MFn::kMeshVertComponent,
+and for NURBS surface CVS we would use MFn::kSurfaceCVComponent. This component type is passed to the ::create() method for
+any of the MFnComponent function sets. The MFn::Type for each component is usually named logically, and it's typically
+simple enough to find the appropriate enumeration entry by scanning the MFn.h header without the need to query the
+object itself. Still, it's nice to know that there's order to Maya's ways, isn't it?</p>
+
+<p>Once you've created an object for the appropriate component type you simply use the associated MObject, pair it with
+its respective MDagPath, and add this pair to an MSelectionList.</p>
+
+<pre class="api">
+<SPAN CLASS="comment">// Create some geometry for this example.</SPAN>
+<SPAN CLASS="comment">// Note: These functions are not included; this merely </SPAN>
+<SPAN CLASS="comment">//       describes one possible origin for each MDagPath.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+MDagPath polycube;
+MDagPath surface;
+
+create_polycube( polycube );
+create_nurbs_surface( surface );
+
+<SPAN CLASS="comment">// MSelectionList and MObject to store our results.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+MSelectionList select;
+MObject components;
+
+<SPAN CLASS="comment">// ** Polygon example : MFnSingleIndexedComponent **</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+
+<SPAN CLASS="comment">// Vertex indices to be selected.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+const int numElements = 4;
+const int elements[numElements] = { 1, 2, 5, 7 };
+MIntArray elementArray( elements, numElements );
+
+<SPAN CLASS="comment">// Create a MFnSingleIndexedComponent object of type kMeshVertComponent.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+MFnSingleIndexedComponent vertices;
+components = vertices.create( MFn::kMeshVertComponent );
+
+<SPAN CLASS="comment">// Add the vertex indices.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+vertices.addElements( elementArray );
+
+<SPAN CLASS="comment">// Add the vertex components to the selection list.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+select.add( polycube, components );
+
+<SPAN CLASS="comment">// ** NURBS example : MFnDoubleIndexedComponent **</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+
+<SPAN CLASS="comment">// Create a MFnDoubleIndexedComponent object of type kSurfaceCVComponent.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+MFnDoubleIndexedComponent cv;
+components = cv.create( MFn::kSurfaceCVComponent );
+
+<SPAN CLASS="comment">// Add the CV index pair [4][7].</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+cv.addElement( 4, 7 );
+
+<SPAN CLASS="comment">// Add the CV components to the selection list.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+select.add( surface, components );
+
+<SPAN CLASS="comment">// Finally, select everything.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+MGlobal::setActiveSelectionList( select );
+</pre>
+
+<p>If, after executing the above command, we query Maya's selection using MEL we'll get the following results:</p>
+
+<pre class="mel">
+ls -sl;
+// Result: polySurface1.vtx[1:2] polySurface1.vtx[5] polySurface1.vtx[7] surface1.cv[4][7] //
+</pre>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.019.html">How do I execute MEL commands from the API? And <EM>why</EM> would I want or need to execute MEL from the API?</a></li>
+<li class="howto"><a href="api.020.html">What are the advantages of using the API versus MEL?</a></li>
+<li class="howto"><a href="api.028.html">How do I read and write a "componentList" attribute, such as '.inputComponents' found on polygon modifier nodes?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->18 Jul 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,50 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · merge</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">merge</P>
+
+<H3>Function</H3>
+
+<P>I've found an (almost) foolproof method for merging overlapping
+  vertices and edges.  I've encapsulated that method into this script.
+  Whenever you want to merge, just select the target components and type
+  'merge'.  The script is optimized for Edge component selection, but
+  Vertex components will work as well.  Technically, facets will as
+  well, but the function is less optimized for this selection mode.</P>
+
+<P>Sometimes the components won't merge correctly on the first try.
+  Fortunately, a "feature" of the script is to expand the selection
+  after the merge, so if it doesn't work the first time, just try it
+  again right away.  If it still fails after repeated attempts, start
+  over and select <I>only</I> the components that require merging.</P>
+
+<P>If Maya still stubbornly refuses to merge, consider the following:</P>
+
+<H3>Usage Requirements</H3>
+
+<UL>
+    <LI><P>The components must overlap perfectly (or damn close -- I specify
+    a tolerance of 0.01).</P></LI>
+
+   <LI><P>Maya cannot and will not merge adjacent facets with conflicting
+    normals.  Make sure the normals for merging facets are facing the
+    same way.</P></LI>
+
+   <LI><P>Two common edges can only be merged if both are Open Edges.  Maya
+      will not attempt to merge edges that are "winged" by geometry on
+      both sides.</P></LI>
+
+   <LI><P>Maya cannot merge vertices at the junction of "bowtie geometry."
+      Think of two triangles meeting at their top points.  Because of the
+      way Maya builds geometry internally, it is not possible to eliminate
+      the common point for these two triangles.  Facets must share at
+      least a full edge in order to merge common vertices.</P></LI>
+</UL>
+
+<!-- footer --></BODY>
+</HTML>

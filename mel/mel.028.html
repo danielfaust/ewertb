@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#28</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #28</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.027.html">Previous</a> &middot; <a href="mel.029.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I query the tangent angles, weights and types for the keyframes on the object I'm animating?</h2>
+<!-- How do I query the tangent angles, weights and types for the keyframes on the object I'm animating? -->
+
+<P>OK, given that your object is "<CODE>pSphere1</CODE>" and the attribute you wish to query is ‘<CODE>translateY</CODE>’:</P>
+
+<DIV CLASS="in">
+<P>First, is ‘<CODE>translateY</CODE>’ animated?</P>
+</DIV>
+
+<PRE CLASS="mel">
+connectionInfo -isDestination pSphere1.translateY
+// Result: 1 //
+</PRE>
+
+<DIV CLASS="in">
+<P>Yes, it is.  What's animating it?</P>
+</DIV>
+
+<PRE CLASS="mel">
+connectionInfo -sourceFromDestination pSphere1.translateY
+// Result: pSphere1_translateY.output //
+</PRE>
+
+<DIV CLASS="in">
+<P>Is 'pSphere1_translateY' an animCurve?</P>
+</DIV>
+
+<PRE CLASS="mel">
+nodeType pSphere1_translateY;
+// Result: animCurveTL //
+</PRE>
+
+<DIV CLASS="in">
+<P>Yes it is.</P>
+</DIV>
+
+<P>You want to go through all of this before querying keyframe stuff -- you can't rely that it will be an animCurve responsible for any animation.</P>
+
+<P>So, given your animCurve is "<CODE>pSphere1_translateY</CODE>" and given that you're interested in a time value of 1.0:</P>
+
+<DIV CLASS="in">
+<P>Is there a keyframe at time 1.0?</P>
+</DIV>
+
+<PRE CLASS="mel">
+keyframe -t "1.0:1.0" -q -keyframeCount pSphere1_translateY;
+// Result: 1 //
+</PRE>
+
+<DIV CLASS="in">
+<P>Yes there is.  If there wasn't a keyframe at the specified time, the next commands would return no values.</P>
+</DIV>
+
+<PRE CLASS="mel">
+// First some shortcuts
+string $animCurve = "pSphere1_translateY";
+string $timeRange = "1.0:1.0";
+
+// Variables to store the results
+float $inTangent[], $outTangent[], $inWeight[], $outWeight[];
+string $inTangentType[], $outTangentType[];
+
+$inTangent = `keyTangent -t $timeRange -q -inAngle $animCurve`;
+// Result: 45.290781 //
+
+$outTangent = `keyTangent -t $timeRange -q -outAngle $animCurve`;
+// Result: 45.29076 //
+
+$inWeight = `keyTangent -t $timeRange -q -inWeight $animCurve`;
+// Result: 1 //
+
+$outWeight = `keyTangent -t $timeRange -q -outWeight $animCurve`;
+// Result: 1 //
+
+$inTangentType = `keyTangent -t $timeRange -q -inTangentType $animCurve`;
+// Result: fixed //
+
+$outTangentType = `keyTangent -t $timeRange -q -outTangentType $animCurve`;
+// Result: fixed //
+</PRE>
+
+<P>You could also omit the ‘<CODE>&minus;time</CODE>’ option to get a list for all keys on the animCurve:</P>
+
+<PRE CLASS="mel">
+// First, determine which times have keyframes
+keyframe -q -timeChange $animCurve;
+// Result: 1 16 30 //
+</PRE>
+
+<DIV CLASS="in">
+<P>Now get the settings for each key, returned in an array where the order of the settings matches the time values from the array above.</P>
+</DIV>
+
+<PRE CLASS="mel">
+$inTangent = `keyTangent -q -inAngle $animCurve`;
+// Result: 45.290781 -41.692898 -61.0103 //
+$outWeight = `keyTangent -q -outWeight $animCurve`;
+// Result: 1 1 1 //
+$outTangentType = `keyTangent -q -outTangentType $animCurve`;
+// Result: fixed spline spline //
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

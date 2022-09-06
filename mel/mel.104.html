@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#104</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #104</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.103.html">Previous</a> &middot; <a href="mel.105.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I assign an object or face component to a material?</h2>
+<!-- How do I assign an object or face component to a material? -->
+
+<p>Maya uses Shading Groups to control the association of objects and materials. Shading Groups are created as a
+"renderable" set. For example:</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Create a Shading Group</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+sets -renderable true -noSurfaceShader true -empty -name "myShadingGroup";
+</pre>
+
+<p>Logically then, a Shading Group's membership is controlled like other Maya sets - via the "<b>sets</b>" command.</p>
+
+<p>To assign an object or a face component to a material, you simply add that object to the Shading Group
+which controls membership for that material. If you attempt at assign objects to the material instead, Maya
+will politely inform you that a material node is not a set:</p>
+
+<PRE CLASS="mel">
+// Error: The argument provided is NOT a set //
+</PRE>
+
+<p>Note that Shading Group assignments are mutually exclusive - you cannot assign an object to more
+than one Shading Group. If an object is already a member of one Shading Group when you attempt to
+assign it to another, then Maya will issue an error:</p>
+
+<PRE CLASS="mel">
+sets -add blinn1SG pSphere1;
+// Error: Cannot add the following items to the set since they would break the
+          exclusivity constraint //
+</PRE>
+
+<p>To instruct Maya that you know what you're doing and, yes, you do want to re-assign your object to a new
+Shading Group, specify the '<b>-forceElement</b>' flag with the sets command. You'll commonly see this
+flag by its short form: '-fe'.</p>
+
+<PRE class="mel">
+sets -forceElement blinn1SG pSphere1;
+// Result: blinn1SG //
+</PRE>
+
+<p>The same method is used for assigning individual face components to Shading Groups:</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Assign face 0 to a blinn shader.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+sets -fe blinn1SG pSphere1.f[0];
+// Result: blinn1SG //
+
+<SPAN CLASS="comment">// Assign faces 7-11 to a phongE shader.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+sets -fe phongE1SG pSphere1.f[7:11];
+// Result: phongE1SG //
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.043.html">How do I get the assigned Shading Group for an object or face component?</a></li>
+<li class="howto"><a href="mel.091.html">How do I determine which Shading Group is associated with a Material?</a></li>
+<li class="howto"><a href="mel.092.html">How do I determine which Material or File Texture is associated with a Shading Group?</a></li>
+<li class="howto"><a href="mel.103.html">How do I create a shading network that connects a Shading Group, a material and a texture?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->04 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,202 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#10</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #10</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.009.html">Previous</a> &middot; <a href="api.011.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I set and assign the UVs on a UVSet other than "map1" - MFnMesh::setUVs and MFnMesh::assignUVs work sporadically at best?</h2>
+<!-- How do I set and assign the UVs on a UVSet other than "map1" - MFnMesh::setUVs and MFnMesh::assignUVs work sporadically at best? -->
+
+<P><SPAN CLASS="heading">Discrepency with MFnMesh::setUVs()</SPAN></P>
+
+<P>Here's the scenario:  You're creating a new mesh which needs two UVSets.  The first set of UVs uses the default "map1" UVSet, for the other you create a new UVSet called "other".  Sounds simple enough:</P>
+
+<PRE CLASS="api">
+meshObj = fnMesh.create( 4, 2, vertexArray, polygonCounts, polygonConnects );
+
+MDagPath::getAPathTo( meshObj, meshDag );
+meshDag.extendToShape();
+
+<SPAN CLASS="comment">// Array to hold our UVs</SPAN>
+MFloatArray         aUVu;
+MFloatArray         aUVv;
+
+<SPAN CLASS="comment">// Array to hold UVSet names</SPAN>
+MStringArray        UVSetNames;
+UVSetNames.append( "map1" );
+UVSetNames.append( "other" );
+
+<SPAN CLASS="comment">// Create the "other" UVSet.</SPAN>
+<SPAN CLASS="comment">// You MUST do this first!  If called after setting UVs</SPAN>
+<SPAN CLASS="comment">// the UVs mysteriously disappear!</SPAN>
+fnMesh.createUVSet( UVSetNames[1] );
+
+<SPAN CLASS="comment">// Add 4 UVs to "map1" UV Set</SPAN>
+
+aUVu.append( 0.0 );
+aUVv.append( 0.0 );
+
+aUVu.append( 1.0 );
+aUVv.append( 0.0 );
+
+aUVu.append( 0.0 );
+aUVv.append( 1.0 );
+
+aUVu.append( 1.0 );
+aUVv.append( 1.0 );
+
+status = fnMesh.setUVs( aUVu, aUVv, &UVSetNames[0] );
+if ( status == MS::kSuccess )
+  cout &lt;&lt; "fnMesh::setUVs successful." &lt;&lt; endl;
+
+<SPAN CLASS="comment">// Add 3 UVs to "other" UVSet</SPAN>
+
+aUVu.clear();
+aUVv.clear();
+
+aUVu.append( 0.5F );
+aUVu.append( 0.25F );
+
+aUVv.append( 0.5F );
+aUVv.append( 0.5F );
+
+aUVu.append( 1.0F );
+aUVu.append( 0.0F );
+
+status = fnMesh.setUVs( aUVu, aUVv, &UVSetNames[1] );
+if ( status == MS::kSuccess )
+  cout &lt;&lt; "fnMesh::setUVs successful." &lt;&lt; endl;
+
+<SPAN CLASS="comment">// Hmm.. that last setUVs() didn't seem to work?</SPAN>
+<SPAN CLASS="comment">// Let's see what's going on...</SPAN>
+
+int                 numUVs_map1;
+int                 numUVs_other;
+
+numUVs_map1  = fnMesh.numUVs( UVSetNames[0] );
+// Result: 4 //
+
+numUVs_other = fnMesh.numUVs( UVSetNames[1] );
+// Result: 0 //
+</PRE>
+
+<P>So why is the "other" UVSet empty?</P>
+
+<P>I have determined (through much trial and error) that to successfully set the UVs in a UVSet that is not the default UVSet, you <EM>must be defining at least the same number of UVs as exists in the default UVSet</EM>.  In other words, if the new UVSet has fewer UVs than "map1" you must inflate your UV array to be the same size as "map1".</P>
+
+<P>Let's pick up from the "other" UVSet in the example above:</P>
+
+<PRE CLASS="api">
+<SPAN CLASS="comment">// Add 3 UVs to "other" UVSet</SPAN>
+aUVu.clear();
+aUVv.clear();
+
+aUVu.append( 0.5F );
+aUVv.append( 0.25F );
+
+aUVu.append( 0.5F );
+aUVv.append( 0.5F );
+
+aUVu.append( 1.0F );
+aUVv.append( 0.0F );
+
+<SPAN CLASS="comment">// And inflate this array so it has the same number of members as "map1"</SPAN>
+
+aUVu.append( 0.0F );
+aUVv.append( 0.0F );
+
+status = fnMesh.setUVs( aUVu, aUVv, &UVSetNames[1] );
+if ( status == MS::kSuccess )
+  cout &lt;&lt; "fnMesh::setUVs successful." &lt;&lt; endl;
+
+<SPAN CLASS="comment">// Now let's see how we stand.</SPAN>
+
+int                 numUVs_map1;
+int                 numUVs_other;
+
+numUVs_map1  = fnMesh.numUVs( UVSetNames[0] );
+// Result: 4 //
+
+numUVs_other = fnMesh.numUVs( UVSetNames[1] );
+// Result: 4 //
+</PRE>
+
+<P><SPAN CLASS="heading">Discrepency with MFnMesh::assignUVs</SPAN></P>
+
+<P>In a nutshell MFnMesh::assignUVs (note the plural form) does not seem to work with UVSets other than the default "map1".  I have found that I must use MFnMesh::assignUV (in other words, assigning them one-by-one) to assign UVs in this case.</P>
+
+<PRE CLASS="api">
+MIntArray                   aUVCounts;
+MIntArray                   aUVids;
+
+<SPAN CLASS="comment">// Mapping UVs to two triangles (i.e. 3 UVs per face)</SPAN>
+aUVCounts.append( 3 );
+aUVCounts.append( 3 );
+
+<SPAN CLASS="comment">// The UV Map IDs</SPAN>
+aUVids.append( 0 );
+aUVids.append( 1 );
+aUVids.append( 2 );
+aUVids.append( 0 );
+aUVids.append( 2 );
+aUVids.append( 3 );
+
+<SPAN CLASS="comment">// You can use the bulk-mode MFnMesh::assignUVs() for the </SPAN>
+<SPAN CLASS="comment">// default "map1" UVSet ONLY!</SPAN>
+
+status = fnMesh.assignUVs( aUVCounts, aUVids, &UVSetNames[0] );
+if ( status == MS::kSuccess )
+  cout &lt;&lt; "fnMesh::assignUVs successful." &lt;&lt; endl;
+
+<SPAN CLASS="comment">// For all other UVSets, you MUST assign the UVs individually </SPAN>
+<SPAN CLASS="comment">// per vertex, per face.</SPAN>
+
+<SPAN CLASS="comment">// (You can use this method for the default "map1" set, too.)</SPAN>
+
+unsigned                    i, p, v;
+p = 0;
+
+for ( i = 0; i &lt; aUVids.length(); i++ )
+{
+  v = i % 3;  <SPAN CLASS="comment">// derive face-relative vertex index</SPAN>
+
+  status = fnMesh.assignUV( p, v, aUVids[i], &UVSetNames[1] );
+  if ( status != MS::kSuccess )
+    cerr &lt;&lt; " ! assignUV FAILED ! " &lt;&lt; endl;
+
+  if ( v == 2 ) p++;  <SPAN CLASS="comment">// increment poly index if last vertex</SPAN>
+}
+</PRE>
+
+<P CLASS="rcomment"><DATE>Thursday, April 05, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

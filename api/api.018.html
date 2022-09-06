@@ -1,0 +1,262 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#18</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #18</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.017.html">Previous</a> &middot; <a href="api.019.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I write a polygon mesh exporter?</h2>
+<!-- How do I write a polygon mesh exporter? -->
+
+<P CLASS="anno">After a deluge of queries on this (well, OK, three) in the span of a week,
+I'm thinking there may be some interest in having this posted here…</P>
+
+<P>The API class that you use to register an "exporter" plug-in is &lsquo;<CODE><SPAN CLASS="api">MPxFileTranslator</SPAN></CODE>&rsquo;.
+Unfortunately, Maya's documentation on the specifics for using this class are sparse
+(let me know if you find any!) so you pretty much have to rely on the example source
+code provided in the devkit folder.</P>
+
+<P>Ultimately, a polygon exporter boils down to the dissection of each mesh object in the
+scene, and knowing how to acquire the vertex positions, normals, colours, and UVs.
+A basic polygon exporter can be written using only <CODE>MFnMesh</CODE> and <CODE>MItMeshPolygon</CODE>.</P>
+
+<P>Below is an amalgamate of code from various exporters I've written in the past.
+For the sake of simplicity (this is intended as an "introduction" to building an exporter),
+it does not cover processing multiple UV Sets (although this is as simple as iterating the
+sets), nor does it deal with Materials and Textures assigned to the mesh. Also, I don't
+touch on exporting animations.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> I have not attempted to compile this code as it is written
+here, but it should be fundamentally correct as it was ripped out of actual production tools.
+If you find any errors please let me know and I'll correct them.</P>
+
+<BR>
+
+<P>First, we start with a utility function. For retrieving the normals for vertex-face components,
+Maya's API requires face-relative vertex indices. However, the methods for querying the
+vertices associated with the triangulation of an n-gon return object-relative indices.
+This method converts from object-relative indices to face-relative indices.</P>
+
+<PRE CLASS="api">
+<SPAN CLASS="comment">// ********************************************************************
+// MItMeshPolygon::getTriangle() returns object-relative vertex
+// indices; BUT MItMeshPolygon::normalIndex() and ::getNormal() need
+// face-relative vertex indices! This converts vertex indices from
+// object-relative to face-relative.
+//
+// param  getVertices: Array of object-relative vertex indices for
+//                     entire face.
+// param  getTriangle: Array of object-relative vertex indices for
+//                     local triangle in face.
+//
+// return Array of face-relative indicies for the specified vertices.
+//        Number of elements in returned array == number in getTriangle
+//        (should be 3).
+//
+// note   If getTriangle array does not include a corresponding vertex
+//        in getVertices array then a value of (-1) will be inserted
+//        in that position within the returned array.
+// ********************************************************************</SPAN>
+MIntArray GetLocalIndex( MIntArray & getVertices, MIntArray & getTriangle )
+{
+  MIntArray   localIndex;
+  unsigned    gv, gt;
+
+  assert ( getTriangle.length() == 3 );    <SPAN CLASS="comment">// Should always deal with a triangle</SPAN>
+
+  for ( gt = 0; gt < getTriangle.length(); gt++ )
+  {
+    for ( gv = 0; gv < getVertices.length(); gv++ )
+    {
+      if ( getTriangle[gt] == getVertices[gv] )
+      {
+        localIndex.append( gv );
+        break;
+      }
+    }
+
+    <SPAN CLASS="comment">// if nothing was added, add default "no match"</SPAN>
+    if ( localIndex.length() == gt )
+      localIndex.append( -1 );
+  }
+
+  return localIndex;
+}
+</PRE>
+
+<P>And here's the function that does all the work. Given the DAG path for a mesh, it extracts
+the triangles that may be used to construct the shape. The way this code is written the
+data doesn't actually go anywhere - it simply drops out of scope when the method returns.
+You'll want to define class members to hold the information, or add an argument that provides
+appropriate storage.</P>
+
+<PRE CLASS="api">
+MStatus ExportMesh( const MDagPath& dagForMesh )
+{
+   MStatus  status;
+
+  MFnMesh  fnMesh( dagForMesh );
+
+  <SPAN CLASS="comment">//  Cache positions for each vertex</SPAN>
+  MPointArray meshPoints;
+  fnMesh.getPoints( meshPoints, MSpace::kObject );
+
+  <SPAN CLASS="comment">//  Cache normals for each vertex</SPAN>
+  MFloatVectorArray  meshNormals;
+  <SPAN CLASS="comment">// Normals are per-vertex per-face..</SPAN>
+  <SPAN CLASS="comment">// use MItMeshPolygon::normalIndex() for index</SPAN>
+  fnMesh.getNormals( meshNormals );
+
+  <SPAN CLASS="comment">// Get UVSets for this mesh</SPAN>
+  MStringArray  UVSets;
+  status = fnMesh.getUVSetNames( UVSets );
+
+  <SPAN CLASS="comment">// Get all UVs for the first UV set.</SPAN>
+  MFloatArray   u, v;
+  fnMesh.getUVs( u, v, &UVSets[0] );
+
+  <SPAN CLASS="comment">// Get Colors for this mesh</SPAN>
+  <SPAN CLASS="comment">// (Not used in this example - included for reference)</SPAN>
+  MColorArray  vertexColors;
+  MColorArray  faceVertexColors;
+  fnMesh.getVertexColors( vertexColors );
+  fnMesh.getFaceVertexColors( faceVertexColors );
+
+  int  vtxInPolygon;
+
+  MItMeshPolygon  itPolygon( dagForMesh, MObject::kNullObj );
+  for ( /* nothing */; !itPolygon.isDone(); itPolygon.next() )
+  {
+    <SPAN CLASS="comment">// Get object-relative indices for the vertices in this face.</SPAN>
+    MIntArray                           polygonVertices;
+    itPolygon.getVertices( polygonVertices );
+
+    <SPAN CLASS="comment">// Get triangulation of this poly.</SPAN>
+    int numTriangles = itPolygon.numTriangles();
+    while ( numTriangles-- )
+    {
+        MPointArray                     nonTweaked;
+        <SPAN CLASS="comment">// object-relative vertex indices for each triangle</SPAN>
+        MIntArray                       triangleVertices;
+        <SPAN CLASS="comment">// face-relative vertex indices for each triangle</SPAN>
+        MIntArray                       localIndex;
+
+        status = itPolygon.getTriangle( numTriangles,
+                                        nonTweaked,
+                                        triangleVertices,
+                                        MSpace::kObject );
+
+        if ( status == MS::kSuccess )
+        {
+
+      <SPAN CLASS="comment">// --------  Get Positions  --------</SPAN>
+<SPAN CLASS="comment">
+          // While it may be tempting to use the points array returned
+          // by MItMeshPolygon::getTriangle(), don't. It does not represent
+          // poly tweaks in its coordinates!
+
+          // Positions are:
+          //  { meshPoints[triangleVertices[0]],
+          //    meshPoints[triangleVertices[1]],
+          //    meshPoints[triangleVertices[2]] }
+</SPAN>
+      <SPAN CLASS="comment">// --------  Get Normals  --------</SPAN>
+<SPAN CLASS="comment">
+          // (triangleVertices) is the object-relative vertex indices
+          // BUT MItMeshPolygon::normalIndex() and ::getNormal() needs
+          // face-relative vertex indices!
+</SPAN>
+          <SPAN CLASS="comment">// Get face-relative vertex indices for this triangle</SPAN>
+          localIndex = GetLocalIndex( polygonVertices,
+                                      triangleVertices );
+<SPAN CLASS="comment">
+          // Normals are:
+          //  { meshNormals[ itPolygon.normalIndex( localIndex[0] ) ],
+          //    meshNormals[ itPolygon.normalIndex( localIndex[1] ) ],
+          //    meshNormals[ itPolygon.normalIndex( localIndex[2] ) ] }
+</SPAN>
+      <SPAN CLASS="comment">// --------  Get UVs  --------</SPAN>
+
+          <SPAN CLASS="comment">// Note: In this example I'm only considering the first UV Set.</SPAN>
+          <SPAN CLASS="comment">// If you want more simply loop through the sets in the UVSets array.</SPAN>
+
+          int uvID[3];
+
+          <SPAN CLASS="comment">// Get UV values for each vertex within this polygon</SPAN>
+          for ( vtxInPolygon = 0; vtxInPolygon < 3; vtxInPolygon++ )
+          {
+            itPolygon.getUVIndex( localIndex[vtxInPolygon],
+                                  uvID[vtxInPolygon],
+                                  &UVSets[0] );
+          }
+<SPAN CLASS="comment">
+          // UVs are:
+          //  { { u[uvID[0]], v[uvID[0]] },
+          //    { u[uvID[1]], v[uvID[1]] },
+          //    { u[uvID[2]], v[uvID[2]] } }
+</SPAN>
+      <SPAN CLASS="comment">// --------  Get Colours  --------</SPAN>
+
+          MColor colours[3];
+
+          <SPAN CLASS="comment">// Get Colour values for each vertex within this polygon</SPAN>
+          for ( vtxInPolygon = 0; vtxInPolygon < 3; vtxInPolygon++ )
+          {
+            itPolygon.getColor( colours[vtxInPolygon],
+                                localIndex[vtxInPolygon] );
+          }
+<SPAN CLASS="comment">
+          // Colours are:
+          //  { colours[0],
+          //    colours[1],
+          //    colours[2] }
+</SPAN>
+      }    <SPAN CLASS="comment">// getTriangle()</SPAN>
+
+    }    <SPAN CLASS="comment">// while (triangles)</SPAN>
+
+  }    <SPAN CLASS="comment">// itPolygon()</SPAN>
+
+  return status;
+
+}    <SPAN CLASS="comment">// ExportMesh()</SPAN>
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.009.html">How do I extract animated polymesh vertex coordinates?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>04 April, 2003</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

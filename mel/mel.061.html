@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#61</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #61</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.060.html">Previous</a> &middot; <a href="mel.062.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I create a MEL procedure that can accept multiple (and optional) flags or arguments?</h2>
+<!-- How can I create a MEL procedure that can accept multiple (and optional) flags or arguments? -->
+
+<P>Unfortunately, MEL does not support overloaded procedure declarations, variable argument lists or default argument assignments.  Thus it requires extra work to create a MEL command that can accept a varying argument list, such as:</P>
+
+<PRE CLASS="mel">
+processPolys -planar;
+
+processPolys -textured -triangles;
+</PRE>
+
+<P>There are two ways you could implement support for multiple arguments.  In neither case will you be able to use the syntax form suggested above, however.  MEL will expect the arguments in a more formal format.</P>
+
+<P><SPAN CLASS="heading">Method #1: Single String Argument</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>The first way is to accept a single string argument which encapsulates all arguments.  This will be tokenized within the MEL script and options will be extracted and parsed.</P>
+
+<PRE CLASS="mel">
+global proc processPolys( string $argList )
+{
+  <SPAN CLASS="comment">// Set defaults first</SPAN>
+  int $optionPlanar = false;
+  int $optionTriangles = false;
+
+  string $argData[];
+
+  <SPAN CLASS="comment">// Separate space-delimited arguments into argument array</SPAN>
+  tokenize $argList " " $argData;
+
+  for ( $arg in $argData )
+  {
+    switch( $arg )
+    {
+      case "-planar":
+        $optionPlanar = true;
+        break;
+      case "-triangles":
+        $optionTriangles = true;
+        break;
+      // A NULL string will parse to a single token?
+      case ""
+        break;
+      default:
+        error ( "Unsupported flag: " + $arg );
+    }
+  }
+
+  <SPAN CLASS="comment">// Continue with script execution.</SPAN>
+}
+</PRE>
+
+<P><SPAN CLASS="heading">Examples</SPAN></P>
+
+<PRE CLASS="mel">
+processPolys "-planar -triangles";
+
+<SPAN CLASS="comment">// Single argument</SPAN>
+processPolys "-planar";
+
+<SPAN CLASS="comment">// Nope, not this way...</SPAN>
+processPolys;
+// Error: Line 1.13: Wrong number of arguments on call to processPolys. //
+
+<SPAN CLASS="comment">// To use defaults, specify empty string to declare no options</SPAN>
+processPolys "";
+</PRE>
+
+</DIV>
+
+<P><SPAN CLASS="heading">Method #2: String Array Argument</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>Another form of "variable argument list" is to declare a single argument as a string array and allow the user to be able to include as many options within the array as needed.  Parsing would be identical to the method above, but the string array would eliminate the need to tokenize them from a single string.  That's really the only difference.</P>
+
+<PRE CLASS="mel">
+global proc processPolys( string $argData[] )
+{
+  <SPAN CLASS="comment">// Set defaults first</SPAN>
+  int $optionPlanar = false;
+  int $optionTriangles = false;
+
+  <SPAN CLASS="comment">// No need to tokenize into an array as we already have one.</SPAN>
+
+  <SPAN CLASS="comment">// Now process any arguments specified by the user</SPAN>
+
+  <SPAN CLASS="comment">// ... same as above.</SPAN>
+}
+</PRE>
+
+<P><SPAN CLASS="heading">Examples</SPAN></P>
+
+<PRE CLASS="mel">
+processPolys { "-planar", "-triangles" };
+
+<SPAN CLASS="comment">// Single argument</SPAN>
+processPolys { "-planar" };
+
+<SPAN CLASS="comment">// Nope, not this way...</SPAN>
+processPolys;
+// Error: Line 1.9: Wrong number of arguments on call to processPolys. //
+
+<SPAN CLASS="comment">// To use defaults, specify empty array to declare no options</SPAN>
+processPolys { };
+</PRE>
+
+</DIV>
+
+</DIV>
+
+<P CLASS="rcomment"><DATE>Tuesday, March 27, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

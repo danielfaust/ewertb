@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#78</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #78</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.077.html">Previous</a> &middot; <a href="mel.079.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine the path for a script while it is executing; for example, to load another file in the same folder?</h2>
+<!-- How do I determine the path for a script while it is executing; for example, to load another file in the same folder? -->
+
+<P>If you have any global procedures in the script you can track it with the
+<SPAN CLASS="mel">whatIs</SPAN> command.</P>
+
+<PRE CLASS="mel">
+string $result = `whatIs myGlobalProc`;
+</PRE>
+
+<P>Unfortunately this returns the human-readable form of:</P>
+
+<PRE>
+Mel procedure found in: C:/AW/Maya4.0/scripts/others/myScript.mel
+</PRE>
+
+<P>But a simple tokenize will yield the result:</P>
+
+<PRE CLASS="mel">
+string $tokens[];
+tokenize $result " " $tokens;
+
+print ( "My location is: " + $tokens[4] + "\n" );
+</PRE>
+
+<P>The output:</P>
+
+<PRE>
+My location is: C:/AW/Maya4.0/scripts/others/myScript.mel
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> If your path or filename contain spaces you'll have to concatenate
+elements 4+ to get the complete path description.</P>
+
+<P>You have to be careful that what you have found is in fact a MEL script and not an internal command.  For example:</P>
+
+<PRE CLASS="mel">
+whatIs sphere;
+// Result: Command //
+</PRE>
+
+<P>Consider the following script:</P>
+
+<PRE CLASS="mel">
+global proc myScript()
+{
+    print ( "Procedure is running in script: " + whereIs( "myScript" ) + "\n" );
+}
+
+print ( "Script being sourced is: " + whereIs( "myScript" ) + "\n" );
+</PRE>
+
+<P>And the <SPAN CLASS="mel">whereIs</SPAN> MEL command:</P>
+
+<PRE CLASS="mel">
+global proc string whereIs( string $procedure )
+{
+    string $where = "";
+
+    if ( `exists $procedure` )
+    {
+        <SPAN CLASS="comment">// Use the whatIs command to determine the location.</SPAN>
+        string $result = eval( "whatIs " + $procedure );
+
+        <SPAN CLASS="comment">// Parse the human-readable form.</SPAN>
+        string $tokens[];
+        int $numTokens = `tokenize $result " " $tokens`;
+
+        <SPAN CLASS="comment">// Make sure this is a MEL script and not an internal command.</SPAN>
+        if ( $tokens[0] == "Mel" )
+        {
+            <SPAN CLASS="comment">// Concatenate path if it contains spaces.</SPAN>
+            for ( $i = 4; $i &lt; $numTokens; $i++ )
+            {
+                $where = $where + $tokens[$i];
+
+                if ( $i &lt; $numTokens )
+                {
+                    $where = $where + " ";
+                }
+            }
+        }
+    }
+
+    return $where;
+}
+</PRE>
+
+<P>Put them together:</P>
+
+<PRE CLASS="mel">
+source myScript;
+Script being sourced is: D:/AW/Bryan/scripts/myScript.mel
+</PRE>
+
+<PRE CLASS="mel">
+myScript;
+Procedure is running in script: D:/AW/Bryan/scripts/myScript.mel
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.040.html">How do I extract just the filename or just the directory from an absolute path description?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>05 January 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

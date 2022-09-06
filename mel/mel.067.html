@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#67</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #67</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.066.html">Previous</a> &middot; <a href="mel.068.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I control the visibility for the currently active Display Layer?</h2>
+<!-- How do I control the visibility for the currently active Display Layer? -->
+
+<P>A quick scan through the MEL Command Reference indicates the following
+commands are available for accessing Display Layer information:</P>
+
+<PRE>
+createDisplayLayer
+editDisplayLayerGlobals
+editDisplayLayerMembers
+</PRE>
+
+<P>The second of these commands is used to query and set the current Display
+Layer; e.g.:</P>
+
+<PRE CLASS="mel">
+string $currentDisplayLayer = `editDisplayLayerGlobals -q -currentDisplayLayer`;
+// Result: defaultLayer //
+</PRE>
+
+<P>A Display Layer's visibility is controlled in the same manner as other Maya
+nodes -- that is, by its &lsquo;<CODE>.visibility</CODE>&rsquo; attribute; e.g.:</P>
+
+<PRE CLASS="mel">
+setAttr defaultLayer.visibility true;
+</PRE>
+
+<P>So, to toggle the visibility of the current Display Layer:</P>
+
+<PRE CLASS="mel">
+string $currentDisplayLayer = `editDisplayLayerGlobals -q -currentDisplayLayer`;
+
+string $visAttr = ( $currentDisplayLayer + ".visibility" );
+
+setAttr $visAttr ( !`getAttr $visAttr` );
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.089.html">How can I use a single hotkey to toggle a ‘Show’ Option (or other mode)?</a></li>
+<li class="howto"><a href="mel.045.html">How do I toggle playback between "Normal" and "Free" while playback is running?  It only seems to take effect when I restart playback at the beginning.</a></li>
+<li class="howto"><a href="mel.047.html">How do I toggle between 'Hide UI Elements' and 'Show UI Elements?'</a></li>
+<li class="howto"><a href="mel.048.html">How do I toggle the visibility of the Model panels' menu bars?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Monday, May 21, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

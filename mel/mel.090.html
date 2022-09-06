@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#90</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #90</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.089.html">Previous</a> &middot; <a href="mel.091.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I determine if a polygon face component is planar?</h2>
+<!-- How can I determine if a polygon face component is planar? -->
+
+<P>The following MEL procedure can be used to determine if a polymesh face is planar.</P>
+
+<P CLASS="anno">Some error-checking is avoided in the following example code.  The downloadable script (at left) contains robust error-checking.</P>
+
+<PRE CLASS="mel">
+global proc int isPlanar( string $mesh, int $face )
+{
+  <SPAN CLASS="comment">// Get vertices for this face</SPAN>
+  string $vertices[] = `polyListComponentConversion -toVertex ( $mesh + ".f[" + $face + "]" )`;
+
+  <SPAN CLASS="comment">// Because the -toVertex result is non-expanded, select and get expanded version</SPAN>
+
+  select -r $vertices;
+  $vertices = `filterExpand -sm 31 -ex true`;
+
+  <SPAN CLASS="comment">// If this face is triangular, it is a given that it is planar.</SPAN>
+  if ( size( $vertices ) == 3 )
+    return true;
+
+  <SPAN CLASS="comment">// Derive normal from first three vertices in face</SPAN>
+  float $f0[3] = `xform -ws -q -t $vertices[0]`;
+  float $f1[3] = `xform -ws -q -t $vertices[1]`;
+  float $f2[3] = `xform -ws -q -t $vertices[2]`;
+
+  vector $v1 = &lt;&lt; $f1[0], $f1[1], $f1[2] &gt;&gt; - &lt;&lt; $f0[0], $f0[1], $f0[2] &gt;&gt;;
+  vector $v2 = &lt;&lt; $f2[0], $f2[1], $f2[2] &gt;&gt; - &lt;&lt; $f0[0], $f0[1], $f0[2] &gt;&gt;;
+
+  vector $normal = unit( $v1 ^ $v2 );   <SPAN CLASS="comment">// cross product</SPAN>
+
+  <SPAN CLASS="comment">// For each additional vertex, generate vector from vertex to plane of triangle</SPAN>
+  for ( $v = 3; $v &lt; size( $vertices ); $v++ )
+  {
+    float $f[3] = `xform -ws -q -t $vertices[$v]`;
+    vector $vp  = &lt;&lt; $f[0] - $f0[0], $f[1] - $f0[1], $f[2] - $f0[2] &gt;&gt;;
+
+    <SPAN CLASS="comment">// Take dot-product of vector to normal of plane</SPAN>
+    float $dot = $vp * $normal;
+
+    <SPAN CLASS="comment">// If distance determined by dot-product is not equal to 0, this face is not planar</SPAN>
+    if ( $dot != 0 )
+      return false;
+  }
+
+  <SPAN CLASS="comment">// The face is planar</SPAN>
+  return true;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.005.html">How do I get the normal vector for a polygon face or vertex?</a></li>
+<li class="howto"><a href="mel.036.html">How can I ensure that a polygon face component is planar?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Tuesday, December 05, 2000</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2004 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

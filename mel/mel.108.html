@@ -1,0 +1,303 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#108</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #108</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.107.html">Previous</a> &middot; <a href="mel.109.html">Next</a></td><td> <a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I plot equidistant points along a curve?</h2>
+<!-- How do I plot equidistant points along a curve? -->
+
+<h3 class="body">"arcLengthDimension" Node</h3>
+ 
+<p>The key here is to use an arcLengthDimension node to measure the distance
+along the curve.<p>
+
+<div class="sidebar">
+The arcLengthDimension node is also covered in MEL How-To #73:<br>
+<div class="in">
+<a href="../mel/mel.073.html">How do I determine the length of a NURBS curve?</a>
+</div>
+</div>
+
+<p>The first thing is to create a curve that will be used during the course of this experiment.</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// Our unsuspecting curve.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $curve = `curve -d 3 -p -3.311535524 0.01465542598  0.01668581601
+                            -p -3.066300435 0.72711707080 -0.29778268700
+                            -p -2.575830259 2.15204036000 -0.92671969290
+                            -p  1.845868694 2.12236523700 -0.94456269070
+                            -p  2.788845691 0.71280207790 -0.33237598680
+                            -p  3.258764000 0.00803332170 -0.02627731900
+                            -k 0 -k 0 -k 0 -k 1 -k 2 -k 3 -k 3 -k 3`;
+</pre>
+
+<p>Now find the length of the entire curve using an "arcLengthDimension" node. This is achieved
+by specifying the U parameter for the end of the curve and querying the distance to that point.
+</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// Determine the U range for this curve.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+float $maxU = `getAttr ( $curve + ".maxValue" )`;
+// Result: 3.0 //
+
+<SPAN CLASS="comment">// Create an arcLengthDimension node, attached downstream of this curve.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $arcLD = `arcLengthDimension ( $curve + ".u[" + $maxU + "]" )`;
+// Result: arcLengthDimensionShape1  //
+
+<SPAN CLASS="comment">// Query the distance to the U parameter.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+float $arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 8.6 //
+</pre>
+
+<p>Unfortunately, there's no equivalent "specify a distance to a point along a
+curve and query the U parameter." This is where the work is involved.</p>
+
+<h3 class="body">Walkthrough</h3>
+
+<p>In order to find the U parameter at a particular distance (without a convenient means to
+query it directly), continually divide the curve (or a segment of the curve) in half, measuring
+at the midpoint of each subdivision. If the point lay before the desired distance, subdivide the
+lesser half of the curve segment and continue. If the point lay past the desired distance
+subdivide the greater half. When a point is found that is close enough to the target, stop the
+traversal. It's rather like walking an infinitely large red-black tree. However, rather than
+committing to find a match, the traversal stops when the measured value is within an arbitrary
+tolerance.</p>
+
+<p>For this example we'll plot 10 equidistant points along the curve generated above. If the
+total length for the curve is 8.6cm then each of the 10 equidistant points will be 0.9556cm
+apart - this assuming that two points lie at the start (U = 0.0) and end (U = 3.0, in this
+example) of the curve.</p>
+
+<p>Plotting the first point is easy: U = 0.0, and distance = 0.0.</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// Get the world-space location for the edit point at U = 0.0.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+float $xyz[3] = `pointOnCurve -pr 0.0 -p $curve`;
+
+<SPAN CLASS="comment">// Plot a locator there.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+spaceLocator -p $xyz[0] $xyz[1] $xyz[2];
+</pre>
+
+<p>The next point will be 0.9557cm from the curve's head. The first pass divides the curve in
+half and checks the distance at the curve's halfway point (U = 1.5, in this example).</p>
+
+<pre class="mel">
+setAttr ( $arcLD + ".uParamValue" ) 1.5;
+$arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 4.099855 //
+</pre>
+
+<p>Much too far from the desired distance. Split in half between 0.0 and 1.5, and test at 0.75.</p>
+
+<pre class="mel">
+setAttr ( $arcLD + ".uParamValue" ) 0.75;
+$arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 1.802793 //
+</pre>
+
+<p>Continue...</p>
+
+<pre class="mel">
+setAttr ( $arcLD + ".uParamValue" ) 0.375;
+$arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 0.909892 //
+</pre>
+
+<p>OK, so our point is between U = 0.375 and U = 0.75.</p>
+
+<pre class="mel">
+setAttr ( $arcLD + ".uParamValue" ) 0.5625;
+$arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 1.354677 //
+</pre>
+
+<p>And now between U = 0.375 and 0.5625.</p>
+
+<pre class="mel">
+setAttr ( $arcLD + ".uParamValue" ) 0.46875;
+$arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 1.132847 //
+</pre>
+
+<p>And so on.. you get the idea. Stop when $arcLength is close enough to the
+target distance.</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// Within 0.001cm is close enough.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+float $epsilon = 0.001;
+
+if ( abs( $arcLength - $distance ) &lt; $epsilon )
+{
+  <SPAN CLASS="comment">// Found point. Do something with it.</SPAN>
+}
+</pre>
+
+<p>For our example curve, a satisfactory close result was found at U = 0.3940429688.</p>
+
+<pre class="mel">
+setAttr ( $arcLD + ".uParamValue" ) 0.3940429688;
+$arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+// Result: 0.955322 //
+
+<SPAN CLASS="comment">// Accurate within +/- 1/1000 of a centimeter.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+print ( abs( 0.955322 - 0.9557 ) );
+// Result: 0.000378 // 
+</pre>
+
+<p>You may think that this method would be slow, but it's not too bad. The
+distance above was isolated in only 11 passes.</p>
+
+<h3 class="body">The Final Solution</h3>
+
+<p>Here's what you really came for: The MEL script that puts it all together in one convenient package:</p>
+
+<pre class="mel">
+proc float findParamAtDistance( string $curve, 
+                                string $arcLD, 
+                                float $distance, 
+                                float $epsilon )
+{
+  float $u = 0.0;
+  
+  float $min = `getAttr ( $curve + ".minValue" )`;
+  float $max = `getAttr ( $curve + ".maxValue" )`;
+
+  setAttr ( $arcLD + ".uParamValue" ) $max;
+  float $arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+  
+  <SPAN CLASS="comment">// Don't bother doing any work for the start or end of the curve.</span>
+  <SPAN CLASS="comment">//</span>
+  if ( $distance &lt;= 0.0 ) return 0.0;
+  if ( $distance &gt;= $arcLength ) return $max;
+
+  <SPAN CLASS="comment">// This is merely a diagnostic to measure the number of passes required to </SPAN>
+  <SPAN CLASS="comment">// find any particular point. You may be surprised that the number of </span>
+  <SPAN CLASS="comment">// passes is typically quite low.</span>
+  <SPAN CLASS="comment">//</span>
+  int $pass = 1;
+
+  while ( true )
+  {
+    $u = ( $min + $max ) / 2.0;
+    setAttr ( $arcLD + ".uParamValue" ) $u;
+    $arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+    if ( abs( $arcLength - $distance ) &lt; $epsilon ) break;
+    if ( $arcLength &gt; $distance ) $max = $u;
+    else $min = $u;
+    $pass++;
+  }
+  
+  return $u;
+}
+
+proc string plotLocator( string $curve, float $uParam )
+{
+  float $p[3] = `pointOnCurve -pr $uParam -p $curve`;
+  string $locator[] = `spaceLocator -p $p[0] $p[1] $p[2]`;
+  
+  return $locator[0];
+}
+
+global proc plotEquidistantLocatorsOnCurve( string $curve, int $count )
+{
+  <SPAN CLASS="comment">// Even two is kind of silly, really.</span>
+  <SPAN CLASS="comment">//</span>
+  if ( $count &lt; 2 ) error( "Must plot at least two equidistant locators." );
+  
+  <SPAN CLASS="comment">// Determine the U range for this curve.</span>
+  <SPAN CLASS="comment">//</span>
+  float $maxU = `getAttr ( $curve + ".maxValue" )`;
+
+  <SPAN CLASS="comment">// Create an arcLengthDimension node for the curve.</span>
+  <SPAN CLASS="comment">//</span>
+  string $arcLD = `arcLengthDimension ( $curve + ".u[" + $maxU + "]" )`;
+
+  <SPAN CLASS="comment">// Find the overall length of the curve.</span>
+  <SPAN CLASS="comment">//</span>
+  float $arcLength = `getAttr ( $arcLD + ".arcLength" )`;
+  
+  <SPAN CLASS="comment">// Span of each plot is ( $arcLength / ( $count - 1 ) )</span>
+  <SPAN CLASS="comment">//</span>
+  float $span = $arcLength / ( $count - 1 );
+  
+  <SPAN CLASS="comment">// First plot is at 0.0.</span>
+  <SPAN CLASS="comment">//</span>
+  plotLocator( $curve, 0.0 );
+  
+  <SPAN CLASS="comment">// Fill in the middle.</span>
+  <SPAN CLASS="comment">//</span>
+  float $epsilon = 0.0001;
+  int $i;
+  for ( $i = 1; $i &lt; ( $count - 1 ); $i++ )
+  {
+    float $distance = $span * $i;
+    float $uParam = findParamAtDistance( $curve, $arcLD, $distance, $epsilon );
+    plotLocator( $curve, $uParam );
+  }
+
+  <SPAN CLASS="comment">// Final plot is at $maxU.</span>
+  <SPAN CLASS="comment">//</span>
+  plotLocator( $curve, $maxU );
+  
+  <SPAN CLASS="comment">// Delete the arcLengthDimensionNode (by its transform).</span>
+  <SPAN CLASS="comment">//</span>
+  delete `listRelatives -fullPath -parent $arcLD`;
+}
+</pre>
+
+Example usage:
+
+<pre class="mel">
+plotEquidistantLocatorsOnCurve( "curve1", 10 );
+</pre>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.073.html">How do I determine the length of a NURBS curve?</a></li>
+<li class="howto"><a href="mel.105.html">How do I align an object to a curve (without using a constraint)?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->20 Feb 2005</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2006 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <a href="http://www.autodesk.com">Autodesk</a> (formerly <A HREF="http://www.alias.com">Alias</A>)<br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

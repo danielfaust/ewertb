@@ -1,0 +1,220 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#102</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #102</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.101.html">Previous</a> &middot; <a href="mel.103.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I convert between Maya's internal linear unit ('cm') and the unit which is represented in the UI?</h2>
+<p>Below are two procedures that may be used to convert between Maya's internal unit and the UI unit.</p>
+
+<pre class="mel">
+proc float internalToUI( float $value )
+{
+  <SPAN CLASS="comment">// Query Maya's UI linear unit.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $unit = `currentUnit -q -l`;
+
+  <SPAN CLASS="comment">// Default ('cm') is unchanged.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  float $factor = 1.0;
+
+  <SPAN CLASS="comment">// Factor used to convert Maya's internal "cm"</SPAN>
+  <SPAN CLASS="comment">// to the following units.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  switch ( $unit )
+  {
+      case "in":
+          $factor =  0.393700787;
+          break;
+      case "ft":
+          $factor =  0.032808399;
+          break;
+      case "yd":
+          $factor =  0.010936133;
+          break;
+      case "mi":
+          $factor =  0.000006214;
+          break;
+      case "mm":
+          $factor = 10.000000000;
+          break;
+      case "km":
+          $factor =  0.000010000;
+          break;
+      case "m":
+          $factor =  0.010000000;
+          break;
+  }
+
+  <SPAN CLASS="comment">// Adjust the value by the appropriate factor.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  $value *= $factor;
+
+  return $value;
+}
+</pre>
+
+<pre class="mel">
+proc float uiToInternal( float $value )
+{
+  <SPAN CLASS="comment">// Query Maya's UI linear unit.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $unit = `currentUnit -q -l`;
+
+  <SPAN CLASS="comment">// Default ('cm') is unchanged.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  float $factor = 1.0;
+
+  <SPAN CLASS="comment">// Factor used to convert the following units</SPAN>
+  <SPAN CLASS="comment">// to Maya's internal "cm".</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  switch ( $unit )
+  {
+      case "in":
+          $factor =      2.540000000;
+          break;
+      case "ft":
+          $factor =     30.480000000;
+          break;
+      case "yd":
+          $factor =     91.440000000;
+          break;
+      case "mi":
+          $factor = 160934.400000000;
+          break;
+      case "mm":
+          $factor =      0.100000000;
+          break;
+      case "km":
+          $factor = 100000.000000000;
+          break;
+      case "m":
+          $factor =    100.000000000;
+          break;
+  }
+
+  <SPAN CLASS="comment">// Adjust the value by the appropriate factor.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  $value *= $factor;
+
+  return $value;
+}
+</pre>
+
+<p>Here's an example use:</p>
+
+<pre>
+  <SPAN CLASS="comment">// Maya is configured to use 'meter' as its UI unit.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  currentUnit -q -l;
+  // Result: m //
+
+  internalToUI( 3.14 );
+  // Result: 0.0314 //
+
+  uiToInternal( 3.14 );
+  // Result: 314 //
+</pre>
+
+<br>
+<p>As a bit of "Making of..." trivia, here's the API code I whipped up to generate the switch
+statements in the above procedures:</p>
+
+<pre class="api">
+const unsigned int numUnits = 8;
+unsigned int u;
+
+const MDistance::Unit unit[numUnits] =
+{
+    MDistance::kInches,
+    MDistance::kFeet,
+    MDistance::kYards,
+    MDistance::kMiles,
+    MDistance::kMillimeters,
+    MDistance::kKilometers,
+    MDistance::kMeters
+};
+
+const char* unitNames[numUnits] =
+{
+    "in",
+    "ft",
+    "yd",
+    "mi",
+    "mm",
+    "km",
+    "m"
+};
+
+MDistance distance( 1.0, MDistance::kCentimeters );
+
+<SPAN CLASS="comment">// internalToUI</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+
+clog &lt;&lt; "// internalToUI" &lt;&lt; endl;
+clog &lt;&lt; "// Factor used to convert Maya's internal \"cm\"" &lt;&lt; endl;
+clog &lt;&lt; "// to the following units." &lt;&lt; endl;
+clog &lt;&lt; "//" &lt;&lt; endl;
+clog &lt;&lt; "switch ( $unit )" &lt;&lt; endl &lt;&lt; "{" &lt;&lt; endl;
+for ( u = 0; u &lt; numUnits; u++ )
+{
+    clog &lt;&lt; "    case \"" &lt;&lt; unitNames[u] &lt;&lt; "\":" &lt;&lt; endl;
+    clog &lt;&lt; "        $factor = ";
+    clog &lt;&lt; setiosflags(ios::fixed) &lt;&lt; setprecision(9);
+    clog &lt;&lt; distance.as( unit[u] ) &lt;&lt; ";" &lt;&lt; endl;
+    clog &lt;&lt; "        break;" &lt;&lt; endl;
+}
+clog &lt;&lt; "}" &lt;&lt; endl;
+
+<SPAN CLASS="comment">// uiToInternal</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+
+clog &lt;&lt; "// uiToInternal" &lt;&lt; endl;
+clog &lt;&lt; "// Factor used to convert the following units" &lt;&lt; endl;
+clog &lt;&lt; "// to Maya's internal \"cm\"." &lt;&lt; endl;
+clog &lt;&lt; "//" &lt;&lt; endl;
+clog &lt;&lt; "switch ( $unit )" &lt;&lt; endl &lt;&lt; "{" &lt;&lt; endl;
+for ( u = 0; u &lt; numUnits; u++ )
+{
+    distance.setUnit( unit[u] );
+    clog &lt;&lt; "    case \"" &lt;&lt; unitNames[u] &lt;&lt; "\":" &lt;&lt; endl;
+    clog &lt;&lt; "        $factor = ";
+    clog &lt;&lt; setiosflags(ios::fixed) &lt;&lt; setprecision(9);
+    clog &lt;&lt; distance.as( MDistance::kCentimeters ) &lt;&lt; ";" &lt;&lt; endl;
+    clog &lt;&lt; "        break;" &lt;&lt; endl;
+}
+clog &lt;&lt; "}" &lt;&lt; endl;
+</pre>
+
+<P CLASS="rcomment"><!-- DATE -->31 Jul 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,150 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · recall</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">recall</P>
+
+<IMG SRC="recall.gif" ALT="recall UI" WIDTH=328 HEIGHT=298 ALIGN=RIGHT>
+<H3>Function</H3>
+
+<P>Recall provides support for <I>named selections</I>.  It allows the artist to create
+and identify selection groups by name and recall them with the double-click of the
+mouse.</P>
+
+<P CLASS="sidebar">Recall was written before I learned of Maya's "Quick Select Sets" which provide much of the same functionality.  However, I still find that use Recall more often than note.  Likely because of familiarity, but I think it does have some merit for existance still.</P>
+
+<H3>Usage</H3>
+
+<P>When you first run Recall you will be presented with a window as shown at right.
+(of course, the Named Selection List will be empty to start).
+To add a Named Selection, select one or more objects or components and click
+"<SPAN CLASS="ui">New&nbsp;Selection</SPAN>".  The selection will be added to this list using the name of
+the first selected item.</P>
+
+<P>To recall a Named Selection, highlight one or more Named Selection(s) and click the
+"<SPAN CLASS="ui">Recall</SPAN>" button. You can also simply double-click on a Named Selection.
+Any number of Named Selections may be recalled at one time.</P>
+
+<P>If the "<SPAN CLASS="ui">Fit&nbsp;to&nbsp;views</SPAN>" box is checked when a selection is recalled, Maya will
+center the selected items in all layout views.</P>
+
+<P>To add items to a Named Selection, select one or more nodes from your scene,
+highlight one or more Named Selections, then click the "<SPAN CLASS="ui">Add&nbsp;to&nbsp;Selection</SPAN>"
+button.  The selected items will be added to <I>all</I> highlighted Named
+Selections.</P>
+
+<P>Any pickable item<SUP><A HREF="#recall_1">1</A></SUP> can be stored in a Named Selection.  This includes objects, components,
+cameras, lights, constraints, handles, etc.  Specifically, Recall simply stores the
+results of the MEL command ‘<CODE>ls -sl</CODE>’ and reissues the selection when
+requested.<SUP><A HREF="#recall_2">2</A></SUP></P>
+
+<P CLASS="sidebar"><SPAN STYLE="color:red"><SUP><A NAME="recall_1">1</SUP></SPAN>
+<SPAN CLASS="note">Note:</SPAN> Currently Recall is unable to restore the selection of sets.  Maya's
+default behavior for the ‘<CODE>select</CODE>’ command is to select the members of a set
+and not the set itself.  To restore the selection of a set the select command requires
+the ‘<CODE>-ne</CODE>’ flag.  At some point I'll add the smarts for Recall to handle
+these properly.</P>
+
+<P>If an item is deleted after being added to a Named Selection, it, of course, cannot
+be reselected.  Recall will politely ignore non-existing items in a Named Selection.
+If you delete an item that is referenced in a Named Selection, and then subsequently
+recreate it, it will again be picked when recalling a selection.</P>
+
+<IMG SRC="recallRename.gif" ALT="recall Rename window" HEIGHT=96 WIDTH=349 ALIGN=RIGHT>
+<P>To rename a selection, highlight the Named Selection in the list and click "<SPAN CLASS="ui">Rename</SPAN>".
+A window will be presented that will allow you to rename the Named Selection.  This
+does <I>not</I> rename anything within the scene file.  In the Rename window, type
+the new name into the provided field and click "Rename".</P>
+
+To delete a selection, highlight a Named Selection in the list and click "<SPAN CLASS="ui">Delete</SPAN>".  This does <I>not</I> delete anything from your scene file.</P>
+
+<P>To clear all Named Selections, click "<SPAN CLASS="ui">Clear&nbsp;All</SPAN>".</P>
+
+<P>The status and contents of the Named Selections are preserved when you close the
+Recall window.  Next time you activate it with the ‘<CODE>recall</CODE>’ MEL command the
+window will be re-opened with the previous contents.  You can destroy the window,
+along with all of its contents, by clicking the "<SPAN CLASS="ui">Destroy</SPAN>" button.  Note that this
+will clear all of your Named Selections.</P>
+
+<P>Named Selections are saved with a Scene File.<SUP><A HREF="#recall_3">3</A></SUP>
+If you Load or Import a Scene for which there have been Named Selection groups defined,
+the Named Selections will be loaded as well.  After the Scene is loaded, the Named
+Selection list will update to reflect the settings for the current scene.  Note that
+clashing nodes are <B>not</B> considered when importing Scenes (see
+<A HREF="#recall_4">Behind The Scenes<SUP>4</SUP></A>).</P>
+
+<P>If you clear the scene, either through the menus or with the MEL command
+‘<CODE>file&nbsp;-f&nbsp;-new</TT></CODE>’, the Named Selection list will clear as well.</P>
+
+<P>When using Maya 2.0's "<SPAN CLASS="ui">Optimize Scene Size</SPAN>" function the 'recallData' node would typically be identified as an "Empty Partition" and would be deleted.  To prevent this, an explicit
+connection is created between "<CODE>persp.translate</CODE>" and "<CODE>recallData.translate</CODE>".</P>
+
+<H3><A NAME="recall_behind">Behind The Scenes</A></H3>
+
+<P><SPAN STYLE="color:red"><SUP><A NAME="recall_2">2</SUP></SPAN>
+As mentioned above, Recall defines a selection by storing the results of the MEL
+command ‘<CODE>ls -sl</CODE>’.  This command returns an array of multiple strings.
+All good and fine, but I ran into a snag when trying to store multiples of these
+for Recall's selection lists.</P>
+
+<P>MEL does not offer multi-dimensional arrays.  Nor does it offer structures. I wanted
+there to be no limit to the number of named selections you could define, and I wanted
+the flexibility to add, remove and rename them at will.  How do you store multiple
+string arrays without multi-dimensional arrays or structures?  Another factor: these
+arrays had to be accessible globally across multiple functions.</P>
+
+<P>The method I chose was to create a hidden window that consists of multiple
+<CODE>textScrollList</CODE> widgets.  As named selections are added to the bottom
+of the list in the Recall window, <CODE>textScrollList</CODE> widgets are added to
+the invisible window's <CODE>columnLayout</CODE>.  By default, UI elements are added
+as the last window element; therefore, by coincidence, I could keep the items
+in the Recall list in sync with the data stored in the multiple <CODE>textScrollList</CODE>
+elements.  To see this hidden window in action, show the window with the following
+MEL command:</P>
+
+<PRE CLASS="mel">
+showWindow hiddenRecallDataWindow;
+</PRE>
+
+<P><SPAN STYLE="color:red"><SUP><A NAME="recall_3">3</SUP></SPAN>
+When Recall runs, it creates a partition-class node with the name <CODE>recallData</CODE>.
+A custom attribute ‘<CODE>data</CODE>’ is added to this node; this attribute is used to
+store the Named Selection list.  The node is saved with the Scene file, and allows
+Recall to restore a Named Selection list when a Scene is reloaded.</P>
+
+<P>(One could argue that I could dispense with the hidden data window
+completely and just use this data node; however, reading, editing and storing this
+data would require some form of multi-dimensional array.
+<A HREF="#recall_2">Remember these?</A>)</P>
+
+<P><SPAN STYLE="color:red"><SUP><A NAME="recall_4">4</SUP></SPAN>
+I wanted the Recall load/import system to be intelligent enough to compensate for
+clashing nodes, renaming and prefixing recall lists as needed.  When a Scene with
+a Recall Data Node is imported, any of the following may result:</P>
+
+<OL>
+  <LI><P>The existing scene has no Recall Data Node, and none of the items included in
+  the imported Recall list clash with existing items.  No special action necessary.</P></LI>
+  <LI><P>The existing scene has no Recall Data Node, but some of the items included in
+  the imported Recall list clash.  The appropriate prefix should be added to items
+  in the list.</P></LI>
+  <LI><P>The existing scene has a Recall Data Node, and none of the items included in
+  the imported Recall list clash.  The prefix parsed from the clashing imported
+  Recall Data Node need not be added to its list contents.</P></LI>
+  <LI><P>The existing scene has a Recall Data Node, and some of the items in the imported
+  list clash with existing elements.  The prefix parsed from the clashing imported
+  Recall Data Node should be added to its list contents (but only those that
+  clashed with existing scene elements).</P></LI>
+</OL>
+
+<P>There are likely more variations of this, but you get the idea.  Bottom line, it's gonna
+be a <I>lot</I> of work that requires lots of juggling to make Recall capable of handling
+all of these situations.  If I find that I <I>really</I> need it to be this robust,
+I'll look into adding this functionality.</P>
+
+<!-- footer --></BODY>
+</HTML>

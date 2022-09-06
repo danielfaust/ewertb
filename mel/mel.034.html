@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#34</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #34</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.033.html">Previous</a> &middot; <a href="mel.035.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I enforce backslashes for Windows filepaths (or forward slashes for Maya)?</h2>
+<!-- How do I enforce backslashes for Windows filepaths (or forward slashes for Maya)? -->
+
+<P><SPAN CLASS="heading"><B>Method #1:</B> Use "<CODE>fromNativePath</CODE>" and "<CODE>toNativePath</CODE>"</SPAN></P>
+
+<DIV CLASS="in">
+
+<P><SPAN CLASS="note">Note:</SPAN> These are only relevant under Windows.</P>
+
+<P>The "<CODE>toNativePath</CODE>" command will take a path using forward slashes (or mixed forward and back slashes) and convert it to use backslashes only.</P>
+
+<PRE CLASS="mel">
+string $path = "C:/path/file.mel";
+// Result: C:/path/file.mel //
+
+toNativePath( $path );
+// Result: C:\path\file.mel //
+
+string $path = "C:\\path/file.mel";
+// Result: C:\path/file.mel //
+
+toNativePath( $path );
+// Result: C:\path\file.mel //
+</PRE>
+
+<P>The "<CODE>fromNativePath</CODE>" will take a path using backslashes (or mixed back and forward slashes) and convert it to use forward slashes only.</P>
+
+<PRE CLASS="mel">
+string $path = "C:\\path\\file.mel";
+// Result: C:\path\file.mel //
+
+fromNativePath( $path );
+// Result: C:/path/file.mel //
+
+string $path = "C:\\path/file.mel";
+// Result: C:\path/file.mel //
+
+fromNativePath( $path );
+// Result: C:/path/file.mel //
+</PRE>
+
+</DIV>
+
+<P><SPAN CLASS="heading"><B>Method #2:</B> Use the "<CODE>substitute</CODE>" command</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>There are a few things to be aware of when using the "<CODE>substitute</CODE>" command.</P>
+
+<P>Firstly, "<CODE>substitute</CODE>" performs only <EM>one</EM> substitution.  It does not
+replace all occurances in a string.  You'll need to perform a while() loop to
+replace all occurances of a substring within a string.</P>
+
+<PRE CLASS="mel">
+  string $path = "C:/path/file.mel";
+  while ( $path != ( $path = `substitute "/" $path "\\"` ) );
+  <SPAN CLASS="comment">// Result: C:\path\file.mel //</SPAN>
+</PRE>
+
+<P>Although converting from forward slashes to backslashes is straightforward,
+replacing a backslash with a forward slash requires a little trickery.  Since the
+substitute command accepts a regular expression for its first argument you must
+double-up all backslashes within the match string for
+the 'substitute' command.  In other words, if you are substituting the
+"<CODE>\</CODE>" character you must specify "<CODE>\\\\</CODE>" as your source
+character.  Each "<CODE>\\</CODE>" pair is ESCaped by the expression parser first,
+converting "<CODE>\\\\</CODE>" to "<CODE>\\</CODE>", and <EM>then</EM> this
+string is passed to the 'substitute' command which again ESCapes the pair to a
+single backslash.  This applies to the <EM>source</EM> string only for the
+substitution; the destination string requires only a single ESCed backslash to
+obtain the expected results.  A bit weird, yes.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Maya doesn't like it this way.</SPAN>
+while ( $path != ( $path = `substitute "\\" $path "/"` ) );
+</PRE>
+
+<P>This attempt results in an error:</P>
+
+<PRE CLASS="mel">
+// Error: line 1: Invalid escape sequence: Missing character after last backslash "\" in string "\". //
+</PRE>
+
+<P><SPAN CLASS="comment">(Or, if you're running a version prior to v2.5, Maya will crash and burn!)</SPAN></P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Doubling each backslash in the first argument is required.</SPAN>
+string $path = "C:\\path\\file.mel";
+while ( $path != ( $path = `substitute "\\\\" $path "/"` ) );
+<SPAN CLASS="comment">// Result: C:/path/file.mel //</SPAN>
+</PRE>
+
+<P>Furthermore, if you are replacing a backslash with two backslashes (to ESCape
+the string for a callback argument, for instance) you must first replace the
+character with a placeholder, and then replace all placeholders with the doubled
+character. Otherwise the while() loop would be infinite, finding more and more
+backslashes to replace.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// First replace all backslashes with asterisk.</SPAN>
+while ( $path != ( $path = `substitute "\\\\" $path "*"` ) );
+// Result: C:*path*file.mel //
+
+<SPAN CLASS="comment">// Now replace all asterisk with double-backslash.</SPAN>
+<SPAN CLASS="comment">// Note: Asterisk must be ESCed here.</SPAN>
+while ( $path != ( $path = `substitute "\\*" $path "\\\\"` ) );
+// Result: C:\\path\\file.mel //
+</PRE>
+
+<P>Note that the "<CODE>\\*</CODE>" argument is a "double-ESCape" of the asterisk, just like
+what is required for a backslash.  The second "<CODE>\\\\</CODE>" argument is the typical way
+you would specify two backslashes - each ESCaped once.</P>
+
+</DIV>
+
+<P><SPAN CLASS="heading"><B>Method #3:</B> Use the ‘<CODE>tokenize</CODE>’ command</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>This method can prove to be more flexible because you have control over how the path is rebuilt; e.g. whether it has a trailing slash or whether it is a relative or absolute path.</P>
+
+<P>Here's the utility procedure I use to convert a path to Windows slashes.</P>
+
+<PRE CLASS="mel">
+proc string slash( string $path )
+<SPAN CLASS="comment">// Input: Directory path with '/' or '\' slash delimiters.</SPAN>
+<SPAN CLASS="comment">// Output: Directory path with '\' slash delimiters.</SPAN>
+{
+  string $slash = "";
+
+  string $tokens[];
+  int $numTokens = `tokenize $path "\\/" $tokens`;
+  int $i;
+
+  $slash = $tokens[0];
+
+  for ( $i = 1; $i &lt; $numTokens; $i++ )
+  {
+    $slash += ( "\\" + $tokens[$i] );
+  }
+
+  return $slash;
+}
+</PRE>
+
+<P>Example:</P>
+
+<PRE CLASS="mel">
+  string $path = "C:/path/file.mel";
+  $path = slash($path);
+  <SPAN CLASS="comment">// Result: C:\path\file.mel //</SPAN>
+</PRE>
+
+</div>
+
+<P><SPAN CLASS="heading">Other Examples</SPAN></P>
+
+<P><CODE><A HREF="slash2.mel">slash2.mel</A></CODE></P>
+
+<DIV CLASS="in">
+<P>Same as <CODE>slash.mel</CODE> with an additional ‘<CODE>$isDir</CODE>’ parameter that allows an extra post-fixed slash if the supplied path specifies a directory.</P>
+</DIV>
+
+<P><A HREF="doubleslash.mel">doubleslash.mel</A></P>
+<DIV CLASS="in">
+<P>Converts any backslashes "\" in string to ESC'd backslash "\\" for use when the resultant filepath must be interpreted by an ‘<CODE>eval</CODE>’ statement, expression, or the like.</P>
+</DIV>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.040.html">How do I extract just the filename or just the directory from an absolute path description?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->13 January 2002</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#26</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #26</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.025.html">Previous</a> &middot; <a href="mel.027.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I Prelight a polymesh without having its material/texture influence the resulting vertex colouring?</h2>
+<!-- How can I Prelight a polymesh without having its material/texture influence the resulting vertex colouring? -->
+
+<P>During the H2O presentation on the Alias|wavefront stage at GDC 2000 I demonstrated H2O's "Polygon Apply Color" panel that includes what I call a "Neutral Prelight" option.  Here's the deal:</P>
+
+<P>Normally when you prelight geometry to which materials and textures have been applied, the Prelight operation uses the "emission" value at the vertex -- this includes the color of the material/texture.</P>
+
+<P>It was Scott Hamilton from A|w that demonstrated to us how to achieve the "neutral" prelight.</P>
+
+<P><IMG SRC="images/mel_a26_cma.gif" WIDTH="375" HEIGHT="119" ALT="Common Material Attributes" BORDER="0"></P>
+
+<P>Open the Attribute Editor for a Material and look in the Common Material Attributes section.  Right-click on the label for the "Color" swatch.  The bottom menu item will read ‘<CODE><SPAN CLASS="ui">Ignore when Rendering</SPAN></CODE>’.  Check this ON.</P>
+
+<P>You will see the material preview swatch render a neutral gray (or whatever you have set for the <SPAN CLASS="ui">Default Color</SPAN> from the file node).  Now a Prelight applied for any faces using this texture will use only the influence from the lights and not from the applied texture.</P>
+
+<P>Our demonstration at GDC explained how we used MEL to simplify this process by applying the <SPAN CLASS="ui">Ignore when Rendering</SPAN> flag en masse across all of the scene's Materials, performing a Prelight, then resetting all <SPAN CLASS="ui">Ignore when Rendering</SPAN> flags.</P>
+
+<P>The <SPAN CLASS="ui">Ignore when Rendering</SPAN> flag is set/cleared via the ‘<CODE>shadingConnection</CODE>’ MEL command; e.g.:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Disable the shading connection, i.e. check ON Ignore when Rendering</SPAN>
+shadingConnection -e -connectionState false lambert1.color;
+</PRE>
+
+<P>H2O's ‘<CODE>polygonApplyColor</CODE>’ script performs the set/clear across all Materials using a simple procedure:</P>
+
+<PRE CLASS="mel">
+proc enableRendering( int $enable )
+{
+  string $materials[] = `ls -materials`;
+
+  for ( $mat in $materials )
+    shadingConnection -e -cs $enable ( $mat + ".color" );
+}
+</PRE>
+
+<P>I cannot distribute the source for the polygonApplyColor script, but here's the panel to give you an idea how it works:</P>
+
+<P><IMG SRC="images/polygonApplyColor.gif" WIDTH="331" HEIGHT="279" ALT="polygonApplyColor" BORDER="0"></P>
+
+<DIV CLASS="heading">
+<P>Related Articles</P>
+</DIV>
+
+<P><A HREF="http://aliaswavefront.com/assistant_online/entertain/maya/how_tos/games/pre_light/">Alias|wavefront's Assistant Online: How to Prelight a Scene</A></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

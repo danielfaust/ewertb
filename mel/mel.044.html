@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#44</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #44</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.043.html">Previous</a> &middot; <a href="mel.045.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I expand a polygon component selection to include all components in the same shell?</h2>
+<!-- How do I expand a polygon component selection to include all components in the same shell? -->
+
+<DIV CLASS="page">
+
+<P>By using the <CODE>polySelectConstraint</CODE> command you can select connected components,
+components within a shell, or components on open borders.</P>
+
+<P>It was previously reported on these pages that you had to use a recursive "brute force" method to
+expand the selection to include the full shell.  This is not true.</P>
+
+<P>The key lies in the ‘<CODE>&minus;type</CODE>’ flag.  You must specify the ‘<CODE>&minus;type</CODE>’ flag to apply an <SPAN CLASS="ui">"All & Next"</SPAN> constraining selection.</P>
+
+<P>The following MEL will select all polygon face components within the same "shell" as the current selection:</P>
+
+<PRE CLASS="mel">
+ls -sl;
+// Result: pCube1.f[5] //
+
+<SPAN CLASS="comment">// type 0x0008 is facet</SPAN>
+<SPAN CLASS="comment">// mode 3 is "All&Next"</SPAN>
+polySelectConstraint -type 0x0008 -shell true -mode 3;
+
+ls -sl;
+// Result: pCube1.f[0:5] //
+</PRE>
+
+<P>The starting selection need not be a face component:</P>
+
+<PRE CLASS="mel">
+ls -sl;
+// Result: pCube1.e[9] //
+polySelectConstraint -type 0x0008 -shell true -m 3;
+ls -sl;
+// Result: pCube1.f[0:5] //
+
+ls -sl;
+// Result: pCube1.f[5] //
+<SPAN CLASS="comment">// Select all vertices is same shell</SPAN>
+polySelectConstraint -type 0x0001 -shell true -m 3;
+ls -sl;
+// Result: pCube1.vtx[0:7] //
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> This command enables a global constraining selection mode that affects the UI.  If you leave the user in this mode
+then everytime they select one or more components the selection will be expanded to include the entire shell.
+Thus, you should reset the selection contraints by turning off all modes that you turn on.
+In this example that would be the ‘<CODE>&minus;shell</CODE>’ flag:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Reset -shell selection constraints</SPAN>
+polySelectConstraint -shell false;
+</PRE>
+
+<!--
+<P>Thus, you must "brute force" the selection by repeatedly expanding the selection using the ‘<CODE>polySelectConstraint</CODE>’
+command and its ‘<CODE>&minus;shell</CODE>’ flag.  When the returned selection no longer differs from the previous selection,
+you've selected the entire shell.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Get list of selected components</SPAN>
+<SPAN CLASS="comment">// (Includes poly facets and vertices, but can be expanded to edges</SPAN>
+<SPAN CLASS="comment">// and UVs (note that UVs expand to their Texture-space shell).</SPAN>
+string $polyComponents[] = `filterExpand -sm 34 -sm 31 -ex true`;
+
+<SPAN CLASS="comment">// Initialize number of "previous selection" to zero</SPAN>
+int $numComponents = 0;
+
+<SPAN CLASS="comment">// As long as the previous selection was smaller than current...</SPAN>
+while ( $numComponents < size($polyComponents ) )
+{
+  $numComponents = size( $polyComponents );
+
+  <SPAN CLASS="comment">// Propagate selection to poly shell</SPAN>
+  polySelectConstraint -shell true -mode 3 -propagate 1;
+
+  <SPAN CLASS="comment">// Refresh selection list</SPAN>
+  $polyComponents = `filterExpand -sm 34 -sm 31 -ex true`;
+}
+
+<SPAN CLASS="comment">// Reset Selection Constraints</SPAN>
+polySelectConstraint -shell false -mode 0;
+</PRE>
+-->
+
+<P>Be aware that if the constraint results in UVs being selected you will receive
+repeated "<SPAN CLASS="ui">Some items cannot be moved/rotated/scaled</SPAN>" warnings if any of the
+Sacred Tools are active.  You can get around this by temporarily activating
+the Select Tool, performing the selection and then resetting the previously
+active Sacred Tool:</P>
+
+<PRE CLASS="mel">
+global string $gSelect;
+string $currentCtx = `currentCtx`;
+setToolTo $gSelect;
+
+// ... UV selection stuff here ...
+
+setToolTo $currentCtx;
+</PRE>
+
+<P CLASS="rcomment"><DATE>29 August 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,54 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · reorderOutliner</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">reorderOutliner</P>
+
+<H3>Function</H3>
+
+<P>Sorts the Outliner so items appear in alphabetical order.</P>
+
+<H3>Usage</H3>
+
+<PRE CLASS="mel">
+reorderOutliner;
+</PRE>
+
+<H3>Advanced Usage</H3>
+
+<IMG SRC="reorderOutliner.gif" WIDTH="137" HEIGHT="134" BORDER="0" ALT="reorderOutliner added to Outliner Display menu" ALIGN="left" HSPACE="16">
+
+<P>For added convenience, you can add this function as an item in the Outliner's Display menu by overriding the "createOutlinerPanelMenu.mel" script and adding the following lines after the 'showSelectedItem' menuItem.</P>
+
+<BR CLEAR="both">
+<BR>
+
+<PRE CLASS="mel">
+global proc createOutlinerPanelMenu( string $panel )
+{
+  <SPAN CLASS="comment">// ...</SPAN>
+
+  <SPAN CLASS="comment">menuItem  -l "Selected"</SPAN>
+  <SPAN CLASS="comment">  -c ("outlinerEditor -e -sc 1  "+$ed)</SPAN>
+  <SPAN CLASS="comment">  showSelectedItem;</SPAN>
+  
+  <SPAN CLASS="comment">// Add 'reorderOutliner' to Display menu</SPAN>
+  if ( `exists reorderOutliner` )
+    menuItem -l "Reorder Outliner"
+      -c "reorderOutliner()"
+      reorderOutliner;
+
+  <SPAN CLASS="comment">// ...</SPAN>
+}  
+</PRE>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Tuesday, October 03, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

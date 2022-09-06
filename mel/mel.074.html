@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#74</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #74</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.073.html">Previous</a> &middot; <a href="mel.075.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I select all of the isoparms for a NURBS surface?</h2>
+<!-- How can I select all of the isoparms for a NURBS surface? -->
+
+<P>The trick is in the use of the "<CODE>surfaceInfo</CODE>" node.  Please refer to the following
+How-To -- the first half of this explains the use of the <CODE>surfaceInfo</CODE> node:</P>
+
+<P CLASS="in"><A HREF="mel_020.html">How can I determine the world space coordinates of NURBS surface edit points?</A></P>
+
+<P>Now it's simply a matter of querying the &lsquo;<CODE>.knotsU</CODE>&rsquo; and
+&lsquo;<CODE>.knotsV</CODE>&rsquo; attribute for the <CODE>surfaceInfo</CODE> node
+and building a selection array from these parametric values.</P>
+
+<P>The following MEL script illustrates the technique:</P>
+
+<PRE CLASS="mel">
+global proc selectIsoparms()
+{
+  <SPAN CLASS="comment">// Get all selected NURBS objects</SPAN>
+  string $nurbs[] = `filterExpand -sm 10`;
+
+  <SPAN CLASS="comment">// Create a surfaceInfo node -- used to determine the UVs for the NURBS spans</SPAN>
+  <SPAN CLASS="comment">// a.k.a. the isoparms.</SPAN>
+  string $surfaceInfo = `createNode surfaceInfo`;
+
+  <SPAN CLASS="comment">// The array of components to be selected when finished.</SPAN>
+  string $isoSelect[];
+
+  for ( $nurb in $nurbs )
+  {
+    <SPAN CLASS="comment">// Connect the surfaceInfo node to the current NURBS surface.</SPAN>
+    connectAttr -f ( $nurb + ".worldSpace" ) ( $surfaceInfo + ".inputSurface" );
+
+    <SPAN CLASS="comment">// Get all the U isoparms</SPAN>
+    float $isoU[] = getAttr ( $surfaceInfo + ".knotsU" );
+
+    <SPAN CLASS="comment">// Add each U isoparms to selection list</SPAN>
+    for ( $iso in $isoU )
+    {
+      string $parm = ( $nurb + ".u[" + $iso + "]" );
+      $isoSelect[`size $isoSelect`] = $parm;
+    }
+
+    <SPAN CLASS="comment">// Get all the V isoparms</SPAN>
+    float $isoV[] = getAttr ( $surfaceInfo + ".knotsV" );
+
+    <SPAN CLASS="comment">// Add each V isoparms to selection list</SPAN>
+    for ( $iso in $isoV )
+    {
+      string $parm = ( $nurb + ".v[" + $iso + "]" );
+      $isoSelect[`size $isoSelect`] = $parm;
+    }
+
+  }
+
+  <SPAN CLASS="comment">// For some reason Maya barfs if I try to select directly.</SPAN>
+  <SPAN CLASS="comment">// So I trick it by using an `ls` on the array.</SPAN>
+  select `ls $isoSelect`;
+
+  <SPAN CLASS="comment">// Delete the temporary surfaceInfo node.</SPAN>
+  delete $surfaceInfo;
+}
+</PRE>
+
+
+<P>It wouldn't be hard to add a bit of logic to restrict the
+selection to only U or V isoparms, or for only border/internal isoparms.</P>
+
+</DIV>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.020.html">How can I determine the world space coordinates of NURBS surface edit points?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Wednesday, October 10, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

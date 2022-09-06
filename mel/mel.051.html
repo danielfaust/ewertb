@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#51</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #51</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.050.html">Previous</a> &middot; <a href="mel.052.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I get the width and height of a file texture?</h2>
+<!-- How do I get the width and height of a file texture? -->
+
+<P>A file texture includes the following attributes for this purpose:  ‘<CODE>.outSizeX</CODE>’, ‘<CODE>outSizeY</CODE>’ and ‘<CODE>outSize</CODE>’.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Width and Height individually</SPAN>
+int $width = `getAttr file1.outSizeX`;
+// Result: 64 //
+
+int $height = `getAttr file1.outSizeY`;
+// Result: 32 //
+
+<SPAN CLASS="comment">// Both</SPAN>
+float $size[2] = `getAttr file1.outSize`;
+// Result: 64 32 //
+</PRE>
+
+<P>Don't know why the latter is returned as a float.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> The first time you query a file texture for its dimensions Maya will likely perform a disk-read of the image, presumably to cache this information.  This can take considerable time if you are looping through many file textures in a scene.  Subsequent queries will not be subject to this delay.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> I've heard of a case where Maya erroneously swapped the width and height dimensions returned with this query.  I have not experienced this anomoly myself, however.</P>
+
+<P CLASS="rcomment"><DATE>Friday, December 08, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

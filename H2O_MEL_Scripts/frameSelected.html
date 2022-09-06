@@ -1,0 +1,38 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · frameSelected</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">frameSelected</P>
+
+<H3>Function</H3>
+
+<P>This script has two functions:</P>
+
+<OL>
+  <LI><P>To provide a more reliable "Frame Selected" and "Frame All" function by adding
+  calculation for the Far Clip Plane.</P></LI>
+  <LI><P>To fix a bug when using ‘<CODE>fitPanel</CODE>’ (assigned by default
+to the ‘<CODE>f</CODE>’ and ‘<CODE>a</CODE>’ hotkeys) with Orthographic cameras.  Sometimes Maya inappropriately
+calculates the Orthographic Width, basing the value on centimeters instead of the
+units you've currently set for your scene (eg. meters).  It is currently undetermined
+what causes this behavior, as it tends to be somewhat erratic.</P></LI>
+</OL>
+
+<H3>Usage</H3>
+
+<PRE>
+frameSelected «fit type» «all views» «adjust Far Clip Plane»
+</PRE>
+
+<TABLE BORDER="0" CELLSPACING="8">
+  <TR><TD><CODE>«fit type»</CODE></TD><TD>(string)</TD><TD>"-selected" to frame only selected items or "-all" to frame everything.</TD></TR>
+  <TR><TD><CODE>«all views»</CODE></TD><TD>(boolean)</TD><TD>If false, the current view will be adjusted; if true, all views will be adjusted.</TD></TR>
+  <TR><TD><CODE>«adjust Far Clip Plane»</CODE></TD><TD>(boolean)</TD><TD>If true, the size of all scene geometry will be calculated and the camera's Far Clip Plane will be adjusted to extend far enough to see everything.</TD></TR>
+</TABLE>
+
+<!-- footer --></BODY>
+</HTML>

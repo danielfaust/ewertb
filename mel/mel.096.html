@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#96</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #96</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.095.html">Previous</a> &middot; <a href="mel.097.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I install MEL scripts that I've downloaded from the internet?</h2>
+<P>For Maya to be able to use MEL scripts they must be installed within the
+scope of Maya's MAYA_SCRIPT_PATH configuration.  Your Maya profile folder -
+created when you first run Maya - will be included in this configuration,
+and will contain a "scripts" folder that you can use to store and execute
+your own scripts.</P>
+
+<div class="in">
+<table>
+<tr><td class="heading">Windows 2000/XP</td><td class="content"><CODE>C:\Documents and Settings\<i>&lt;your login name&gt;</i>\My Documents\maya\scripts\</CODE></td></tr>
+<tr><td class="heading">UNIX/Linux</td><td class="content"><CODE>/usr/people/<i>&lt;your login name&gt;</i>/maya/scripts/</CODE></td></tr>
+<tr><td class="heading">Mac OS X</td><td class="content"><CODE>/Users/<i>&lt;your user name&gt;</i>/Library/Preferences/Alias/maya/scripts/</CODE></td></tr>
+</table>
+</div>
+
+<P>If you download a script, copy it into this folder.</P>
+
+<P>Maya's Script Editor may be used to execute MEL commands - either by typing them in,
+or by pasting or loading the commands. However, you may find that executing a
+script in the Script Editor doesn't appear to do anything.
+This is because the script is laid out so that it sets up custom commands
+for you to use in the form of procedures.  These are designated by a
+special declaration within the script, such as:</P>
+
+<PRE CLASS="mel">
+global proc myCommand()
+</PRE>
+
+<P>There should be one main procedure in a script that will launch its UI
+(if there is one), or do whatever it is that it's supposed to do. This procedure is
+typically given the same name as the script. Thus, the above example would be
+the main procedure for the script "myCommand.mel".</P>
+
+<P>After installing the script as described above, execute this procedure by entering
+the following in the Script Editor:</P>
+
+<PRE CLASS="mel">
+myCommand;
+</PRE>
+
+<P>As noted in my <A href="mel.095.html">Introduction To MEL</A>,
+if you enter a MEL command such as "myCommand" Maya will scan your ‘scripts’ folder(s) for a
+script file named "myCommand.mel".  In this way Maya can automatically
+use a function from a script without explicitly loading the script first.
+If the author of the script did not follow this convention, then you'll need
+to source the script before you can execute its procedures:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Author declared main procedure in "myCommand.mel" as</SPAN>
+<SPAN CLASS="comment">// global proc performMyCommand()</SPAN>
+source myCommand;
+performMyCommand;
+</PRE>
+
+<P>Finally, if the script in question requires any arguments for its main procedure,
+you'll need to read the documentation that came with the script. If there isn't a
+separate documentation file then load the MEL script itself into your text editor (or even
+into the Script Editor). Very often an author will include a description of how to
+use the script at the top of the file.</P>
+
+<P>For more details regarding the MAYA_SCRIPT_PATH locatoin, refer to Maya's documentation: </P>
+
+<P>Maya 4.0:</p>
+<div class="in">
+<P><span CLASS="ui">Using Maya &rarr; MEL &rarr; Introducing Scripting &rarr; Setting the Scripting Environment</span></P>
+</div>
+
+<P>Maya 5.0:</p>
+<div class="in">
+<P><span CLASS="ui">Maya &rarr; Reference &rarr; Environment Variables &rarr; Setting environment variables using Maya.env</span></P>
+</div>
+
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.095.html">Introduction To MEL</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->06 Jun 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

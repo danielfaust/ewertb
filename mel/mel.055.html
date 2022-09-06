@@ -1,0 +1,408 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#55</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #55</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.054.html">Previous</a> &middot; <a href="mel.056.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can a get a list of all vertex or edge components from a polymesh in proper counter-clockwise or "render" order?</h2>
+<!-- How can a get a list of all vertex or edge components from a polymesh in proper counter-clockwise or "render" order? -->
+
+<IMG class="float" SRC="images/mel_a55.gif" WIDTH="205" HEIGHT="180" ALT="A polymesh face">
+
+<P>The image at right depicts a selected polymesh face component.  If
+we were to query this face using the API we would learn that Maya
+constructs this face in the vertex order: <SPAN CLASS="ui">295</SPAN>,
+<SPAN CLASS="ui">12</SPAN>, <SPAN CLASS="ui">14</SPAN>, <SPAN CLASS=
+"ui">296</SPAN>.  From this, logic will yield an "edge construction
+order" of: <SPAN CLASS="ui">582</SPAN>, <SPAN CLASS="ui">19</SPAN>,
+<SPAN CLASS="ui">584</SPAN>, <SPAN CLASS="ui">585</SPAN>.</P>
+
+<BR STYLE="clear: both">
+
+
+<P CLASS="heading">Deriving Vertex Order From A Face</P>
+
+<P><B>polyInfo</b></P>
+
+<p>The "polyInfo" command, when specified with its `<code>&minus;faceToVertex</code>` flag, returns a string result
+which lists the vertex order for a face in the proper
+construction order. While tokenizing a string result is not an ideal way to query numeric results,
+it does get the job done, and is less work than futzing with vertex-face components (as described below).</p>
+
+<PRE CLASS="mel">
+string $ftv[] = `polyInfo -faceToVertex m26_section.f[278]`;
+// Result: FACE    278:    295     12     14    296 //
+</PRE>
+
+<p>To extract the values in order to use them, use the <CODE>tokenize</CODE> command on the string. In the
+example below the string is split by stripping its space (" "), colon (":"), and carriage-return/newline ("\n\r")
+characters. This results in six tokens - the first of which is the string "FACE", the second being the index
+of the face, and the remaining four the indices for the vertices.</p>
+
+<PRE CLASS="mel">
+string $tokens[];
+tokenize $ftv[0] " :\n\r" $tokens;
+// Result: 6 //
+
+int $vertexOrder[];
+clear $vertexOrder;
+int $t;
+
+for ( $t = 2; $t &lt; `size $tokens`; $t++ )
+{
+  $vertexOrder[`size $vertexOrder`] = $tokens[$t];
+};
+
+print $vertexOrder;
+// Prints: 295 12 14 296 //
+</PRE>
+
+
+<P><B>polyListComponentConversion</b></P>
+
+<P>You can use the <CODE>polyListComponentConversion</CODE> command in a round-about fashion to derive the
+counter-clockwise order (or "render order", or "construction order") for the edges and vertices
+that comprise a polymesh face component.</P>
+
+<P>Joey Ponthieux (Video Applications Group, NASA Langley Research Center) struck upon using <CODE>polyListComponentConversion</CODE>
+to query "vertexFace" components and, through a series of conversions,
+this will yield a list of components in the desired order.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// This face</SPAN>
+ls -sl;
+// Result: m26_section.f[278] //
+
+<SPAN CLASS="comment">// Use polyListComponentConversion to get .vtxFace components</SPAN>
+string $vtxFace[] = `polyListComponentConversion -fromFace
+                                                 -toVertexFace m26_section.f[278]`;
+// Result: m26_section.vtxFace[295][278]
+           m26_section.vtxFace[12][278]
+           m26_section.vtxFace[14][278]
+           m26_section.vtxFace[296][278] //
+</PRE>
+
+<P>You can see the pattern in the order emerging.  Now we just need to get this
+represented in a more direct form.  Use the <CODE>polyListComponentConversion</CODE> again
+to convert each of these back to a vertex component.  You <EM>must</EM> do this conversion
+one component at a time; a conversion en masse will revert to numerical order, defeating
+the intentions of this exercise.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// An array to store our result</SPAN>
+string $vertexOrder[];
+
+for ( $vf in $vtxFace )
+{
+  <SPAN CLASS="comment">// Get vertex for this vtxFace</SPAN>
+  string $vertex[] = `polyListComponentConversion -fromVertexFace -toVertex $vf`;
+
+  <SPAN CLASS="comment">// And append to our result</SPAN>
+  $vertexOrder[ size($vertexOrder) ] = $vertex[0];
+}
+
+print $vertexOrder;
+
+// Result: m26_section.vtx[295]
+           m26_section.vtx[12]
+           m26_section.vtx[14]
+           m26_section.vtx[296] //
+</PRE>
+
+<P><b>Expanding Results In "Range" Form</b></P>
+
+<P>The <CODE>polyListComponentConversion</CODE> command may return its results in compressed "range" form:</P>
+
+<PRE CLASS="mel">
+ls -sl;
+// Result: m26_section.f[6] //
+
+string $vtxFace[] = `polyListComponentConversion -fromFace
+                                                 -toVertexFace m26_section.f[6]`;
+// Result: m26_section.vtxFace[14][6]
+           m26_section.vtxFace[13][6]
+           m26_section.vtxFace[15:16][6] //
+</PRE>
+
+<P>Therefore, it's likely best to throw a <CODE>filterExpand</CODE> in the mix:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Use filterExpand to individualize each .vtxFace component in $vtxFace</SPAN>
+$vtxFace = `filterExpand -sm 70 -expand true $vtxFace`;
+// Result: m26_section.vtxFace[14][6] m26_section.vtxFace[13][6]
+           m26_section.vtxFace[15][6] m26_section.vtxFace[16][6] //
+
+for ( $vf in $vtxFace )
+{
+  <SPAN CLASS="comment">// Get vertex for this vtxFace</SPAN>
+  string $vertex[] = `polyListComponentConversion -fromVertexFace -toVertex $vf`;
+
+  <SPAN CLASS="comment">// And append to our result</SPAN>
+  $vertexOrder[ size($vertexOrder) ] = $vertex[0];
+}
+
+print $vertexOrder;
+
+// Result: m26_section.vtx[14]
+           m26_section.vtx[13]
+           m26_section.vtx[15]
+           m26_section.vtx[16] //
+</PRE>
+
+<br>
+<P CLASS="heading">Deriving Edge Order From A Face</P>
+
+<P><B>polyInfo</b></P>
+
+<p>The "polyInfo" command, when specified with its `<code>&minus;faceToEdge</code>` flag, returns a string result
+which lists the edge order for a face in the proper
+construction order. While tokenizing a string result is not an ideal way to query numeric results,
+it does get the job done, and is less work than futzing with vertex-face components (as described below).</p>
+
+<PRE CLASS="mel">
+string $fte[] = `polyInfo -faceToEdge m26_section.f[278]`;
+// Result: FACE    278:    582     19     584   585 //
+</PRE>
+
+<p>To extract the values in order to use them, use the <CODE>tokenize</CODE> command on the string. In the
+example below the string is split by stripping its space (" "), colon (":"), and carriage-return/newline ("\n\r")
+characters. This results in six tokens - the first of which is the string "FACE", the second being the index
+of the face, and the remaining four the indices for the vertices.</p>
+
+<PRE CLASS="mel">
+string $tokens[];
+tokenize $fte[0] " :\n\r" $tokens;
+// Result: 6 //
+
+int $edgeOrder[];
+clear $edgeOrder;
+int $t;
+
+for ( $t = 2; $t &lt; `size $tokens`; $t++ )
+{
+  $edgeOrder[`size $edgeOrder`] = $tokens[$t];
+};
+
+print $edgeOrder;
+// Prints: 582 19 584 585 //
+</PRE>
+
+
+<P><B>polyListComponentConversion</b></P>
+
+<p>Using the $vtxFace array obtained in the above example, the edge construction order may be
+obtained from the <code>polyListComponentConversion</code> command by specifying its `<code>&minus;toEdge</code>` flag.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// An array to store our result</SPAN>
+string $edgeOrder[];
+
+for ( $vf in $vtxFace )
+{
+  <SPAN CLASS="comment">// Get edge for this vtxFace</SPAN>
+  string $edge[] = `polyListComponentConversion -fromVertexFace -toEdge $vf`;
+
+  <SPAN CLASS="comment">// And append to our result</SPAN>
+  $edgeOrder[ size($edgeOrder) ] = $edge[0];
+}
+
+print $edgeOrder;
+
+// Result: m26_section.e[582]
+           m26_section.e[19]
+           m26_section.e[584]
+           m26_section.e[585] //
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> Joey Ponthieux explains that this conversion to edge components appears
+to only be reliable using Maya v3.0.  In Maya 2.5 the returned edge does not necessarily correspond
+to the same construction order of the input vertex.  In this case it is necessary to
+specify successive vertices and use the ‘<CODE>&minus;internal</CODE>’ flag to extract the common edge.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Modified loop to accomodate Maya v2.5</SPAN>
+<SPAN CLASS="comment">// $vertexOrder derived in method described above</SPAN>
+for ( $v = 0; $v &lt; size($vertexOrder); $v++ )
+{
+  int $nextVtx = ( $v &lt; ( size($vertexOrder) - 1 ) ? $v + 1 : 0 );
+
+  <SPAN CLASS="comment">// Use two successive vertices to derive internal edge</SPAN>
+  string $edge[] = `polyListComponentConversion -fromVertex -toEdge
+                    -internal $vertexOrder[$v] $vertexOrder[$nextVtx]`;
+
+  $edgeOrder[ size($edgeOrder) ] = $edge[0];
+}
+
+print $edgeOrder;
+
+// Result: m26_section.e[582]
+           m26_section.e[19]
+           m26_section.e[584]
+           m26_section.e[585] //
+</PRE>
+
+<br>
+<P CLASS="heading">Deriving Vertex Order From An Edge</P>
+
+<IMG class="float" SRC="images/mel_a55.gif" WIDTH="205" HEIGHT="180" ALT="A polymesh face">
+
+<P>The "vertex order" implied here is that which corresponds to the winding order for the face. That is,
+such that the indices for the vertices are ordered as required to reconstruct the face in a manner
+preserving its face normal.</p>
+
+<p>It is possible (and likely) that an edge will be shared between two adjacent faces.  Even though
+both faces are constructed in counter-clockwise order, their adjacent nature means that the vertex ordering
+for a shared edge is dependent upon for which face you are describing it.  Given an edge shared by face 'A'
+and face 'B', the vertex order of the edge on face 'A' is exactly opposite to the vertex order of the edge
+on face 'B'.  Therefore, for meaningful results, it is necessary to specify both an edge and a face to
+retrieve the vertex order for the edge.</P>
+
+<p>Again referring to geometry at right, the winding order for the edges is <SPAN CLASS="ui">582</SPAN>,
+<SPAN CLASS="ui">19</SPAN>, <SPAN CLASS="ui">584</SPAN>, <SPAN CLASS="ui">585</SPAN>. Specifying their
+vertex indices in similar fashion yields an ordering, per edge, of:
+{ <SPAN CLASS="ui">295</SPAN>,<SPAN CLASS="ui">12</SPAN> },
+{ <SPAN CLASS="ui">12</SPAN>,<SPAN CLASS="ui">14</SPAN> },
+{ <SPAN CLASS="ui">14</SPAN>,<SPAN CLASS="ui">296</SPAN> },
+{ <SPAN CLASS="ui">296</SPAN>,<SPAN CLASS="ui">295</SPAN> }.</p>
+
+<P>Using a combination of the techniques described above it is a short stone's throw to expand
+the functionality of this process to derive the vertex order from an edge. The steps are as follows:</P>
+
+<OL>
+  <LI><P>Retrieve the ordered vertices for the specified face, as described in "Deriving Vertex Order From A Face".</P></LI>
+  <LI><P>Starting at the first vertex, create pairs to determine the "internal" edge that each generates, as described in "Deriving Edge Order From A Face".</P></LI>
+  <LI><P>Check if the derived edge matches the specified edge.  If so, then the current vertex pair, in order, describes the vertex order of the specified edge within the specified face.</P></LI>
+  <LI><P>If all vertex pairs are exhausted without finding a matching edge, then the specified edge is not a component of the specified face and the result is an empty set.</P></LI>
+</OL>
+
+<BR STYLE="clear: both">
+
+<P><B>polyInfo</b></P>
+
+<p><span class="remark">Left as an exercise for the reader. Ain't I a stinker?</span></p>
+
+<P><B>polyListComponentConversion</b></P>
+
+<P>The following MEL procedure takes as arguments an edge component and related face component,
+and returns a string array containing the ordered vertex pair for the edge.</P>
+
+<PRE CLASS="mel">
+global proc string[] edgeVertexOrder( string $inputEdge, string $inputFace )
+{
+  string $edgeVertexOrder[];
+
+  string $vertexOrder[];
+
+  <SPAN CLASS="comment">// Note: polyListComponentConversion will return the components relative</SPAN>
+  <SPAN CLASS="comment">//       to the TRANSFORM node.  You may want to add an assertion/conversion</SPAN>
+  <SPAN CLASS="comment">//       for the input arguments so they are relative to a transform.</SPAN>
+  <SPAN CLASS="comment">//       If the input arguments are shape-relative then this procedure will FAIL.</SPAN>
+
+  <SPAN CLASS="comment">// Get vertex order of face</SPAN>
+  string $vtxFace[] = `polyListComponentConversion -fromFace -toVertexFace $inputFace`;
+
+  <SPAN CLASS="comment">// Use filterExpand to individualize each .vtxFace component in $vtxFace</SPAN>
+  $vtxFace = `filterExpand -sm 70 -expand true $vtxFace`;
+
+  for ( $vf in $vtxFace )
+  {
+    <SPAN CLASS="comment">// Get vertex for this vtxFace</SPAN>
+    string $vertex[] = `polyListComponentConversion -fromVertexFace -toVertex $vf`;
+
+    <SPAN CLASS="comment">// And append to our result</SPAN>
+    $vertexOrder[ size($vertexOrder) ] = $vertex[0];
+  }
+
+  <SPAN CLASS="comment">// Now, check each vertex pair to see if it matches the specified edge</SPAN>
+  for ( $v = 0; $v &lt; size($vertexOrder); $v++ )
+  {
+    int $nextVtx = ( $v &lt; ( size($vertexOrder) - 1 ) ? $v + 1 : 0 );
+
+    <SPAN CLASS="comment">// Use two successive vertices to derive internal edge</SPAN>
+
+    string $edge[] = `polyListComponentConversion -fromVertex -toEdge
+                    -internal $vertexOrder[$v] $vertexOrder[$nextVtx]`;
+
+    <SPAN CLASS="comment">// Does this match?</SPAN>
+    if ( $edge[0] == $inputEdge )
+    {
+      $edgeVertexOrder[0] = $vertexOrder[$v];
+      $edgeVertexOrder[1] = $vertexOrder[$nextVtx];
+
+      <SPAN CLASS="comment">// As soon as a match is found we can stop looking.</SPAN>
+      break;
+    }
+  }
+
+  <SPAN CLASS="comment">// Warn if $inputEdge not found in $inputFace</SPAN>
+  if ( size( $edgeVertexOrder ) == 0 )
+    warning ( $inputEdge + " is not part of " + $inputFace );
+
+  return $edgeVertexOrder;
+}
+</PRE>
+
+<P>An example run:</P>
+
+<PRE CLASS="mel">
+edgeVertexOrder m26_section.e[582] m26_section.f[278];
+// Result: m26_section.vtx[295] m26_section.vtx[12] //
+
+<SPAN CLASS="comment">// This demonstrates that the adjacent face (.f[277]) evaluates its </SPAN>
+<SPAN CLASS="comment">// vertex order in the opposite direction, as described in the text.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+edgeVertexOrder m26_section.e[582] m26_section.f[277];
+// Result: m26_section.vtx[12] m26_section.vtx[295] //
+
+edgeVertexOrder m26_section.e[584] m26_section.f[277];
+// Warning: m26_section.e[584] is not part of m26_section.f[277] //
+</PRE>
+
+<br><h3 class="body">Acknowledgements</h3>
+<div class="in">
+<ul>
+<li><b>Joey Ponthieux</b>, Video Applications Group, NASA Langley Research Center, for demonstrating how to use "polyListComponentConversion"</li>
+<li><b>David Biggs</b>, for prompting me to update this How-To with "polyInfo"</li>
+</ul>
+</div>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.003.html">How can a get a list of all vertex or edge components that are associated with a polymesh face? (or vice versa)</a></li>
+<li class="howto"><a href="mel.005.html">How do I get the normal vector for a polygon face or vertex?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->18 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

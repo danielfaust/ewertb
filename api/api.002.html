@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#02</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #02</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.003.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I get a MObjectArray of a particular type of DAG/DG node?</h2>
+<!-- How can I get a MObjectArray of a particular type of DAG/DG node? -->
+
+<P>Here's an example of how I've extend the MObjectArray class to populate itself with DAG/DG nodes matching a specified type.</P>
+
+<PRE CLASS="api">
+//------------------------------------------------------------
+// MObjectArrayHelper declaration
+//------------------------------------------------------------
+
+class MObjectArrayHelper: public MObjectArray
+{
+  public:
+
+    MObjectArrayHelper(void);
+    virtual ~MObjectArrayHelper(void);
+
+    MStatus   getDGOfType( MFn::Type );
+    MStatus   getDAGOfType( MFn::Type );
+};
+</PRE>
+
+<PRE CLASS="api">
+//------------------------------------------------------------
+// getDGOfType
+//
+// Fills MObjectArray with array of nodes matching given type.
+//
+// * My findings suggested that the MGlobal::getSelection* functions
+// could ONLY for DAG nodes and not DG nodes.  Thus, I've created
+// this function as a member of a MObjectArray-derived class.
+//------------------------------------------------------------
+
+MStatus MObjectArrayHelper::getDGOfType( MFn::Type type )
+{
+  for ( MItDependencyNodes listIter( type ); !listIter.isDone(); listIter.next() )
+  {
+    if ( MS::kSuccess != append( listIter.item() ) )
+      return MS::kFailure;
+  }
+
+  return MS::kSuccess;
+}
+
+//------------------------------------------------------------
+// getDAGOfType
+//
+// Fills MObjectArray with array of DAG nodes matching given type.
+//------------------------------------------------------------
+
+MStatus MObjectArrayHelper::getDAGOfType( MFn::Type type )
+{
+  for ( MItDag listIter( MItDag::kDepthFirst, type ); !listIter.isDone(); listIter.next() )
+  {
+    if ( MS::kSuccess != append( listIter.item() ) )
+      return MS::kFailure;
+  }
+
+  return MS::kSuccess;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.003.html">How can I get a MStringArray of a particular type of DAG/DG node?</a></li>
+</ul>
+</div>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

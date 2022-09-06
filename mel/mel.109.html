@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#109</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #109</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.108.html">Previous</a></td><td> <a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I retrieve or replace a single element from an array optionVar?</h2>
+<!-- How do I retrieve or replace a single element from an array optionVar? -->
+
+<p>The optionVar command allows you to save multiple values in a single preference location.
+However, its ability to access individual elements of this array is rather limited.</p>
+
+<p>To access the n'th item in an optionVar you'll need to query the entire array, and extract
+the item in which you're interested:</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// Index of the element to query.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+int $index = 3;
+
+<SPAN CLASS="comment">// Value at the specified index.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+string $value = "";
+
+if ( $index >= 0 )
+{
+  if ( `optionVar -exists stringArrayOptionVar` )
+  {
+    <SPAN CLASS="comment">// Query the entire array.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    string $vars[] = `optionVar -q stringArrayOptionVar`;
+
+    <SPAN CLASS="comment">// If the element exists, assign it to our result.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    if ( $index &lt; `size $vars` )
+    {
+      $value = $vars[$index];
+    }
+  }  
+}  
+</pre>
+
+<p>Replacing or inserting an n'th item requires rebuilding the entire array for the optionVar:</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// Index of the element to assign.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+int $index = 7;
+
+if ( $index >= 0 )
+{
+  <SPAN CLASS="comment">// Array contents of the optionVar</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  string $vars[];
+
+  if ( `optionVar -exists stringArrayOptionVar` )
+  {
+    $vars = `optionVar -q stringArrayOptionVar`;
+  }  
+
+  <SPAN CLASS="comment">// This index restriction allows only replacing of existing elements;</span>
+  <SPAN CLASS="comment">// remove this to allow for insertion of new elements.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  if ( $index &lt; `size $vars` )
+  {
+    $vars[$index] = "value";
+  }  
+
+  <SPAN CLASS="comment">// Must first clear the entire array.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  optionVar -clearArray stringArrayOptionVar;
+
+  <SPAN CLASS="comment">// …then insert the elements and rebuild the optionVar.</SPAN>
+  <SPAN CLASS="comment">//</SPAN>
+  for ( $item in $vars )
+  {
+    optionVar -sva stringArrayOptionVar $item;
+  }
+}  
+</pre>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.012.html">How do I save preferences for my scripts so they are recalled in subsequent sessions?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->02 Apr 2006</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2006 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <a href="http://www.autodesk.com">Autodesk</a> (formerly <A HREF="http://www.alias.com">Alias</A>)<br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

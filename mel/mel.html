@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+<!--BASE HREF="http://ewertb.com/maya/mel/"-->
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya MEL How-To">
+<meta name="keywords" content="Bryan,Ewert,maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To</TITLE>
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="../maya.html">Back</a> <!--&middot;--> </td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<!--
+http://web.archive.org/web/20050222134137/ewertb.com/mel/mel.000
+http://web.archive.org/web/20050222134137/ewertb.com/mel/mel.0104
+-->
+<UL>
+<li class="howto"><a href="mel.000.html">I've never done any programing before.  What is the best way to start learning how to write MEL scripts?  Would courses that teach C, C++ or Java help?</a></li>
+<li class="howto"><a href="mel.001.html">How do you find out all these things about MEL?  I can't find some things in the documentation!</a></li>
+<li class="howto"><a href="mel.002.html">How do I determine which Reference files are currently defined or loaded?  How do I load and unload them?</a></li>
+<li class="howto"><a href="mel.003.html">How can a get a list of all vertex or edge components that are associated with a polymesh face? (or vice versa)</a></li>
+<li class="howto"><a href="mel.004.html">Given a polymesh edge component, how can I get a list of its associated vertices?</a></li>
+<li class="howto"><a href="mel.005.html">How do I get the normal vector for a polygon face or vertex?</a></li>
+<li class="howto"><a href="mel.006.html">How do I get the global or world-space coordinates of an object or component?</a></li>
+<li class="howto"><a href="mel.007.html">How can I turn off all of a scene's textures for rendering (similar to the flag in PA)?</a></li>
+<li class="howto"><a href="mel.008.html">How do I find the Shape node of a Transform?  Or the Transform of a Shape node?</a></li>
+<li class="howto"><a href="mel.009.html">How do I find out which items are highlighted/selected in the MultiLister?</a></li>
+<li class="howto"><a href="mel.010.html">How do I declare a matrix whose size is determined at run-time?</a></li>
+<li class="howto"><a href="mel.011.html">How do I strip the "new-line-character" off of the end of my string variable?</a></li>
+<li class="howto"><a href="mel.012.html">How do I save preferences for my scripts so they are recalled in subsequent sessions?</a></li>
+<li class="howto"><a href="mel.013.html">How do I determine the name of the camera for the currently active layout panel?</a></li>
+<li class="howto"><a href="mel.014.html">How do I get and set the ‘Show’ Options for the currently active layout panel?</a></li>
+<li class="howto"><a href="mel.015.html">How should I name my UI controls?  Which is better: defining my own names, or using the names Maya assigns?</a></li>
+<li class="howto"><a href="mel.016.html">How do I hook up a slider to an attribute so that it updates in real time?</a></li>
+<li class="howto"><a href="mel.017.html">Why are my "instantaneous" constraints not being applied to the target object?</a></li>
+<li class="howto"><a href="mel.018.html">How do I get information for a motion curve value at a specific time?</a></li>
+<li class="howto"><a href="mel.019.html">How can I determine if a camera other than the default cameras has been created if I don't know the name of the new camera?</a></li>
+<li class="howto"><a href="mel.020.html">How can I determine the world space coordinates of NURBS surface edit points?</a></li>
+<li class="howto"><a href="mel.021.html">How do you center a button (or any other UI control) in a layout?</a></li>
+<li class="howto"><a href="mel.022.html">How can I add a control to the top of a UI layout instead of the bottom (as is the default)?</a></li>
+<li class="howto"><a href="mel.023.html">How do I retrieve a list of only the selected Lights (or any other node type that uses a transform/shape pair)?</a></li>
+<li class="howto"><a href="mel.024.html">How can I turn off the main modelling views automatically so Simulations calculate without being slowed by redraws?</a></li>
+<li class="howto"><a href="mel.025.html">How can I control the display of Key Ticks in the Time Slider via MEL?</a></li>
+<li class="howto"><a href="mel.026.html">How can I Prelight a polymesh without having its material/texture influence the resulting vertex colouring?</a></li>
+<li class="howto"><a href="mel.027.html">How do I query/set the Time Slider and Range Slider?</a></li>
+<li class="howto"><a href="mel.028.html">How do I query the tangent angles, weights and types for the keyframes on the object I'm animating?</a></li>
+<li class="howto"><a href="mel.029.html">How can I get Maya to execute a command as soon as a window is closed?</a></li>
+<li class="howto"><a href="mel.030.html">How do I create and edit Shelf buttons?</a></li>
+<li class="howto"><a href="mel.031.html">How can I mirror the keys on an animCurve so the animation plays backwards?</a></li>
+<li class="howto"><a href="mel.032.html">How do I create a Lambert shading network given the path to the image file on disk?</a></li>
+<li class="howto"><a href="mel.033.html">How do I change units (e.g. Angular or Time) via MEL?</a></li>
+<li class="howto"><a href="mel.034.html">How do I enforce backslashes for Windows filepaths (or forward slashes for Maya)?</a></li>
+<li class="howto"><a href="mel.035.html">How do I get/set the name of the scene that's currently loaded, the current project and the default project?</a></li>
+<li class="howto"><a href="mel.036.html">How can I ensure that a polygon face component is planar?</a></li>
+<li class="howto"><a href="mel.037.html">How do I represent a custom numeric attribute as a drop-down text menu in the Attribute Editor?</a></li>
+<li class="howto"><a href="mel.038.html">How do I activate any of Maya's Sacred Tools via MEL?</a></li>
+<li class="howto"><a href="mel.039.html">How do I deal with those weird float values that I get instead of zero (e.g. -8.881784329e-017)?</a></li>
+<li class="howto"><a href="mel.040.html">How do I extract just the filename or just the directory from an absolute path description?</a></li>
+<li class="howto"><a href="mel.041.html">How do I replicate the Frame Selected and Frame All hotkey functions in MEL?</a></li>
+<li class="howto"><a href="mel.042.html">How do I find/close Maya's editor windows -- the Dope Sheet and Graph Editor, for example?</a></li>
+<li class="howto"><a href="mel.043.html">How do I get the assigned Shading Group for an object or face component?</a></li>
+<li class="howto"><a href="mel.044.html">How do I expand a polygon component selection to include all components in the same shell?</a></li>
+<li class="howto"><a href="mel.045.html">How do I toggle playback between "Normal" and "Free" while playback is running?  It only seems to take effect when I restart playback at the beginning.</a></li>
+<li class="howto"><a href="mel.046.html">How can I change the precision of the floating point values in Maya's editors (such as the Channel Box, Attribute Spreadsheet and Attribute Editor)?</a></li>
+<li class="howto"><a href="mel.047.html">How do I toggle between 'Hide UI Elements' and 'Show UI Elements?'</a></li>
+<li class="howto"><a href="mel.048.html">How do I toggle the visibility of the Model panels' menu bars?</a></li>
+<li class="howto"><a href="mel.049.html">How do I run a MEL script as a background process?</a></li>
+<li class="howto"><a href="mel.050.html">How do I control the Grid display settings via MEL?</a></li>
+<li class="howto"><a href="mel.051.html">How do I get the width and height of a file texture?</a></li>
+<li class="howto"><a href="mel.052.html">How do I get the names of the locators that animate a two- or three-node Camera's "View" and "Up" control if all I know is the name of the Camera?</a></li>
+<li class="howto"><a href="mel.053.html">How do I dock Maya's Graph Editor, HyperGraph, Render View, et al, in my own window?</a></li>
+<li class="howto"><a href="mel.054.html">How do I get an expanded list of selected components instead of the default "range" format?</a></li>
+<li class="howto"><a href="mel.055.html">How can a get a list of all vertex or edge components from a polymesh in proper counter-clockwise or "render" order?</a></li>
+<li class="howto"><a href="mel.056.html">How do I determine which UV Set is being used to derive the UVs for the Texture of a given face component?</a></li>
+<li class="howto"><a href="mel.058.html">How do I determine how many CVs are in a NURBS Curve or Surface?</a></li>
+<li class="howto"><a href="mel.059.html">How can I create a hotkey to cycle through the Shelf tabs?</a></li>
+<li class="howto"><a href="mel.060.html">How do I determine if a transform is a Group node?</a></li>
+<li class="howto"><a href="mel.061.html">How can I create a MEL procedure that can accept multiple (and optional) flags or arguments?</a></li>
+<li class="howto"><a href="mel.062.html">How do I set defaults so Materials, Cameras, Layout views, et al. have my own settings every time I start a new scene?</a></li>
+<li class="howto"><a href="mel.063.html">How do I toggle the Polygon statistics in the Heads-up Display?</a></li>
+<li class="howto"><a href="mel.064.html">How do I create a window with controls overlaying a background image?</a></li>
+<li class="howto"><a href="mel.065.html">How do I use MEL to get and set the Render Globals?</a></li>
+<li class="howto"><a href="mel.066.html">How do I control the Graph Editor's Outliner and Graph panels?</a></li>
+<li class="howto"><a href="mel.067.html">How do I control the visibility for the currently active Display Layer?</a></li>
+<li class="howto"><a href="mel.068.html">How do I specify the options for an Export plug-in (a.k.a. File Translator)?</a></li>
+<li class="howto"><a href="mel.069.html">How do I change a Material's type - from Lambert to Blinn, for example - using MEL?</a></li>
+<li class="howto"><a href="mel.070.html">How can I intercept a Save or Save As operation?</a></li>
+<li class="howto"><a href="mel.071.html">How do I determine what Blind Data types are defined and assigned?</a></li>
+<li class="howto"><a href="mel.072.html">How do I output the UVs for each Vertex component?</a></li>
+<li class="howto"><a href="mel.073.html">How do I determine the length of a NURBS curve?</a></li>
+<li class="howto"><a href="mel.074.html">How can I select all of the isoparms for a NURBS surface?</a></li>
+<li class="howto"><a href="mel.075.html">How can I list all active values/connections in a compound array attribute, such as the &lsquo;.colorEntryList&rsquo; for a ramp texture, or the &lsquo;.inputs&rsquo; for a layeredShader node?</a></li>
+<li class="howto"><a href="mel.076.html">How do I undeclare a variable used in the Script Editor so I can use it as a different type?</a></li>
+<li class="howto"><a href="mel.077.html">How do I create a popup or Marking Menu that activates via mouse button but only when a hotkey is pressed?</a></li>
+<li class="howto"><a href="mel.078.html">How do I determine the path for a script while it is executing; for example, to load another file in the same folder?</a></li>
+<li class="howto"><a href="mel.079.html">How do I perform a case-insensitive string comparison?</a></li>
+<li class="howto"><a href="mel.080.html">How do I extract the numeric part of a unique name; e.g. the value 42 from "pCube42"?</a></li>
+<li class="howto"><a href="mel.081.html">How do I find the deformers influencing an object?</a></li>
+<li class="howto"><a href="mel.082.html">How do I delete an imported camera that Maya identifies as "non-deletable?"</a></li>
+<li class="howto"><a href="mel.083.html">How do I devise a setup whereby when I select one object, Maya automatically selects another object?</a></li>
+<li class="howto"><a href="mel.084.html">How do I query which keyframes are selected in the Graph Editor or Dope Sheet?</a></li>
+<li class="howto"><a href="mel.085.html">How do I determine if a shape node has been instanced?</a></li>
+<li class="howto"><a href="mel.086.html">How do I force a window to open to a specific size or location?</a></li>
+<li class="howto"><a href="mel.087.html">How do I determine the coordinates for an object relative to the camera's viewport?</a></li>
+<li class="howto"><a href="mel.088.html">How do I determine which window -- like the Outliner or MultiLister -- is currently the active window?</a></li>
+<li class="howto"><a href="mel.089.html">How can I use a single hotkey to toggle a ‘Show’ Option (or other mode)?</a></li>
+<li class="howto"><a href="mel.090.html">How can I determine if a polygon face component is planar?</a></li>
+<li class="howto"><a href="mel.091.html">How do I determine which Shading Group is associated with a Material?</a></li>
+<li class="howto"><a href="mel.092.html">How do I determine which Material or File Texture is associated with a Shading Group?</a></li>
+<li class="howto"><a href="mel.093.html">How do I create a file dialog for which I can define the default starting directory?</a></li>
+<li class="howto"><a href="mel.094.html">Useful Regular Expressions for MEL</a></li>
+<li class="howto"><a href="mel.095.html">Introduction To MEL</a></li>
+<li class="howto"><a href="mel.096.html">How do I install MEL scripts that I've downloaded from the internet?</a></li>
+<li class="howto"><a href="mel.097.html">How do I get a list of all global variables currently defined?</a></li>
+<li class="howto"><a href="mel.098.html">How do I determine if an object is visible?</a></li>
+<li class="howto"><a href="mel.099.html">How do I query the field names from an enumerated attribute?</a></li>
+<li class="howto"><a href="mel.100.html">How do I store a value or string such that it is saved and restored with the current scene?</a></li>
+<li class="howto"><a href="mel.101.html">How do I find a window and query its child layout and controls?</a></li>
+<li class="howto"><a href="mel.102.html">How do I convert between Maya's internal linear unit ('cm') and the unit which is represented in the UI?</a></li>
+<li class="howto"><a href="mel.103.html">How do I create a shading network that connects a Shading Group, a material and a texture?</a></li>
+<li class="howto"><a href="mel.104.html">How do I assign an object or face component to a material?</a></li>
+<li class="howto"><a href="mel.105.html">How do I align an object to a curve (without using a constraint)?</a></li>
+<li class="howto"><a href="mel.106.html">How do I find the type of an anonymous MEL UI control?</a></li>
+<li class="howto"><a href="mel.107.html">How do I use '-dragCallback' and '-dropCallback'?</a></li>
+<li class="howto"><a href="mel.108.html">How do I plot equidistant points along a curve?</a></li>
+<li class="howto"><a href="mel.109.html">How do I retrieve or replace a single element from an array optionVar?</a></li>
+</UL>
+
+</td></tr>
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+</HTML>

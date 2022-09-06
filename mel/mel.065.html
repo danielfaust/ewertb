@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#65</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #65</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.064.html">Previous</a> &middot; <a href="mel.066.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I use MEL to get and set the Render Globals?</h2>
+<!-- How do I use MEL to get and set the Render Globals? -->
+
+<P>Most of the settings are defined in the "defaultRenderGlobals" node in the
+scene.  You can query this node for the settings used in the render.  Of
+course, you'll need to know the name of the attribute corresponding to the
+setting for which you need, and you'll need to know what its value means.</P>
+
+<P>As a start, use the <SPAN CLASS="mel">listAttr</SPAN> command to get a quick summary of all the attributes
+on this node.  The following MEL will give you a sorted list:</P>
+
+<PRE CLASS="mel">
+string $globals[] = `listAttr defaultRenderGlobals`;
+$globals = `sort $globals`;
+print $globals;
+</PRE>
+
+<P>The correlation between this node and the Render Globals window are managed
+by the MEL script:</P>
+
+<PRE>
+/AW/Maya3.0/scripts/others/renderGlobalsWindow.mel
+</PRE>
+
+<P>You can activate the Script Editor's "Echo All Commands" and then toggle
+settings in the Render Globals window to see which MEL procedures are called
+in response.  Note that the "renderGlobalsWindow.mel" script uses the UI for
+obtaining the current settings, defeating the ability to simply call the
+functions within it to specify your own setting.</P>
+
+<P>Once you figure out what all the settings mean you can use the MEL commands
+<SPAN CLASS="mel">getAttr</SPAN> and <SPAN CLASS="mel">setAttr</SPAN> - targeting the "defaultRenderGlobals" node - to
+change the render settings as you see fit.</P>
+
+<BR>
+<P><SPAN CLASS="heading">Resolution</SPAN></P>
+
+<P>The Render Globals derives its resolution from the "resolution" node connected
+through its &lsquo;<CODE>.resolution</CODE>&rsquo; attribute:</P>
+
+<PRE CLASS="mel">
+listConnections defaultRenderGlobals.resolution;
+// Result: defaultResolution //
+</PRE>
+
+<P>Knowing this, you can query the width and height from the connected
+"resolution" node:</P>
+
+<PRE CLASS="mel">
+getAttr defaultResolution.width;
+// Result: 640 //
+
+getAttr defaultResolution.height;
+// Result: 480 //
+</PRE>
+
+<P>To find other potential resolutions:</P>
+
+<PRE CLASS="mel">
+ls -type "resolution";
+// Result: defaultResolution resolution1 //
+
+getAttr resolution1.width;
+// Result: 320 //
+getAttr resolution1.height;
+// Result: 240 //
+</PRE>
+
+<P CLASS="anno">The following tip was generously provided by both Mark Adams (<A HREF="http://www.pixar.com">Pixar Animation Studios</A>)
+and John Cassella (<A HREF="http://www.redpawfx.com">Red Paw FX</A>).  Originally posted on the
+<A HREF="http://www.highend3d.com">Highend3D</A> Maya forum, I've paraphrased the content for these pages.
+Reproduced with permission from the authors.</P>
+
+<P>Maya maintains its list of resolutions in the global variable <CODE>$gImageFormatData</CODE>, which is defined in, e.g.:</P>
+
+<PRE CLASS="mel">
+/AW/Maya3.0/scripts/others/imageFormats.mel
+</PRE>
+
+<P>You could make a script that blanks this global variable and then add your own, each in the format:</P>
+
+<PRE CLASS="mel">
+"&lt;Preset Name&gt;   &lt;width&gt; &lt;height&gt; &lt;aspect&gt;"
+</PRE>
+
+<P>Maya supports user-defined resolutions as stored in "<CODE>userImageFormats.mel</CODE>".  The
+use of this file is described in Maya's documentation under "Rendering: Render Globals, Resolution Presets".</P>
+
+<BR>
+<P><SPAN CLASS="heading">Renderable Cameras</SPAN></P>
+
+<P>The renderable camera is not specified by the
+"defaultRenderGlobals" node, but rather by the &lsquo;<CODE>.renderable</CODE>&rsquo; attribute for
+each Camera in the scene.  You'll need to query each Camera to find out which ones are flagged
+to be renderable; e.g.</P>
+
+<PRE CLASS="mel">
+int $isRenderable = `getAttr perspShape.renderable`;
+</PRE>
+
+<BR>
+<div class="sidebar">
+  <P CLASS="sans"><b>MEL Tip</b></P>
+
+  <P CLASS="sans">To get at the old Render Globals window (from pre Maya2.0 days):</P>
+
+<PRE CLASS="mel">
+string $globals[] = `ls -head 1 -renderGlobals`;
+showEditor $globals[0];
+</PRE>
+
+</div>
+
+<BR>
+<BR>
+<P><SPAN CLASS="heading">Acknowledgements</SPAN></P>
+
+<DIV CLASS="in">
+
+<P><SPAN CLASS="acknowledgement">Mark Adams</SPAN>, <A HREF="http://www.pixar.com">Pixar Animation Studios</A></P>
+
+<P><SPAN CLASS="acknowledgement">John Cassella</SPAN>, <A HREF="http://www.redpawfx.com">Red Paw FX</A></P>
+
+</DIV>
+
+<P CLASS="rcomment"><!-- DATE -->Wednesday, August 29, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

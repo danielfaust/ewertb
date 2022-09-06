@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#35</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #35</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.034.html">Previous</a> &middot; <a href="mel.036.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I get/set the name of the scene that's currently loaded, the current project and the default project?</h2>
+<!-- How do I get/set the name of the scene that's currently loaded, the current project and the default project? -->
+
+<P><SPAN CLASS="heading">Scene Name</SPAN></P>
+<DIV CLASS="in">
+
+  <PRE CLASS="mel">
+  string $fileName = `file -q -sceneName`;
+  // Result: C:/projects/default/scenes/untitled.mb //
+  </PRE>
+
+  <P><SPAN CLASS="note">Note:</SPAN> If the scene has just been cleared, querying the sceneName will return an empty string.</P>
+
+  <P>If you want to change the name of the scene, you can use:</P>
+
+  <PRE CLASS="mel">
+  file -rename "newSceneName";
+  <SPAN CLASS="comment">// Result: C:/projects/default/scenes/newSceneName.mb //</SPAN>
+  </PRE>
+
+  <P>Maya will use the current scene type (mayaBinary or mayaAscii) and the current path by default.</P>
+
+  <PRE CLASS="mel">
+  file -rename "C:/projects/toy_story/woody";
+  <SPAN CLASS="comment">// Result: C:/projects/toy_story/woody.mb //</SPAN>
+  </PRE>
+
+  <P>Here Maya will use the specified filepath and keep the current scene type (mayaBinary or mayaAscii).  At this point Maya doesn't care if the path exists.</P>
+
+  <PRE CLASS="mel">
+  file -rename "C:/projects/toy_story/woody.ma";
+  <SPAN CLASS="comment">// Result: C:/projects/toy_story/woody.mb //</SPAN>
+  </PRE>
+
+  <P>If the scene type is "mayaBinary" Maya will ignore the extension and keep the name "woody.mb".</P>
+
+  <PRE CLASS="mel">
+  file -type "mayaAscii";
+  <SPAN CLASS="comment">// Result: C:/projects/toy_story/woody.ma //</SPAN>
+  </PRE>
+
+  <P>Maya changes the filetype.</P>
+
+  <P>You cannot specify the filetype in conjunction with the <CODE>&minus;rename</CODE> flag, but you can specify it in conjunction with the <CODE>&minus;save</CODE> flag.</P>
+
+  <P><SPAN CLASS="note">Note:</SPAN> After you perform a ‘<CODE>file -rename</CODE>’ Maya does not update the title of Maya's main window to reflect the change.  It only does this upon a ‘<CODE>file -save</CODE>’.  Be careful.</P>
+
+</DIV>
+
+<BR>
+<P><SPAN CLASS="heading">Project (a.k.a. Workspace)</SPAN></P>
+<DIV CLASS="in">
+
+<p>The current Workspace can by queried using:</p>
+
+<PRE CLASS="mel">
+string $workspace = `workspace -q -fullName`;
+
+// Result: D:/AW/projects/hulk //
+</PRE>
+
+<p>If you intend to use this result as the folder for the "getFileList" command then
+you'll need to ensure a slash is specified as the last character. A variation which
+includes this trailing slash is the '-dir' flag.</p>
+
+<PRE CLASS="mel">
+string $workspace = `workspace -q -dir`;
+
+// Result: D:/AW/projects/hulk/ //
+
+getFileList -fld $workspace;
+
+// Result: scenes sourceImages workspace.mel //
+</PRE>
+
+<p>The default Workspace may be determined using:</p>
+
+<PRE CLASS="mel">
+string $workspaces[] = `workspace -q -listFullWorkspaces`;
+print ( "Default workspace is: " + $workspaces[0] + "\n" );
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> This is a bit of assumption on my part that the default Workspace will always be the first item in this array.</P>
+
+</DIV>
+
+<P CLASS="rcomment"><!-- DATE -->15 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

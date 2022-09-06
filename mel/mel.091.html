@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#91</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #91</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.090.html">Previous</a> &middot; <a href="mel.092.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine which Shading Group is associated with a Material?</h2>
+<!-- How do I determine which Shading Group is associated with a Material? -->
+
+<P CLASS="in">To determine which Material is associated to a Shading Group, get a list
+of all connection from the Material's ".outColor" attribute.  Iterate this array to find
+all Shading Groups.  The &lsquo;<CODE>nodeType</CODE>&rsquo; command will identify a Shading Group with the string "shadingEngine".</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// ////////////////////////////////////////////////////////////////////</SPAN>
+<SPAN CLASS="comment">//  getSGFromMaterial</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Description: Returns the Shading Group set whose '.surfaceShader'</SPAN>
+<SPAN CLASS="comment">//  attribute is being fed by the specified Material.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//  Returns an array for all Shading Groups using the Material.</SPAN>
+
+global proc string[] getSGFromMaterial( string $material )
+{
+  string $SG[];
+
+  <SPAN CLASS="comment">// First, assert that $material is a Material.</SPAN>
+  <SPAN CLASS="comment">// (Returns a string array, unfortunately, so requires variable.)</SPAN>
+  string $class[] = getClassification( `nodeType $material` );
+
+  if ( $class[0] == "shader/surface" )
+  {
+    <SPAN CLASS="comment">// Assert that there is a connection from the Material's .outColor</SPAN>
+    if ( `connectionInfo -is ( $material + ".outColor" )` )
+    {
+      <SPAN CLASS="comment">// There may be more than one connection...</SPAN>
+      string $dests[] = `connectionInfo -dfs ( $material + ".outColor" )`;
+      for ( $dest in $dests )
+      {
+        <SPAN CLASS="comment">// Iterate through connections and identify ShadingGroup sets.</SPAN>
+        if ( "shadingEngine" == `nodeType $dest` )
+        {
+          $SG[`size $SG`] = rootNode( $dest );
+          break;
+        }
+      }
+    }
+  }
+
+  return $SG;
+}
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> The following &lsquo;<CODE>rootNode()</CODE>&rsquo; procedure is required by the procedures above.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// //////////////////////////////////////////////////////////////</SPAN>
+<SPAN CLASS="comment">//  rootNode</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Description: Strips the dot-suffix of the specified string.</SPAN>
+<SPAN CLASS="comment">//  e.g. "object.attribute" is returned as "object"</SPAN>
+
+proc string rootNode( string $object )
+{
+  string $buffer[];
+  tokenize $object "." $buffer;
+  return $buffer[0];
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.043.html">How do I get the assigned Shading Group for an object or face component?</a></li>
+<li class="howto"><a href="mel.092.html">How do I determine which Material or File Texture is associated with a Shading Group?</a></li>
+<li class="howto"><a href="mel.104.html">How do I assign an object or face component to a material?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Friday, September 14, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

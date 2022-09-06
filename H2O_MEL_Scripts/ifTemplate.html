@@ -1,0 +1,45 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · ifTemplate</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">ifTemplate</P>
+
+<H3>Function</H3>
+
+<P>This script is designed to be used as an <I>itemFilter</I> for the ‘<CODE>lsThroughFilter</CODE>’ MEL command. It filters the input list to return only those objects which are currently rendered in Template mode.</P>
+
+<H3>Usage</H3>
+
+<P>First, prepare the itemFilter. You only have to do this once per Maya session.</P>
+
+<PRE CLASS="mel">
+itemFilter -byScript ifTemplate ifTemplate;
+</PRE>
+
+<P>You may then use the filter with the ‘<CODE>lsThroughFilter</CODE>’ MEL command:</P>
+
+<PRE CLASS="mel">
+lsThroughFilter ifTemplate;
+</PRE>
+
+<P>See Maya's documentation on itemFilters for more information.</P>
+
+<H3>Related Scripts</H3>
+
+<P CLASS="in">
+<!--
+<A HREF="ifAnimated.html">ifAnimated</A><BR>
+<A HREF="ifCanTranslate.html">ifCanTranslate</A><BR>
+<A HREF="ifOrientConstraint.html">ifOrientConstraint</A><BR>
+<A HREF="ifPointConstraint.html">ifPointConstraint</A><BR>
+-->
+<A HREF="ifDegree1.html">ifDegree1</A><BR>
+<A HREF="ifVisible.html">ifVisible</A><BR>
+</P>
+
+<!-- footer --></BODY>
+</HTML>

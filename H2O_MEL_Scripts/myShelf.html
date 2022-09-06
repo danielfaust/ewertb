@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · myShelf</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">myShelf</P>
+
+<IMG SRC="myShelf.gif" ALT="My Shelf" WIDTH=245 HEIGHT=70 ALIGN="right">
+
+<H3>Function</H3>
+
+<P>My Shelf provides a floating, resizable, minimizable Shelf window.  As
+my <SPAN CLASS="mel">tearoffShelf.mel</SPAN> proved to be unreliable, this is an interim
+replacement.</P>
+
+<H3>Usage</H3>
+
+<P>My Shelf includes, by default, tools for quickly switching to the three
+component highlight modes, and for toggling between Object and Component
+Mode.  Initially, My Shelf provides five buttons with the following
+functions:</P>
+
+<UL>
+  <LI>Toggle between Object and Component Mode.</LI>
+  <LI>Component Mode + Vertex Selection Mask.</LI>
+  <LI>Component Mode + Edge Selection Mask.</LI>
+  <LI>Component Mode + Facet Selection Mask.</LI>
+  <LI>Component Mode + PolyUV Selection Mask.</LI>
+  <LI>polyInfoWin (function from Kenneth Ibrahim)</LI>
+</UL>
+
+<P>This is a standard Maya Shelf.  You can drag and drop icons to and from
+the main Shelf, and from or to the Shelf Editor.</P>
+
+<P>A Popup Menu via the Right Mouse Button provides the option to Load or
+Save My Shelf.  My Shelf will load the last-saved Shelf each time it is
+started.</P>
+
+<P>You must explicitly save My Shelf, as it cannot save itself.</P>
+
+<P>The saved shelf is in the form of an executable MEL script:</P>
+
+<PRE>
+<Maya appdir>/prefs/shelf_MyShelf.mel
+</PRE>
+
+<P>To restore My Shelf to its initial five tools, select the <SPAN CLASS="ui">Revert to
+Default</SPAN> menu item. This will clear the My Shelf and create the five
+default buttons described above.  It will not overwrite your saved My
+Shelf.  To switch back to your previously saved My Shelf use the <SPAN CLASS="ui">Load
+My Shelf</SPAN> menu item, or quit and restart My Shelf.</P>
+
+<P>To delete a My Shelf item, use the Middle Mouse Button to drag it on to
+the "trashcan" on Maya's own Shelf bar.</P>
+
+<P>My Shelf, as yet, does not support multiple tabs, nor the ability to
+tweak its contents using an editor similar to Maya's Customize Shelves
+panel.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> Tool Buttons are not supported.  I tried, but dragging and
+dropping a Tool from the "Sacred Tools" tray onto the My Shelf is
+fraught with inconsistencies.</P>
+
+<H3>Requirements</H3>
+
+<P>This script requires the <SPAN CLASS="mel"><A HREF="abortTest.html">abortTest.mel</A></SPAN> script (a safeguard
+during the <SPAN CLASS="mel">legalizeString()</SPAN> function).</P>
+
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>8 June, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

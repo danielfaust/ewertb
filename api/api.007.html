@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#07</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #07</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.006.html">Previous</a> &middot; <a href="api.008.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I use MPxLocatorNode::draw() to draw in static world-space independent of the parent locator's transformation?</h2>
+<!-- How do I use MPxLocatorNode::draw() to draw in static world-space independent of the parent locator's transformation? -->
+
+<P>When the <SPAN CLASS="api">MPxLocator::draw()</SPAN> method is initiated the OpenGL
+<CODE>MODELVIEW</CODE> describes the matrix for the offset from the camera's
+eyepoint to your node.  Rendering with this matrix will draw using the
+node's object space.</P>
+
+<P>To draw in world-space, find the Maya Camera represented by the
+current view and determine the inverse of this Camera's transformation
+matrix.  Load this inverted matrix into the OpenGL <CODE>MODELVIEW</CODE>.
+Rendering with this matrix will draw using Maya's world-space,
+ignoring the transformations applied to your MPxLocator node.
+</P>
+
+<PRE CLASS="api">
+void myMPxLocator::draw( M3dView & view,
+                         const MDagPath & dagPath,
+                         M3dView::DisplayStyle style,
+                         M3dView::DisplayStatus displayStatus )
+{
+  MStatus                     status;
+
+  MDagPath                    thisCameraView;       // the dagPath for this modelPanel's Camera
+  MMatrix                     cameraInverseMatrix;  // inverse matrix for the modelPanel's Camera
+  double                      dMatrix[4][4];        // the 4Ч4 array for the OpenGL matrix
+
+  <SPAN CLASS="comment">// Get the Maya Camera associated with this view</SPAN>
+  view.getCamera( thisCameraView );
+
+  <SPAN CLASS="comment">// Load inverse of the Camera's Matrix</SPAN>
+  cameraInverseMatrix = (thisCameraView.inclusiveMatrix()).inverse();
+
+  <SPAN CLASS="comment">// Get 4Ч4 array to represent matrix (required for glLoadMatrix)</SPAN>
+  cameraInverseMatrix.get( dMatrix );
+
+  <SPAN CLASS="comment">// Initialize Maya's GL</SPAN>
+  view.beginGL();
+
+  glMatrixMode( GL_MODELVIEW );
+  glPushMatrix();
+
+  <SPAN CLASS="comment">// Load the inverse of the Camera's matrix into the Model View.</SPAN>
+  <SPAN CLASS="comment">// This places the render origin at Maya's world center.</SPAN>
+  glLoadMatrixd( (GLdouble *)dMatrix );
+
+  <SPAN CLASS="comment">// Now draw your OpenGL using world-coordinates for the vertices</SPAN>
+  glBegin( GL_LINES )
+  <SPAN CLASS="comment">/* ... render here ... */</SPAN>
+  glEnd();
+
+  glPopMatrix();
+
+  view.endGL();
+}
+</PRE>
+
+<P CLASS="rcomment"><DATE>Monday, January 08, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

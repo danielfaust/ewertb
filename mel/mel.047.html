@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#47</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #47</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.046.html">Previous</a> &middot; <a href="mel.048.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I toggle between 'Hide UI Elements' and 'Show UI Elements?'</h2>
+<!-- How do I toggle between 'Hide UI Elements' and 'Show UI Elements?' -->
+
+<p>The general MEL command for this is:</p>
+
+<PRE CLASS="mel">
+setAllMainWindowComponentsVisible &lt;true|false&gt;;
+</PRE>
+
+<P>However, this is not a toggle.  Nor does it have a query mechanism to
+determine in what state it is currently in, or for what state it was last
+called.  And, passing 'true' doesn't mean "make them visible" but rather
+"return them to their state before they were explicitly hidden."</P>
+
+<P>You have a few options:</P>
+
+<OL>
+<LI>
+<P>Pick one of the UI elements and use its visibility to determine if you
+are toggling the works on or off.  For example, if you want to base it on
+the Time Slider:</P>
+
+<PRE CLASS="mel">
+setAllMainWindowComponentsVisible( !isTimeSliderVisible() );
+</PRE>
+
+<P>Or the Shelf:</P>
+
+<PRE CLASS="mel">
+setAllMainWindowComponentsVisible( !isShelfVisible() );
+</PRE>
+</LI>
+
+<LI>
+<P>Use your own optionVar to store the last toggled state, and use its
+complement as the visibility:</P>
+
+<PRE CLASS="mel">
+int $globalUIVisibilityFlag = true;
+
+if ( `optionVar -exists globalUIVisibilityFlag` )
+  $globalUIVisibilityFlag = `optionVar -q globalUIVisibilityFlag`;
+
+$globalUIVisibilityFlag = !$globalUIVisibilityFlag;
+
+setAllMainWindowComponentsVisible $globalUIVisibilityFlag;
+optionVar -intValue globalUIVisibilityFlag $globalUIVisibilityFlag;
+</PRE>
+
+<P>However, this could prove an inconvenience.  As alluded to above, the
+setAll...() function doesn't specifically turn the UI elements on and off.
+It turns them off and restores them to their last visible state.  If
+everything is already invisible when your own script asks everything to be
+invisible, the setAll...() script will remember everything as invisible and
+you'll have to manually toggle everything back on again.</P>
+</LI>
+
+<LI>
+<P>Write your own hard-toggle script that specifically hides all UI elements
+but also specifically unhides the UI elements that you want on.</P>
+</LI>
+
+</OL>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.089.html">How can I use a single hotkey to toggle a ‘Show’ Option (or other mode)?</a></li>
+<li class="howto"><a href="mel.045.html">How do I toggle playback between "Normal" and "Free" while playback is running?  It only seems to take effect when I restart playback at the beginning.</a></li>
+<li class="howto"><a href="mel.048.html">How do I toggle the visibility of the Model panels' menu bars?</a></li>
+<li class="howto"><a href="mel.063.html">How do I toggle the Polygon statistics in the Heads-up Display?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Wednesday, November 29, 2000</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#39</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #39</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.038.html">Previous</a> &middot; <a href="mel.040.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I deal with those weird float values that I get instead of zero (e.g. -8.881784329e-017)?</h2>
+<!-- How do I deal with those weird float values that I get instead of zero (e.g. -8.881784329e-017)? -->
+
+<P>These results represent the almost-but-not-quite-zero values that Maya often returns. Unless you're modelling atoms you can safely ignore values this small.</P>
+
+<P>To counter this behavior, I typically run calculations through a precision rounder, such as the following:</P>
+
+<PRE CLASS="mel">
+proc float precision( float $value, int $dec )
+<SPAN CLASS="comment">// $value == value to round off</SPAN>
+<SPAN CLASS="comment">// $dec == number of decimal places</SPAN>
+{
+  float $bump = 0.5;
+  if ($value &lt; 0.0)
+    $bump = -0.5;
+
+  $value = trunc( $value * pow( 10, $dec ) + $bump ) / pow( 10, $dec );
+
+  return $value;
+}
+</PRE>
+
+<P><b>Duncan Brinsmead</b> (Chief Scientist, Alias) noted that my function
+does not work properly when supplied with a negative number of decimal places (for rounding to 10s, 100s, etc).
+Mr. Brinsmead generously provided his own function which handles this properly:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Procedure Name: roundoff</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Author: Duncan Brinsmead</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Description:</SPAN>
+<SPAN CLASS="comment">// simple function to round float values to a particular decimal</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Usage:  roundoff &lt;float value&gt; &lt;number of decimal places&gt;</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// examples</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//  roundoff -1.119 2</SPAN>
+<SPAN CLASS="comment">//  Result: -1.12</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//  roundoff 256.812 0</SPAN>
+<SPAN CLASS="comment">//  Result: 257</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//  roundoff 128.1 -1</SPAN>
+<SPAN CLASS="comment">//  Result: 130</SPAN>
+
+global proc float roundoff( float $f, int $n )
+{
+  <SPAN CLASS="comment">// we divide if n &lt; 0 to avoid numeric</SPAN>
+  <SPAN CLASS="comment">// precision problems</SPAN>
+  if( $n &gt; 0 )
+  {
+    float $roundScale = pow(10,$n);
+    if( $f &gt; 0 )
+      return( ((float)(int)($f * $roundScale + 0.5)) /$roundScale );
+    else
+      return( ((float)(int)($f * $roundScale - 0.5)) /$roundScale );
+  }
+  else
+  {
+    float $roundScale = pow(10,-$n);
+    if( $f &gt; 0 )
+      return( ((float)(int)($f/$roundScale + 0.5)) *$roundScale );
+    else
+      return( ((float)(int)($f/$roundScale - 0.5)) *$roundScale );
+
+  }
+}
+</PRE>
+
+<P CLASS="anno">Reproduced with permission from the author.</P>
+
+<P class="heading">Converting from scientific to fixed point</p>
+
+<p><b>David Biggs</b> contributed the following "formatFloat" MEL procedure which can return a fixed point representation from
+the scientific format used for these infinitesimal floating point values.</p>
+
+<pre class="mel">
+proc string formatFloat(float $f,int $precision)
+{
+  int $wasNegative = 0;
+  if($f &lt; 0)
+  {
+   $f *= -1;
+   $wasNegative = 1;
+  }
+  string $result = "";
+
+  int $b = 0;
+  int $n = 12;
+  while($n &gt; -$precision)
+  {
+    float $temp = pow(10,$n);
+    int $g = (int)($f/$temp);
+    if($n == -1)
+    {
+      if($b == 0) {
+        $b = 1;
+        $result += "0";
+      }
+      $result += ".";
+    }
+
+    if($g &gt; 0)
+    {
+      $b = 1;
+      $f = $f -($g * $temp);
+      $result += $g;
+    }
+    else if($b == 1)
+    {
+      $result += "0";
+    }
+    $n--;
+
+  }
+  if($wasNegative) $result = "-" + $result;
+  return $result;
+}
+</pre>
+
+<p>Example:</p>
+
+<pre class="mel">
+formatFloat(-8.881784329e-017,25);
+// Result: -0.000000000000000088817843 //
+</pre>
+
+<p>It can be susceptible to floating point precision loss (like all things that use floating point),
+so be wary of its results with values more significant than these infinitesimal values.</p>
+
+<pre class="mel">
+formatFloat( -0.08881784329, 25 );
+// Result: -0.088817843290000001793391 //
+
+formatFloat( 888.1784329, 25 );
+// Result: 888.178432899999961579272769 //
+</pre>
+
+<br><h3 class="body">Acknowledgements</h3>
+<div class="in">
+<ul>
+<li><b>Duncan Brinsmead</b>, Chief Scientist, <A HREF="http://www.alias.com">Alias</A></li>
+<li><b>David Biggs</b></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->23 Sep 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

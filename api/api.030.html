@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#30</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #30</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.029.html">Previous</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I query the output color for a Material?</h2>
+<!-- How do I query the output color for a Material? -->
+
+<h2>Color In Context</h2>
+
+<p>The '.outColor' attribute for a material is valid only within the context of rendering. Otherwise,
+what color should it give you? At what UV? At what pixel?</p>
+
+<p>To demonstrate, wire up a phong material that uses a ramp color as input.</p>
+
+<pre class="mel">
+string $p = `shadingNode -asShader "phong"`;
+string $r = `shadingNode -asTexture "ramp"`;
+connectAttr ( $r + ".outColor" ) ( $p + ".color" );
+</pre>
+
+<p>In the Hypershade you'll see the material decked out in its yuletide colors of
+red, green and blue. Now, try to query the output color:</p>
+
+<pre class="mel">
+getAttr ( $p + ".outColor" );
+// Result: 0 0 0 //
+</pre>
+
+<p>Uh-huh. Right.</p>
+
+<p>So what if there wasn't a texture, but only a static color?</p>
+
+<pre class="mel">
+disconnectAttr ( $r + ".outColor" ) ( $p + ".color" );
+setAttr ( $p + ".color" ) 1.0 0.9 0.2;
+
+getAttr ( $p + ".outColor" );
+// Result: 0 0 0 //
+</pre>
+
+<p>What we <em>can</em> do in this case is query the input color attribute (i.e. the
+one set earlier):</p>
+
+<pre class="mel">
+getAttr ( $p + ".color" );
+// Result: 1 0.9 0.2 //
+</pre>
+
+<p>It may appear that this works with a connection, as well:</p>
+
+<PRE CLASS="mel">
+connectAttr ( $r + ".outColor" ) ( $p + ".color" );
+
+getAttr ( $p + ".color" );
+// Result: 1 0 0 //
+</PRE>
+
+<p>However, this can only represent any one color from the ramp, and there's no
+way to construct the whole picture <SPAN CLASS="remark">(pardon the pun)</SPAN> for the material's
+behavior.</p>
+
+
+<h2>Pieces of the Puzzle</h2>
+
+<p>If querying the inputs for your material is enough, you may perform the following:</p>
+
+<p>1. Find the MPlug from the input color for the material (phong, lambert,
+blinn, doesn't matter):</p>
+
+<PRE CLASS="api">
+MObject phongMaterial;
+MFnDependencyNode fnDependNode( phongMaterial ):
+MPlug colorPlug = fnDependNode.findPlug( "color" );
+</PRE>
+
+<p>2. Determine if it has an input connection:</p>
+
+<PRE CLASS="api">
+MPlugArray cc;
+colorPlug.connectedTo( cc, true /* asDst */, false );
+if ( cc.length() &gt; 0 )
+{
+  <SPAN CLASS="comment">// Plug is driven by an input connection.</SPAN>
+}
+</PRE>
+
+<p>3. If it <em>isn't</em> driven by a plug, you can simply query its value.</p>
+
+<PRE CLASS="api">
+else
+{
+  MColor phongColor;
+  colorPlug.child(0).getValue( phongColor.r );
+  colorPlug.child(1).getValue( phongColor.g );
+  colorPlug.child(2).getValue( phongColor.b );
+}
+</PRE>
+
+<p>4. If it is driven by a plug, you'll need to output a texture for the incoming connection. If
+the input is a "file" node then you can <a href="../api/api.021.html">query its
+'.fileTextureName' attribute</a> and parse the image from disk. If it's not a file node you'll
+likely have to resort to baking the image to disk first (via "convertSolidTx").</p>
+
+
+<h2>The Whole Picture</h2>
+
+<p>The above method provides you with the color - or texture - which influences one of the color inputs 
+for the material. However, the whole point of a shader is to imbue surface properties to the color values: 
+layering textures, adding specular highlights, generating anisotropic striations, or perhaps generating a
+non-photorealistic effect (such as a toon shader). If you wish to sample the true output for a material,
+you must call upon Maya's rendering functions.</p>
+
+<p>If you have a specific range of UVs at which you want to query the color values, or if you
+need only a limited sampling of the colors, then you can also use the 
+<SPAN CLASS="api"> MRenderUtil</SPAN> class to generate the output at specific UVs. You'll need
+to be prepared to provide a fair amount of "surface" information, however:</p>
+
+<div class="sidebar">
+This is described in the Maya documentation under the topic "Evaluating shading nodes outside of the rendering context."
+</div>
+
+<PRE CLASS="api">
+MRenderUtil::sampleShadingNetwork( 
+    MString shadingNodeName, 
+    int numSamples, 
+    bool useShadowMaps, 
+    bool reuseMaps,  
+    MFloatMatrix&amp; cameraMatrix,  
+    MFloatPointArray* points,  
+    MFloatArray* uCoords,  
+    MFloatArray* vCoords,  
+    MFloatVectorArray* normals,  
+    MFloatPointArray* refPoints,  
+    MFloatVectorArray* tangentUs,  
+    MFloatVectorArray* tangentVs,  
+    MFloatArray* filterSizes,  
+    MFloatVectorArray&amp; resultColors,  
+    MFloatVectorArray&amp; resultTransparencies );
+</PRE>
+
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.021.html">How do I find the file texture, and the image filepath, assigned to a material?</a></li>
+<li class="howto"><a href="api.029.html">How do I determine the type of a MPlug in order to use the appropriate getValue() overload?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->19 Feb 2005</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

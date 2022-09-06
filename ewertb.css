@@ -1,0 +1,470 @@
+BODY {
+  background-color: #718B8F;
+  color: black;
+  margin: 0px;
+  padding: 0px;
+  font-size: 10pt;
+  text-align: center;
+}
+
+DIV.body {
+  text-align: left;
+}
+
+TD.title {
+  background-color: #718B8F;
+  color: black;
+  vertical-align: middle;
+  text-align: left; 
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+  font-size: 14pt;
+  padding: 0px 8px 0px 8px;
+                                                                  }
+
+TD.nav {
+  background-color: #718B8F;
+  color: black;
+  width: 100px;
+  vertical-align: top;
+  text-align: center; 
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+  font-size: 8pt;
+}
+
+TD.bar {
+  background-color: #80756B;
+  color: white;
+  vertical-align: middle;
+  text-align: right; 
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+  font-size: 8pt;
+  padding: 0px 8px 0px 8px;
+  border-style: solid none solid none;
+  border-width: 1px;
+  border-color: black white black black;
+}
+
+TD.footer {
+  background-color: #A89E94;
+  color: white;
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+  font-size: 8pt;
+  padding: 0px 8px 0px 8px;
+  border-style: solid none solid none;
+  border-width: 1px;
+  border-color: black white black black;
+}
+
+TD.html {
+  background-color: #80756B;
+  color: white;
+  vertical-align: middle;
+  text-align: left; 
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+  font-size: 8pt;
+  padding: 0px 0px 0px 8px;
+}
+
+TD.body {
+  background-color: #E9E4DF;
+  color: black;
+  font-family: times,sans-serif;
+  font-size: 10pt;
+  padding: 8px;
+}
+
+TD.heading {
+  background-color: #718B8F;
+  color: white;
+  vertical-align: middle;
+  text-align: center; 
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+  font-weight: bold;
+}
+
+TD.content {
+  background-color: #E0D8D0;
+  color: black;
+  vertical-align: middle;
+  text-align: left; 
+  padding: 0px 4px 0px 4px;
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+}
+
+TD.odd {
+  background-color: #E9E4DF;
+  color: black;
+  vertical-align: middle;
+  text-align: left; 
+  padding: 0px 4px 0px 4px;
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+}
+
+TD.even {
+  background-color: #E0D8D0;
+  color: black;
+  vertical-align: middle;
+  text-align: left; 
+  padding: 0px 4px 0px 4px;
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+}
+
+TD.blogwhat {
+  width: 140px;
+  vertical-align: top;
+  text-align: center;
+  border-style: double;
+  border-width: 0px 0px 0px 4px;
+}
+
+A.discreet 
+{
+  text-decoration: none;
+}
+
+P {
+   vertical-align : top; 
+}
+
+P.anno {
+  font-size: smaller; 
+  font-family: "Comic Sans MS",fantasy; 
+  color: black; 
+  margin-left: 25px; 
+  margin-right: 5%; 
+  text-align:justify
+}
+
+P.rcomment {
+   color : gray; 
+   text-align : right; 
+}
+
+P.heading {
+   font-weight : bold; 
+   font-size : 11pt; 
+   font-family: "Book Antiqua","Bookman Old Style",Verdana,Arial,sans-serif; 
+   font-weight: bold; 
+   color : #485d7c; 
+}
+
+P.trace {
+  font-family: "Comic Sans MS",fantasy;
+  color: red;
+  font-weight: bold;
+}
+
+H1 {
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+  font-size: 14pt;
+  padding: 0px;
+  margin: 4px 0px 8px 0px;
+}
+
+H2.body {
+  background-color: #e9e4df;
+  color: navy;
+  font-family: "Trebuchet MS",helvetica,sans-serif;
+  font-size: 12pt;
+  border-bottom: groove;
+  border-color: navy;
+  border-width: 3px;
+  padding: 0px;
+  margin: 3px 0px 6px 0px;
+}
+
+H3.body {
+  font-weight : bold;
+  font-size : medium;
+  font-family : Verdana, Arial, sans-serif;
+  color : blue;
+  padding: 0px;
+  margin: 2px 0px 4px 0px;
+}
+
+SPAN.ui {
+   font-size : small;
+   font-family : Courier, monospace;
+   color : #005000;
+}
+
+SPAN.exif {
+  background-color: #e9e4dF;
+  color: #808060;
+  font-family : Verdana, Arial, Helvetica, sans-serif; 
+  font-size: 10px;
+}
+
+SPAN.remark {
+  background-color: #E9E4DF;
+  color: gray;
+}
+
+P.caption {
+  color: maroon;
+  font-family : Verdana, Arial, Helvetica, sans-serif; 
+  font-size: 10px;
+  line-height: 110%;
+}
+
+SPAN.caption {
+  color: maroon;
+  font-family : Verdana, Arial, Helvetica, sans-serif; 
+  font-size: 10px;
+}
+
+PRE.mel {
+   color : #DD0000;
+   background-color: #E4E0D8;
+   border-style: solid;
+   border-width: 1px;
+   border-color: black;
+   padding: 8px;
+}
+
+PRE.shade {
+   color : #404040;
+   background-color: #E0D8D0;
+   border-style: solid;
+   border-width: 1px;
+   border-color: black;
+   padding: 8px;
+}
+
+SPAN.mel {
+   color : #DD0000;
+}
+
+SPAN.comment {
+   color : #406040;
+}
+
+PRE.api {
+   color : #4000A0; 
+   background-color: #E4E0D8;
+   border-style: solid;
+   border-width: 1px;
+   border-color: black;
+   padding: 8px;
+}
+
+SPAN.api {
+   color : #4000A0;
+}
+
+PRE {
+   font-family : "Courier New", monospace; 
+   margin-left : 25px; 
+}
+
+LI.tutorial {
+   list-style-type : square; 
+   list-style-image : url(../images/pins.gif);
+}
+
+LI.howto {
+   vertical-align : top; 
+   list-style-type : circle; 
+   list-style-image : url(../images/pin.gif); 
+}
+
+LI.boing {
+   vertical-align : top; 
+   list-style-type : circle; 
+   list-style-image : url(../images/boing.gif); 
+}
+
+IMG {
+	border-style: none;
+  padding: 2px 8px 2px 8px;
+}
+
+IMG.nopad {
+  border-style: none;
+  padding: 0px;
+}
+
+IMG.float {
+  border-style: none;
+  padding: 2px 8px 8px 8px;
+  float: right;
+}
+
+IMG.lfloat {
+  border-style: none;
+  padding: 2px 8px 8px 8px;
+  float: left;
+}
+
+TD.gallery {
+  width : 320px;
+  text-align : left;
+  vertical-align: top;
+  background-color: #1A2220;
+  padding-left : 8px;
+  padding-right : 8px;
+  margin : 0px;
+}
+
+TD.thumb {
+  width : 160px;
+  height : 160px;
+  text-align : center;
+  vertical-align: middle;
+  background-color: black;
+  color: white;
+  padding : 0px;
+  margin : 0px;
+  border-color: white;
+  border-width: 3px;
+  border-style: double;
+}
+
+TD.image {
+  text-align : center;
+  vertical-align: middle;
+  background-color: black;
+  padding : 0px;
+  margin : 0px;
+  border-style: solid;
+  border-color: black;
+  border-width: 1px;
+}
+
+TD.top {
+  vertical-align: top;
+}
+
+TD.center {
+  text-align: center;
+}
+
+DIV.description {
+  font-family: Verdana,helvetica,sans-serif;
+  font-size: 14px;
+  text-align : left;
+  padding: 4px 0px 4px 8px;
+}
+
+DIV.page {
+   width : 640px; 
+}
+
+DIV.menu {
+  margin-left: 75px;
+}
+
+DIV.nav {
+   font-size : smaller; 
+   font-family : Verdana, Arial, Helvetica, sans-serif; 
+   color : #500040; 
+}
+
+DIV.in {
+   margin-left : 25px; 
+}
+
+DIV.heading {
+   font-size : medium; 
+   font-family : Verdana, Arial, sans-serif; 
+   color : #485d7c; 
+}
+
+DIV.center {
+   text-align : center; 
+}
+
+DIV.footer {
+  color: white;
+  font-family : 'comic sans ms',sans-serif;
+  font-size : 8pt;
+}
+
+DIV.sidebar {
+   font-size : smaller; 
+   font-family : sans-serif; 
+   color : #500040; 
+   background-color: #F4EAD0;
+   border-style: none solid solid none;
+   border-width: 2px;
+   border-color: #888888;
+   margin-right : 5%; 
+   margin-left : 25px; 
+   padding-left: 8px;
+}
+
+DIV.quote {
+   text-align : justify;
+   margin : 0px 0px 0px 8px;
+}
+
+DIV.archive {
+  font-family: "Poor Richard","Garamond","Times Roman",times,serif;
+  font-size: 11pt;
+}
+
+DIV.blog {
+  font-family : "Trebuchet MS",Verdana,Helvetica,Arial;
+  font-size : 12px;
+  background-color: #E9E4DF;
+  color: #444444;
+}
+
+CODE {
+   font-size : 80%; 
+   font-family : "Courier New", monospace; 
+}
+
+BLOCKQUOTE {
+   font-family : Verdana,helvetica,sans-serif;
+   font-style : italic; 
+   margin-left: 25px;
+   margin-right : 5%; 
+   text-align:justify;
+}
+
+BR {
+  clear: both;
+}
+
+.yellow {
+   color : yellow; 
+}
+
+.white {
+   color : white; 
+}
+
+.note {
+   font-style : italic; 
+   font-variant : small-caps; 
+   font-weight : bold; 
+   color : maroon; 
+}
+
+.sans {
+   font-family : Verdana, Arial, Helvetica, sans-serif; 
+}
+
+.fantasy {
+   font-family: "Comic Sans MS", fantasy;
+   color:black;
+}
+
+.arg {
+  font-style : italic; 
+  font-family : Courier,monospace; 
+  font-weight : normal;
+}
+
+.heading {
+  font-size : larger; 
+  font-family : Verdana, Arial, Helvetica, sans-serif; 
+  font-weight : bold; 
+  color : #485D7C;
+}
+
+.acknowledgement {
+  font-size : 11pt; 
+  font-weight : bold; 
+}

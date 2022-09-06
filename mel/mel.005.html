@@ -1,0 +1,267 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#05</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #05</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.004.html">Previous</a> &middot; <a href="mel.006.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I get the normal vector for a polygon face or vertex?</h2>
+<!-- How do I get the normal vector for a polygon face or vertex? -->
+
+<P><SPAN CLASS="heading">Querying Per-Vertex Per-Face Normals</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>There is a "<CODE>polyNormalPerVertex</CODE>" command which allows you to query the vertex normal for each associated face:</P>
+
+<PRE CLASS="mel">
+polyNormalPerVertex -q -xyz;
+// Result: 0 1 0 0 0 1 -1 0 0 //
+</PRE>
+
+<P>These results indicate that the vertex is associated with three faces.  The normals are:</P>
+
+<PRE>
+{ 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 }, { -1.0, 0.0, 0.0 }
+</PRE>
+
+<P>You could average these three to obtain the shared vertex normal, if desired.</P>
+
+<P>Unfortunately, this doesn't tell you which normal correlates to which associated face.  To really know you must work with .vtxFace components.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Convert a .vtx component to .vtxFace components.</SPAN>
+string $plcc[] = `polyListComponentConversion -fv -tvf pCube1.vtx[2]`;
+<SPAN CLASS="comment">
+// Expand the list to avoid Maya's component compression</SPAN>
+$plcc = `filterExpand -sm 70 -ex true $plcc`;
+
+for ( $vtxFace in $plcc )
+{
+  <SPAN CLASS="comment">// Get the per-vertex per-face normal for this component</SPAN>
+  float $normal[3] = `polyNormalPerVertex -q -xyz $vtxFace`;
+  print(  $vtxFace + ": { " + $normal[0] + ", " + $normal[1] + ", " + $normal[2] + " }\n" );
+}
+</PRE>
+
+<P>Example run:</P>
+
+<PRE>
+pCube1.vtxFace[2][0]: { 0, 0, 1 }
+pCube1.vtxFace[2][1]: { 0, 1, 0 }
+pCube1.vtxFace[2][5]: { -1, 0, 0 }
+</PRE>
+
+</DIV>
+
+<P><SPAN CLASS="heading">Using 'polyInfo'</SPAN></P>
+
+<div class="sidebar">
+<P>This tip is credited to <SPAN CLASS="acknowledgement">Joseph A. Hansen</SPAN> (Beyond Games).</P>
+</div>
+
+<DIV CLASS="in">
+
+<P>The polyInfo command has a '-faceNormal' flag which can be used to obtain the
+vector for a face. Two quirks with this method:</P>
+
+<OL>
+  <LI><P>The result is returned as an annotated string (actually a string
+  array, just to be difficult); and,</P></LI>
+  <LI><P>The normal isn't normalized.</P></LI>
+</OL>
+
+<P>We can work around both of these with a little helper procedure.</P>
+
+<PRE CLASS="mel">
+polyInfo -fn pSphere1.f[7];
+// Result: FACE_NORMAL      7: -0.090404 -0.135299 0.017982 //
+
+polyInfo -fn pCube1.f[0];
+// Result: FACE_NORMAL      0: 0.000000 0.000000 2.000000 //
+</PRE>
+
+<P>Here's our helper script:</P>
+
+<PRE CLASS="mel">
+proc vector translatePolyInfoNormal( string $pin )
+{
+  vector $normal;
+  float $x;
+  float $y;
+  float $z;
+
+  string $tokens[];
+  int $numTokens = `tokenize $pin " " $tokens`;
+
+  <SPAN CLASS="comment">// Make sure we're looking at polyInfo data:</SPAN>
+  if ( ( $numTokens &gt; 3 ) &amp;&amp; ( $tokens[0] == "FACE_NORMAL" ) )
+  {
+    <SPAN CLASS="comment">// Maya performs data-type conversion here.</SPAN>
+    $x = ($tokens[$numTokens-3]);
+    $y = ($tokens[$numTokens-2]);
+    $z = ($tokens[$numTokens-1]);
+
+    $normal = &lt;&lt; $x, $y, $z &gt;&gt;;
+
+    <SPAN CLASS="comment">// Normalize it.</SPAN>
+    $normal = `unit $normal`;
+  }
+
+  <SPAN CLASS="comment">// Return it.</SPAN>
+  return $normal;
+}
+</PRE>
+
+<P>Now let's put it to use:</P>
+
+<PRE CLASS="mel">
+string $sphereInfo[] = `polyInfo -fn pSphere1.f[7]`;
+// Result: FACE_NORMAL      7: -0.090404 -0.135299 0.017982
+
+vector $sphereNormal = translatePolyInfoNormal( $sphereInfo[0] );
+// Result: &lt;&lt;-0.552209, -0.826438, 0.109838&gt;&gt;  //
+
+string $cubeInfo[] = `polyInfo -fn pCube1.f[7]`;
+// Result: FACE_NORMAL      5: -2.000000 0.000000 0.000000
+
+vector $cubeNormal = translatePolyInfoNormal( $cubeInfo[0] );
+// Result: &lt;&lt;-1, 0, 0&gt;&gt;  //
+</PRE>
+
+</DIV>
+
+<P><SPAN CLASS="heading">Using The Cross Product</SPAN></P>
+
+<DIV CLASS="in">
+
+<PRE CLASS=mel>
+<SPAN CLASS="comment">// Pick a face, any face</SPAN>
+string $node = "polySurface1";
+int $face = 0;
+
+<SPAN CLASS="comment">// Get vertex list for face</SPAN>
+int $vertices[] = <A HREF="mel.003.html">facetVertices</A>( $node + ".f[" + $face + "]" );
+
+<SPAN CLASS="comment">// Get coordinates for each of the three vertices</SPAN>
+vector $vector[3];
+for ( $p = 0; $p &lt; 3; $p++ )
+{
+  float $coord[3];
+
+  $command = "xform -q -ws -t " + $node + ".vtx[" + $vertices[$p] + "]";
+  $coord = `eval $command`;
+  $vector[$p] = &lt;&lt; $coord[0], $coord[1], $coord[2] &gt;&gt;;
+}
+
+vector $v0, $v1, $v2;
+<SPAN CLASS="comment">// Reassign to non-array variables to allow access</SPAN>
+<SPAN CLASS="comment">// to vector components (e.g. vector.x)</SPAN>
+$v0 = $vector[0];
+$v1 = $vector[1];
+$v2 = $vector[2];
+
+<SPAN CLASS="comment">// Get two vectors for surface definition, from the 3 verts.</SPAN>
+vector $def[2];
+$def[0] =
+  &lt;&lt;
+    $v0.x - $v2.x,
+    $v0.y - $v2.y,
+    $v0.z - $v2.z
+  &gt;&gt;;
+
+$def[1] =
+  &lt;&lt;
+    $v1.x - $v2.x,
+    $v1.y - $v2.y,
+    $v1.z - $v2.z
+  &gt;&gt;;
+
+<SPAN CLASS="comment">// Get normal</SPAN>
+vector $normal;
+
+<SPAN CLASS="comment">// The cross product provides the normal for the surface defined from these two vectors</SPAN>
+$normal = `cross $def[0] $def[1]`;
+</PRE>
+
+<P>This script only considers the first three vertices for the given face.  If your face is planar, this is fine.  If your face is comprised of more than three vertices and it is <I>not</I> planar then the results will be inaccurate.</P>
+
+<P>Be aware that the direction of the surface normal is dependent on the direction of your edge vectors. To ensure accurate results you'll want to make sure that the vertices are queried in <a href="mel.055.html">render order</A>.</P>
+
+</DIV>
+
+<P><SPAN CLASS="heading">Querying The 'mesh' Node</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>On a whim, I tried to see if it was possible to query one of the '<CODE>vertexNormal</CODE>' attributes of the 'mesh' DG node to obtain this information directly:</P>
+
+<PRE CLASS=mel>
+  getAttr pSphere1.vn[0].vfnl[0].fnxy;
+  // Result: 100000002004087730000 100000002004087730000 100000002004087730000 //
+</PRE>
+
+<P>Given the results, I think not.</P>
+<BR>
+
+</DIV>
+
+<DIV CLASS="heading">
+<P>References for Cross Product</P>
+</DIV>
+
+<DIV CLASS="in">
+<P><A HREF="http://www.mcasco.com/p1va.html">M Casco Associates - Vector Arithmetic</A></P>
+<P><A HREF="http://mathworld.wolfram.com/CrossProduct.html">Eric Weisstein's World of Mathematics - Cross Product</A></P>
+
+</DIV>
+
+<BR>
+<P><SPAN CLASS="heading">Acknowledgement</SPAN></P>
+
+<DIV CLASS="in">
+
+<P><SPAN CLASS="acknowledgement">Joseph A. Hansen</SPAN>, Tools Manager, Beyond Games</P>
+
+</DIV>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.036.html">How can I ensure that a polygon face component is planar?</a></li>
+<li class="howto"><a href="mel.090.html">How can I determine if a polygon face component is planar?</a></li>
+<li class="howto"><a href="mel.055.html">How can a get a list of all vertex or edge components from a polymesh in proper counter-clockwise or "render" order?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->22 February 2003</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,32 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · replacePrefix</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">replacePrefix</P>
+
+<H3>Function</H3>
+
+<P>Use to replace the prefix in a heirarchy; e.g. the decoration that Maya adds when importing a scene.  This recursively scans the scene for all nodes that have a prefix matching the first argument and renames them with the prefix specified as the second argument.  The match is case-sensitive.</P>
+
+<H3>Usage</H3>
+
+<PRE CLASS="mel">
+replacePrefix &lt;oldPrefix&gt; &lt;newPrefix&gt;
+</PRE>
+
+<P>For example, if you wanted to replace all nodes with the prefix "run_" (e.g. "run_leg_l") with "jump_" (e.g. "jump_leg_l):</P>
+
+<PRE CLASS="mel">
+replacePrefix run_ jump_
+</PRE>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Tuesday, October 03, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

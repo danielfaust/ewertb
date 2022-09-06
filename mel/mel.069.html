@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#69</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #69</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.068.html">Previous</a> &middot; <a href="mel.070.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I change a Material's type - from Lambert to Blinn, for example - using MEL?</h2>
+<!-- How do I change a Material's type - from Lambert to Blinn, for example - using MEL? -->
+
+<P>The drop-down menu in the Attribute Editor looks deceptively simple.  By appearances it
+is simply switching a Material attribute from "Lambert" to "Blinn", or some such.</P>
+
+<P>In reality, what's happening when you change the shading type is that Maya creates a
+brand new Material node of a different type, and uses the magic command
+<SPAN CLASS="mel">replaceNode</SPAN> to match it to the original.  This all happens from the Attribute Editor
+template script:</P>
+
+<PRE>
+\AW\Maya3.0\scripts\AETemplates\AEshaderTypeNew.mel
+</PRE>
+
+<P>The <SPAN CLASS="mel">replaceNode</SPAN> command (implemented via a MEL script) can be found here:</P>
+
+<PRE>
+\AW\Maya3.0\scripts\others\replaceNode.mel
+</PRE>
+
+<P>Here are the commands to do it yourself:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// This would be your existing Lambert Material</SPAN>
+string $shaderNode = "myLambert";
+
+<SPAN CLASS="comment">// This would be the desired Material type</SPAN>
+string $replaceType = "blinn";
+
+string $replaceWith = `createNode $replaceType`;
+
+replaceNode $shaderNode $replaceWith;
+
+<SPAN CLASS="comment">// Not strictly necessary...</SPAN>
+showEditor $replaceWith;
+
+delete $shaderNode;
+
+<SPAN CLASS="comment">// Rename the new node to match the original.</SPAN>
+rename $replaceWith $shaderNode;
+</PRE>
+
+<P CLASS="rcomment"><DATE>Wednesday, August 29, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

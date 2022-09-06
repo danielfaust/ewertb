@@ -1,0 +1,322 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#107</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #107</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.106.html">Previous</a> &middot; <a href="mel.108.html">Next</a></td><td> <a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I use '-dragCallback' and '-dropCallback'?</h2>
+<!-- How do I use '-dragCallback' and '-dropCallback'? -->
+
+<p>MEL's drag'n'drop functionality threw me for a loop for the longest time. I was never able to
+successfully implement drag'n'drop callbacks in any of my UI's until Maya v3, when an Alias rep
+casually alluded to an obscure requirement on the Highend3D Maya Mailing list. Unfortunately
+this requisite had not been clearly described in Maya's documentation.</p>
+
+<p>There are several key things you need to keep in mind regarding MEL's
+drag'n'drop functionality:</p>
+
+<ul>
+
+<li><p>MEL will register drop events <em>only</em> from other MEL controls which have
+been assigned a drag event. Assigning a '-dragCallback' to a control does
+<em>not</em> mean that it will interact with every other control automatically.</p></li>
+
+<li> 
+
+<p>The drop callback <em>will not trigger</em> if the message array from the drag callback is
+empty! You must assign at least one item to the message array - even if it's an empty string.
+<SPAN CLASS="remark">(This is the tip that finally got my drag'n'drop working.)</SPAN></p>
+
+<div class="in">
+<p>For example:</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// A non-functional drag callback.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+global proc string[] dragCallback( string $drag, 
+                                   int $x, int $y, int $mods )
+{
+  string $msgs[];
+  return $msgs;
+}
+</pre>
+
+<p>The above drag message will <em>not</em> trigger a drop!  Use (at least):</p>
+
+<pre class="mel">
+<SPAN CLASS="comment">// A drag callback that works.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+global proc string[] dragCallback( string $drag, 
+                                 int $x, int $y, int $mods )
+{
+  string $msgs[] = { "" };
+  return $msgs;
+}
+</pre>
+
+<p>I suppose one could argue that this <em>is</em> a documented behavior, as the description for the callback flags states:</p>
+
+<blockquote>
+"By convention the first string in the array describes the user settable message type."
+</blockquote>
+
+</div>
+
+</li>
+
+<li><p>Several controls do not support a user-customizable drag'n'drop.</p>
+
+<div class="in"> 
+
+<p> Maya's native panels - such as the Outliner or its modelPanels - cannot be assigned drag
+events which will propogate to your own controls. For example, even though Maya provides a "drop
+cursor" when you attempt a drag from the Outliner to a MEL window, the drop callback is never
+invoked.  A MEL UI element will only acknowledge a dropCallback from another MEL UI element that
+has initiated a dragCallback.</p>
+
+<p>You cannot successfully capture a drop callback directly upon a textField; the textField
+always offers a "Do not enter" cursor when you attempt a drop.  A workaround is to use a
+textFieldGrp instead, and drop on its label.</p>
+
+<p>The "trash" control in Maya's shelfTabLayout is handled internally by the layout and not via
+a MEL callback.  In other words, there's no way to assign a specific command to the trashcan or
+intercept its operation.</p>
+
+<p>The shelfLayout implements its own drag and drop functionality for managing shelfButtons; as a
+consequence, it is not possible to use the MEL '-dragCallback' nor '-dropCallback' on shelf
+layouts or shelf buttons.</p>
+
+<p>In general, controls such as shelfLayouts, shelfButtons, tabLayouts, textFields and
+scrollFields cannot react to custom drag callbacks assigned to controls as they have their own
+inherent drag and drop behaviors.</p>
+</div>
+
+</li>
+
+</ul>
+
+<p>Below is a sample script with demonstrates the use of drag and drop
+callbacks, and shows some of the limitations inherent to the system:</p>
+
+<pre class="mel">
+global proc dragDropHowTo()
+{
+    string $windowUI = "dragDropHowToUI";
+
+    if ( `window -exists $windowUI` )
+    deleteUI -window $windowUI;
+
+    window -title "MEL How-To #107" -iconName "How-To #107" 
+           -wh 540 280 $windowUI;
+    string $form = `formLayout`;
+
+        string $buttonLeftUI = `button leftButtonUI`;
+        string $buttonRightUI = `button rightButtonUI`;
+
+        string $shelfUI = `shelfLayout shelfUI`;
+
+            string $sphereUI = `shelfButton
+                -enableCommandRepeat 1
+                -enable 1
+                -width 34
+                -height 34
+                -manage 1
+                -visible 1
+                -label "Polygon Sphere" 
+                -image1 "polySphere.xpm" 
+                -style "iconOnly" 
+                -command ( "polySphere -r 1 -sx 16 -sy 8 -ax 0 1 0 " +
+                                      "-tx 1 -ch 1;\n" )
+                    sphereUI`;
+
+            string $cubeUI = `shelfButton
+                -enableCommandRepeat 1
+                -enable 1
+                -width 34
+                -height 34
+                -manage 1
+                -visible 1
+                -label "Polygon Cube" 
+                -image1 "polyCube.xpm" 
+                -style "iconOnly" 
+                -command ( "polyCube -w 1 -h 1 -d 1 -sx 1 -sy 1 -sz 1 " +
+                                    "-ax 0 1 0 -tx 1 -ch 1;\n" )
+                    cubeUI`;
+
+            setParent ..;
+
+        string $tslUI = `textScrollList -height 64 tslUI`;
+
+        string $scrollUI = `scrollField scrollUI`;
+
+        setParent ..;
+
+    setParent ..;
+
+    formLayout -e
+
+        -af $buttonLeftUI       "top"       2
+        -af $buttonLeftUI       "left"      2
+        -ap $buttonLeftUI       "right"     2   50
+
+        -af $buttonRightUI      "top"       2
+        -ap $buttonRightUI      "left"      2   50
+        -af $buttonRightUI      "right"     2
+
+        -ac $shelfUI            "top"       2   $buttonLeftUI
+        -af $shelfUI            "left"      2
+        -af $shelfUI            "right"     2
+
+        -ac $tslUI              "top"       2   $shelfUI
+        -af $tslUI              "left"      2
+        -af $tslUI              "right"     2
+
+        -ac $scrollUI           "top"       2   $tslUI
+        -af $scrollUI           "left"      2
+        -af $scrollUI           "right"     2
+        -af $scrollUI           "bottom"    2
+
+            $form;
+
+    showWindow;  
+
+    button -e
+        -dragCallback howToDragCB
+        -dropCallback howToDropCB
+            $buttonLeftUI;
+
+    button -e
+        -dragCallback howToDragCB
+        -dropCallback howToDropCB
+            $buttonRightUI;
+
+    <SPAN CLASS="comment">// The shelfLayout does not send nor accept drag/drop callbacks.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    shelfLayout -e
+        -dragCallback howToDragCB
+        -dropCallback howToDropCB
+            $shelfUI;
+
+    <SPAN CLASS="comment">// The shelfButton does not send nor accept drag/drop callbacks.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    shelfButton -e
+        -dragCallback howToDragCB
+        -dropCallback howToDropCB
+            $sphereUI;
+
+    <SPAN CLASS="comment">// The shelfButton does not send nor accept drag/drop callbacks.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    shelfButton -e
+        -dragCallback howToDragCB
+        -dropCallback howToDropCB
+            $cubeUI;
+
+    <SPAN CLASS="comment">// The scrollField does not send nor accept drag/drop callbacks.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    scrollField -e
+        -text ( "Drop shelf buttons on this scrollField to paste text;\n" +
+                "This is not an effect of the '-dropCallback', but a native\n" +
+                "behavior of the shelfButton and scrollField controls.\n" +
+                "The button drag callbacks won't trigger a drop here.\n" )
+        -dragCallback howToDragCB
+        -dropCallback howToDropCB
+            $scrollUI;
+
+    <SPAN CLASS="comment">// The textScrollList will send and accept drag/drop callbacks.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    textScrollList -e
+        -append ( "You may drag the button controls to this textScrollList, " + 
+                  "but the shelfButtons will do naught." )
+        -dragCallback howToDragCB
+        -dropCallback howToDropCB
+            $tslUI;
+}
+
+<SPAN CLASS="comment">// ---------------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">// howToDragCB</SPAN>
+<SPAN CLASS="comment">// ---------------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">/// Process the "on drag" events from participating MEL UI controls.</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// \param  $dragControl: The control from which the "on drag" event</SPAN>
+<SPAN CLASS="comment">///                       was initiated.</SPAN>
+<SPAN CLASS="comment">/// \param  $x: The X coordinate of the mouse where the drag event</SPAN>
+<SPAN CLASS="comment">///             occurred.</SPAN>
+<SPAN CLASS="comment">/// \param  $y: The Y coordinate of the mouse where the drag event</SPAN>
+<SPAN CLASS="comment">///             occurred.</SPAN>
+<SPAN CLASS="comment">/// \param  $mods: Any modifying keypresses.</SPAN>
+<SPAN CLASS="comment">///                 0 = None, 1 = Shift, 2 = Ctrl, 3 = Both.</SPAN>
+<SPAN CLASS="comment">// ---------------------------------------------------------------------</SPAN>
+global proc string[] howToDragCB( string $dragControl, 
+                               int $x, int $y, int $mods )
+{
+    print ( "Drag from " + $dragControl + "\n" );
+
+    <SPAN CLASS="comment">// The msg array returned from the drag callback must _not_ be empty,</SPAN>
+    <SPAN CLASS="comment">// else the drop callback will not trigger.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    return { $dragControl };
+}
+
+<SPAN CLASS="comment">// ---------------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">// howToDropCB</SPAN>
+<SPAN CLASS="comment">// ---------------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">/// Process the "on drop" events from participating MEL UI controls.</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// \param  $drag: The control from which the "on drag" event was </SPAN>
+<SPAN CLASS="comment">///                initiated.</SPAN>
+<SPAN CLASS="comment">/// \param  $drop: The control upon which the "on drop" event was </SPAN>
+<SPAN CLASS="comment">///                invoked.</SPAN>
+<SPAN CLASS="comment">/// \param  $msgs: Array of messages sent from the "on drag" callback.</SPAN>
+<SPAN CLASS="comment">/// \param  $x: The X coordinate of the mouse where the drop event</SPAN>
+<SPAN CLASS="comment">///             occurred.</SPAN>
+<SPAN CLASS="comment">/// \param  $y: The Y coordinate of the mouse where the drop event</SPAN>
+<SPAN CLASS="comment">///             occurred.</SPAN>
+<SPAN CLASS="comment">/// \param  $type: (unknown)</SPAN>
+<SPAN CLASS="comment">// ---------------------------------------------------------------------</SPAN>
+global proc howToDropCB( string $drag, string $drop, string $msgs[],
+                          int $x, int $y, int $type )
+{
+    print ( "Drop on " + $drop + " from " + $msgs[0] + "\n" );
+
+    <SPAN CLASS="comment">// Special case for textScrollList.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    if ( `textScrollList -q -exists $drop` )
+    {
+      textScrollList -e -append ( "Drop from " + $msgs[0] ) $drop;
+    }
+}
+</pre>
+
+<P CLASS="rcomment"><!-- DATE -->19 Feb 2005</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2006 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <a href="http://www.autodesk.com">Autodesk</a> (formerly <A HREF="http://www.alias.com">Alias</A>)<br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,295 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#31</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #31</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.030.html">Previous</a> &middot; <a href="api.032.html">Next</a></td><td> <a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I specify, and parse, a matrix, double array or double list for a MPxCommand argument?</h2>
+<pre class="api">
+#pragma warning( disable : 4786 )
+
+#include "maya/MFnPlugin.h" <SPAN CLASS="comment">// cannot put in header...declares global vars</SPAN>
+
+#include "maya/MPxCommand.h"
+#include "maya/MArgList.h"
+#include "maya/MMatrix.h"
+#include "maya/MDoubleArray.h"
+#include "maya/MGlobal.h"
+
+#include &lt;iostream&gt;
+
+static const char* COMMAND_NAME = "matrixArg";
+
+static const char* MATRIX_FLAG = "m";
+static const char* MATRIX_FLAG_LONG = "matrix";
+
+static const char* DOUBLE_ARRAY_FLAG = "da";
+static const char* DOUBLE_ARRAY_FLAG_LONG = "doubleArray";
+
+static const char* DOUBLE_LIST_FLAG = "dl";
+static const char* DOUBLE_LIST_FLAG_LONG = "doubleList";
+
+static const char* HELP_FLAG = "h";
+static const char* HELP_FLAG_LONG = "help";
+
+void print_maya_matrix( const MMatrix&amp; m, const char* label = NULL )
+{
+    if ( NULL != label )
+    {
+        std::clog &lt;&lt; label &lt;&lt; std::endl;
+    }
+    
+    char buf[128];
+    sprintf( buf, "\t%4.4f %4.4f %4.4f %4.4f", m[0][0], m[0][1], m[0][2], m[0][3] );
+    std::clog &lt;&lt; buf &lt;&lt; std::endl;
+    sprintf( buf, "\t%4.4f %4.4f %4.4f %4.4f", m[1][0], m[1][1], m[1][2], m[1][3] );
+    std::clog &lt;&lt; buf &lt;&lt; std::endl;
+    sprintf( buf, "\t%4.4f %4.4f %4.4f %4.4f", m[2][0], m[2][1], m[2][2], m[2][3] );
+    std::clog &lt;&lt; buf &lt;&lt; std::endl;
+    sprintf( buf, "\t%4.4f %4.4f %4.4f %4.4f", m[3][0], m[3][1], m[3][2], m[3][3] );
+    std::clog &lt;&lt; buf &lt;&lt; std::endl;
+}
+
+void print_double_array( const MDoubleArray&amp; d, const char* label = NULL )
+{
+    if ( NULL != label )
+    {
+        std::clog &lt;&lt; label &lt;&lt; std::endl;
+    }
+
+    std::clog &lt;&lt; "\t";
+    
+    char buf[16];
+    unsigned int i;
+    for ( i = 0; i &lt; d.length(); i++ )
+    {
+        sprintf( buf, "%4.4f", d[i] );
+        std::clog &lt;&lt; buf;
+
+        if ( i &lt; ( d.length() - 1 ) ) std::clog &lt;&lt; ", ";
+    }
+
+    std::clog &lt;&lt; std::endl;
+}
+
+class SimpleCommand : public MPxCommand
+{
+    public:
+        SimpleCommand();
+        ~SimpleCommand() {}
+
+        static void*        creator();
+
+        virtual MStatus     doIt( const MArgList&amp; args );
+
+        MStatus             parseArgs( const MArgList&amp; args );
+        
+        void                Help( void ) const;
+
+    private:
+
+        MMatrix             mMatrix;
+        MDoubleArray        mDoubleArray;
+        MDoubleArray        mDoubleList;
+
+        bool                mHelp;   
+};
+
+void* SimpleCommand::creator()
+{
+    return new SimpleCommand();
+}
+
+SimpleCommand::SimpleCommand() :
+    mHelp( false )
+{
+}
+
+MStatus SimpleCommand::parseArgs( const MArgList&amp; args )
+{
+    MStatus status;
+    MStatus argStatus;
+
+    unsigned int flagIndex = 0;
+
+    flagIndex = args.flagIndex( HELP_FLAG, HELP_FLAG_LONG );
+    if ( MArgList::kInvalidArgIndex != flagIndex )
+    {
+        mHelp = true;
+        return MS::kSuccess;
+    }
+
+    flagIndex = args.flagIndex( MATRIX_FLAG, MATRIX_FLAG_LONG );
+    if ( MArgList::kInvalidArgIndex != flagIndex )
+    {
+        flagIndex++;
+
+        MMatrix m;
+        status = args.get( flagIndex, m );
+        if ( MS::kSuccess == status )
+        {
+            mMatrix = m;
+        }
+        else status.perror( "FAILED to get matrix." );
+    }
+
+    flagIndex = args.flagIndex( DOUBLE_ARRAY_FLAG, DOUBLE_ARRAY_FLAG_LONG );
+    if ( MArgList::kInvalidArgIndex != flagIndex )
+    {
+        flagIndex++;
+
+        MDoubleArray a;
+        status = args.get( flagIndex, a );
+        if ( MS::kSuccess == status )
+        {
+            mDoubleArray = a;
+        }
+        else status.perror( "FAILED to get double array." );
+    }
+
+    flagIndex = args.flagIndex( DOUBLE_LIST_FLAG, DOUBLE_LIST_FLAG_LONG );
+    if ( MArgList::kInvalidArgIndex != flagIndex )
+    {
+        MString asString;
+
+        <SPAN CLASS="comment">// Keep popping arguments off the stack until </SPAN>
+        <SPAN CLASS="comment">// we hit one that's not a number.</SPAN>
+        <SPAN CLASS="comment">//</SPAN>
+        while ( ( MS::kSuccess == argStatus ) &amp;&amp; 
+                ( ++flagIndex &lt; args.length() ) )
+        {
+            asString = args.asString( flagIndex, &amp;argStatus );
+
+            if ( ( MS::kSuccess != argStatus ) ||
+                 !( asString.isDouble() || 
+                    asString.isFloat() || 
+                    asString.isInt() || 
+                    asString.isShort() || 
+                    asString.isUnsigned() ) )
+                break;
+
+            <SPAN CLASS="comment">// If any of the numeric types, accept it as a double.</SPAN>
+            <SPAN CLASS="comment">//</SPAN>
+            mDoubleList.append( args.asDouble( flagIndex, &amp;argStatus ) );    
+        }
+    }
+
+    return status;
+}
+
+MStatus SimpleCommand::doIt( const MArgList&amp; args )
+{
+    MStatus status;
+
+    status = parseArgs( args );
+
+    if ( mHelp )
+    {
+        Help();
+        return MS::kSuccess;
+    }
+
+    if ( MS::kSuccess == status )
+    {
+        print_maya_matrix( mMatrix, "Your matrix:" );
+        print_double_array( mDoubleArray, "Your array:" );
+        print_double_array( mDoubleList, "Your list:" );
+    }
+
+    return status;
+}
+
+
+void SimpleCommand::Help( void ) const
+{
+    MString help( "Example MPxCommand - by Bryan Ewert\n" );
+
+    help += "//\t -m|-matrix                     [C]   Specify a matrix argument. Accepts sixteen float values only.\n";
+    help += "//\t                                        e.g. 1.0 0.0 0.0 0.0  0.0 1.0 0.0 0.0  0.0 0.0 1.0 0.0  0.0 0.0 0.0 1.0\n";
+    help += "//\t -da|-doubleArray               [C]   Specify a double array, enclosed in braces, comma-separated.\n";
+    help += "//\t                                        e.g. { 1.1, 3.14, 0.707 }\n";
+    help += "//\t -dl|-doubleList                [C]   Specify a list of doubles, separated by whitespace.\n";
+    help += "//\t                                        e.g. 1.1 3.14 0.707\n";
+
+    help += "//\t -h|-help                       [C]   Displays this help.\n";
+
+    MGlobal::displayInfo( help );
+}
+
+
+<SPAN CLASS="comment">//------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">//------------------------------------------------------------</SPAN>
+
+
+<SPAN CLASS="comment">//------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">// Plugin initialization. </SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// All command objects need to be registered in this function</SPAN>
+<SPAN CLASS="comment">// before they can be called by a MEL script from within maya.</SPAN>
+<SPAN CLASS="comment">//------------------------------------------------------------</SPAN>
+MStatus initializePlugin(MObject pluginObj)
+{
+    MStatus			status;
+    MFnPlugin		plugin( pluginObj, COMMAND_NAME, "1.0", "Any" );
+
+    // Register: simpleCommand
+    status = plugin.registerCommand( COMMAND_NAME,
+                                     SimpleCommand::creator );
+    if ( MS::kSuccess != status)
+    {
+	    status.perror( MString( "FAILED to register '" ) + COMMAND_NAME + "'" );
+	    return status;
+    }
+
+    return MS::kSuccess;
+}
+
+<SPAN CLASS="comment">//------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">// Plugin uninitialization. </SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// All command objects need to be deregistered in this function</SPAN>
+<SPAN CLASS="comment">// so that maya can clean up properly.</SPAN>
+<SPAN CLASS="comment">//------------------------------------------------------------</SPAN>
+MStatus uninitializePlugin(MObject pluginObj)
+{
+    MStatus			status;
+    MFnPlugin		plugin( pluginObj );
+
+    status = plugin.deregisterCommand( COMMAND_NAME );
+
+    return status;
+}
+</pre>
+
+<P CLASS="rcomment"><!-- DATE -->21 Oct 2005</P>
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2006 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <a href="http://www.autodesk.com">Autodesk</a> (formerly <A HREF="http://www.alias.com">Alias</A>)<br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

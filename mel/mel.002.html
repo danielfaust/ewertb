@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#02</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #02</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.001.html">Previous</a> &middot; <a href="mel.003.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine which Reference files are currently defined or loaded?  How do I load and unload them?</h2>
+<!-- How do I determine which Reference files are currently defined or loaded?  How do I load and unload them? -->
+
+<P>To find out which References exist for the currently loaded file:</P>
+
+<PRE CLASS=mel>
+string $references[] = `file -q -r`;
+</PRE>
+
+<P>To find out which are loaded (ie. not deferred):</P>
+
+<PRE CLASS=mel>
+proc string[] referencesLoaded()
+{
+   string $referencesLoaded[];
+   int $numLoaded = 0;
+
+   string $refs[] = `file -q -r`;
+
+   for ( $ref in $refs )
+   {
+      // If Reference is not deferred, then it is loaded
+      if ( !`file -q -dr $ref` )
+         $referencesLoaded[$numLoaded++] = $ref;
+   }
+   return $referencesLoaded;
+}
+</PRE>
+
+<P>To unload all references (this won't delete them from the Reference Editor):</P>
+
+<PRE CLASS=mel>
+proc unloadReferences()
+{
+   string $referencesLoaded[] = referencesLoaded();
+   string $refNode;
+
+   for ( $refFile in $referencesLoaded )
+   {
+      // Need to get node that identifies reference
+      $refNode = `file -q -rfn $refFile`;
+
+      // Now you can unload it
+      file -ur $refNode $refFile;
+   }
+}
+</PRE>
+
+<P>To physically delete loaded references from the scene <I>and</I> the Reference Editor:</P>
+
+<PRE CLASS=mel>
+proc deleteLoadedReferences()
+{
+   string $referencesLoaded[] = referencesLoaded();
+
+   for ( $refFile in $referencesLoaded )
+   {
+      file -rr $refFile;
+   }
+}
+</PRE>
+
+<P>And finally, to delete all References:</P>
+
+<PRE CLASS=mel>
+proc deleteAllReferences()
+{
+   string $references = `file -q -r`;
+
+   for ( $refFile in $references )
+   {
+      file -rr $refFile;
+   }
+}
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

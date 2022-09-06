@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#83</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #83</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.082.html">Previous</a> &middot; <a href="mel.084.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I devise a setup whereby when I select one object, Maya automatically selects another object?</h2>
+<!-- How do I devise a setup whereby when I select one object, Maya automatically selects another object? -->
+
+<P>The only method with which Maya communicates a change in selection is via a scriptJob.
+There is no attribute on an object to indicate whether it is part of the active
+selection list, and nothing in the DG becomes "dirty" when you simply click
+something with the mouse.</P>
+
+<P>Now here's the kicker: The event doesn't tell you <EM>what</EM> was just selected
+(or unselected), only that the selection has changed.  You'll have to figure
+out for yourself what's moved in or out of the queue.</P>
+
+<P>Now, here's the <EM>real</EM> kicker:  Whenever you perform a selection as a
+response to a SelectionChanged event, you add the selection to the undo
+queue.  Attempting to undo the selection puts you back into the callback for
+the SelectionChanged event, which undoes your undo by restoring the
+selection just the way it was.  Result: You can't undo.</P>
+
+<P>So, what you have to do within the SelectionChanged event is to 'undo' the
+selection, modify the array of items to select if necessary, and 'redo' the
+selection.  This tip from the <A HREF="http://www.highend3d.com/maya/">Highend3D Maya Mailing List</A> courtesy
+<A HREF="http://www.highend3d.com/maya/archive/sp.3d?mail_id=44875">Roger Klado<A>.</P>
+
+<P>I also found that the "Click Drag Select" mode would trigger a
+SelectionChanged event which, upon obediently performing its undo, made the
+Click Drag ineffectual.  So I had to wrap the works with a query to the Undo
+queue to assert it was triggered by a selection event and not a move event.</P>
+
+<P>In the following example "<CODE>ObjectB</CODE>" will be selected whenever "<CODE>ObjectA</CODE>" is selected.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Set up the scriptJob</SPAN>
+scriptJob -event "SelectionChanged" reactToSelection;
+
+<SPAN CLASS="comment">// Callback for "SelectionChanged" scriptJob event.</SPAN>
+global proc reactToSelection()
+{
+  string $whyAmIHere = `undoInfo -q -undoName`;
+
+  <SPAN CLASS="comment">// Wrapper to prevent unwanted Undo during 'Click Drag Select' mode.</SPAN>
+  if ( `gmatch $whyAmIHere "select*"` )
+  {
+    string $select[] = `ls -sl`;
+
+    <SPAN CLASS="comment">// Undo the user selection.</SPAN>
+    undo;
+
+    int $hasObjectA = stringArrayCount( "ObjectA", $select );
+
+    if ( $hasObjectA )
+    {
+      $select = stringArrayCatenate( { "ObjectB" }, $select );
+    }
+    else
+    <SPAN CLASS="comment">// Don't allow ObjectB to be selected alone.</SPAN>
+    {
+      $select = stringArrayRemove( { "ObjectB" }, $select );
+    }
+
+    <SPAN CLASS="comment">// Redo with modified selection.</SPAN>
+    select $select;
+  }
+}
+</PRE>
+
+There's bound to be some issues with this that I haven't foreseen.
+If it breaks, please <A HREF="mailto:maya@ewertb.com?subject=mel_a83">let me know</A>.
+
+<BR>
+<P><SPAN CLASS="heading">Acknowledgements</SPAN></P>
+
+<DIV CLASS="in">
+
+<P><SPAN CLASS="acknowledgement"><A HREF="http://www.highend3d.com">Highend3D.com</A></SPAN></P>
+
+<P><SPAN CLASS="acknowledgement">Roger Klado</SPAN>, Man'O'War</P>
+
+</DIV>
+
+<P CLASS="rcomment"><DATE>09 February 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

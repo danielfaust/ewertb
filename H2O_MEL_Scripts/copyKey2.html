@@ -1,0 +1,38 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · copyKey2</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">
+copyKey2<BR>
+pasteKey2
+</P>
+
+<P CLASS="note">Both functions are accessed from the MEL script ‘<CODE>copyKey2.mel</CODE>’.</P>
+
+<H3>Function</H3>
+
+<P>These functions behave almost identically to the Copy and Paste functions accessed from the Time Slider (in fact, 95% of the script is just copied and pasted from the Time Slider functions :).</P>
+
+<P>What's different, though, is that these functions allow for "smart" pasting.  There was a thread on the Maya Mailing List discussing the problem with copying and pasting keys within the Time Slider:</P>
+
+<PRE>
+> how do you set it up so that if you cut and paste keys in the time slider,
+> when you paste it doesn't offset all the keys after the one you pasted?
+</PRE>
+
+<P>Using pasteKeys2 it is now possible to copy from the Time Slider, then paste <I>without shifting keys</I>.</P>
+
+<P>Now you can scrub to a keyframe, use copyKey2, scrub to the new location, then pasteKey2.  The key's value and tangents will be pasted at the new time without shifting the time values of later keys.</P>
+
+<P>If you copy a single key (ie. with no highlighted range in the Time Slider), the Paste operation will replace only the key at the current time.  If you copy a range of keys then the Paste operation will replace all keys from the current time for the length of the copied range.</P>
+
+<P>Note that keys <I>must</I> be copied using copyKey2 for pasteKey2 to function properly.</P>
+
+<P>You'll have to assign hotkeys (or a similarly convenient access) to these commands; they are not linked to the Time Slider Menus.</P>
+
+<!-- footer --></BODY>
+</HTML>

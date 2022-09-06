@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#81</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #81</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.080.html">Previous</a> &middot; <a href="mel.082.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I find the deformers influencing an object?</h2>
+<!-- How do I find the deformers influencing an object? -->
+
+<P>To find the skinClusters (smooth bind) and its joints influencing a
+polymesh:</P>
+
+<PRE CLASS="mel">
+findRelatedSkinCluster myObject;
+// Result: skinCluster1 //
+
+skinPercent -q -t skinCluster1 "myObject.vtx[*]";
+// Result: joint1 joint2 joint3 joint4 //
+</PRE>
+
+<P>For a NURBS object:</P>
+
+<PRE CLASS="mel">
+findRelatedSkinCluster myNurbsObject;
+// Result: skinCluster2 //
+
+skinPercent -q -t skinCluster2  "myNurbsObjects.cv[*]";
+// Result: joint5 joint6 joint7 joint8 //
+</PRE>
+
+<P>To find clusters, jointClusters (rigid bind), joints and lattices
+influencing an object:</P>
+
+<PRE CLASS="mel">
+proc string getShape( string $xform )
+{
+  string $shapes[];
+
+  $shapes[0] = $xform;
+
+  if ( "transform" == `nodeType $xform` )
+  <SPAN CLASS="comment">// If given node is not a transform, assume it is a shape </SPAN>
+  <SPAN CLASS="comment">// and pass it through</SPAN>
+  {
+    $shapes = `listRelatives -fullPath -shapes $xform`;
+  }
+
+  return $shapes[0];
+}
+
+<SPAN CLASS="comment">// Returns an array of the 'cluster', 'jointCluster',</SPAN>
+<SPAN CLASS="comment">// or 'lattice' nodes influencing the specified objects.</SPAN>
+<SPAN CLASS="comment">// Note that a 'jointCluster' is also a 'cluster'.</SPAN>
+<SPAN CLASS="comment">// $obj: The object to query.</SPAN>
+<SPAN CLASS="comment">// $deformerType: "cluster", "jointCluster" or "lattice".</SPAN>
+global proc string[] findRelatedDeformer( string $obj,
+                                          string $deformerType )
+{
+  string $related[];
+
+  string $longName = getShape( $obj );
+  string $shortName[] = `ls -sn $longName`;
+
+  string $deformers[] = `ls -type $deformerType`;
+
+  for ( $deform in $deformers )
+  {
+    string $geometry[];
+
+    switch ( $deformerType )
+    {
+        case "cluster":
+        case "jointCluster":
+        {
+            $geometry = `cluster -q -g $deform`;
+            break;
+        }
+
+        case "lattice":
+        {
+            $geometry = `lattice -q -g $deform`;
+            break;
+        }
+    }
+
+    for ( $g in $geometry )
+    {
+        if ( ( $g == $longName ) || ( $g == $shortName[0] ) )
+        {
+          $related[`size $related`] = $deform;
+        }
+    }
+  }
+
+  return $related;
+}
+
+<SPAN CLASS="comment">// Returns the 'joint' nodes related to a 'jointCluster',</SPAN>
+<SPAN CLASS="comment">// or the 'clusterHandle' nodes related to a 'cluster'.</SPAN>
+<SPAN CLASS="comment">// or the 'joint' nodes related to a 'skinCluster'.</SPAN>
+global proc string[] findDeformerDAGs( string $deformerNode )
+{
+    string $DAGs[];
+
+    string $connect[] = `listConnections -source true
+      ( $deformerNode + ".matrix" )`;
+
+    for ( $c in $connect )
+    {
+        $DAGs[`size $DAGs`] = $c;
+    }
+
+    return $DAGs;
+}
+</PRE>
+
+
+<P CLASS="rcomment"><DATE>29 March 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

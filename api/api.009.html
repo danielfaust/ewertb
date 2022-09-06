@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#09</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #09</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.008.html">Previous</a> &middot; <a href="api.010.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I extract animated polymesh vertex coordinates?</h2>
+<!-- How do I extract animated polymesh vertex coordinates? -->
+
+<P><SPAN CLASS="heading">Preamble</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>This How-To is the direct result of my being stonewalled for three days while trying to determine how to do this (seemingly) simple feat without causing Maya to crash and burn at every turn.</P>
+
+<P>I express sincere gratitude towards Justin Miller (DreamWorks) and Mark McGrevy (SONY) for their helpful advice.  Justin suggested the MDGContext technique, and Mark explained for me why my original code wasn't working.  Thanks also to William McCullough for providing the <A HREF="http://www.highend3d.com">Highend3D</A> Maya forums, without which I'd still be stuck on this problem.</P>
+
+</DIV>
+
+<P><SPAN CLASS="heading">Method #1: Advancing Time</SPAN></P>
+
+<DIV CLASS="in">
+
+<P>This technique is straight-forward and intuitive.  Start at the first frame of the animation (acquired from<SPAN CLASS="api"> MAnimControl::minTime()</SPAN>) and march through each consecutive frame until you reach the end of the animtion (<SPAN CLASS="api">MAnimControl::maxTime()</SPAN>).  At each time stop, grab the coordinates for the vertices (using <SPAN CLASS="api">MFnMesh::getPoints()</SPAN>).</P>
+
+<P>There seems to be a consensus amongst developers for using <SPAN CLASS="api">MGlobal::viewFrame()</SPAN> over <SPAN CLASS="api">MAnimControl::setCurrentTime()</SPAN>.  The former forces a refresh of Maya's interactive view whereas the latter simply flags it as "dirty."   The opinion is that <SPAN CLASS="api">::viewFrame()</SPAN> is the more reliable, and who am I to argue with the experts?</P>
+
+<P>The following class method can be used to query vertex coordinates at a given frame (or "time" if you prefer):</P>
+
+</DIV>
+
+<PRE CLASS="api">
+// ************************************************************************************************
+//    Function: GetPointsAtTime
+//
+// Description: Sets Maya to the specified Time and gets the object-space vertex coordinates
+//              from the specified DAG at the that Time.
+//
+//       Input: const MDagPath&amp; dagPath: The DAG path for the mesh object.
+//              const MTime&amp; mayaTime: The Time at which to query the vertex coordinates.
+//              MPointArray&amp; points: Storage for the array of vertex coordinates.
+//
+//      Output: (MStatus): MS::kSuccess if it worked; else MS::kFailure.
+// ************************************************************************************************
+MStatus myPlugIn::GetPointsAtTime(
+    const MDagPath&amp; dagPath,
+    const MTime&amp; mayaTime,
+    MPointArray&amp; points )
+{
+  MStatus                               status = MS::kSuccess;
+
+  points.clear();
+
+  MFnMesh                               fnMesh;
+
+  <SPAN CLASS="comment">// Move Maya to current frame</SPAN>
+  MGlobal::viewFrame( mayaTime );
+
+  <SPAN CLASS="comment">// You MUST reinitialize the function set after changing time!</SPAN>
+  fnMesh.setObject( dagPath );
+
+  <SPAN CLASS="comment">// Get vertices at this time</SPAN>
+  status = fnMesh.getPoints( points );
+
+  return status;
+}
+</PRE>
+
+<DIV CLASS="sidebar">
+<P><span class="note">Warning!</span> It is important that you note the caution within the GetPointsAtTime function above.
+Whenever you change Maya's time value you <EM>must</EM> "rebind your function sets to the objects they are accessing"
+(from Maya Developer's ToolKit - FAQ).  Although the MDagPath remains valid after the time has changed, its function set
+is not necessarily so lucky.  This was the cause of the crashes that plagued my efforts for several days.</P>
+</div>
+
+<DIV CLASS="in">
+
+<P>Below is an example use of the GetPointsAtTime function:</P>
+
+</DIV>
+
+<PRE CLASS="api">
+MStatus myPlugIn::doIt( const MArgList&amp; args )
+{
+  MStatus                               status = MS::kSuccess;
+
+  MDagPath                              dagPath;
+
+  <SPAN CLASS="comment">// .. determing dagPath from current selection, or whatever .. //</SPAN>
+
+  MPointArray                           points;
+
+  MTime                                 currentTime, maxTime;
+
+  <SPAN CLASS="comment">// Get start- and end-frame from Maya</SPAN>
+  currentTime = MAnimControl::minTime();
+  maxTime = MAnimControl::maxTime();
+
+  <SPAN CLASS="comment">// Iterate through time</SPAN>
+  while ( currentTime &lt;= maxTime )
+  {
+    <SPAN CLASS="comment">// Get vertices at this time</SPAN>
+    status = GetPointsAtTime( dagPath, currentTime, points );
+
+    <SPAN CLASS="comment">// .. do something with the points here .. //</SPAN>
+
+    <SPAN CLASS="comment">// Advance by one frame</SPAN>
+    currentTime++;
+  }
+
+  return status;
+}
+</PRE>
+
+<P><SPAN CLASS="heading">Method #2: Using Time in Context</SPAN></P>
+
+<DIV CLASS="in">
+<P>There is one important consideration for using the "Advancing Time" technique for extracting vertex animation: Performance.  Maya's API documentation warns that <SPAN CLASS="api">::viewFrame()</SPAN> is slow.  This is understandable as it forces a refresh for the entire dependency graph, even for the nodes that have no influence on the mesh object you are probing.
+</P>
+<P>The recommended alternative is to "create an instance of the MDGContext class initialized to the time you are interested in" and "pass it to the getValue method of the MPlug class."</P>
+
+<P>So how can you get vertex coordinates by querying an attribute?  Every mesh has an attribute with this exact information: &lsquo;<CODE>.outMesh</CODE>&rsquo;.  At first it may not be clear how to extract the necessary information from this plug.  If you query this attribute via <SPAN CLASS="api">MGlobal::getFunctionSetList()</SPAN> it reveals that the MObject returned via <SPAN CLASS="api">MPlug::getValue()</SPAN> supports the following function sets:</P>
+
+<PRE>
+[kBase, kMesh, kData, kMeshData, kGeometryData]
+</PRE>
+
+<P>Thus, conveniently, you can use the MFnMesh function set and treat the plug like it was the mesh itself.</P>
+
+<P>The following class method shows how to use MPlug and MDGContext to query vertex coordinates at a given time:</P>
+
+</DIV>
+
+<PRE CLASS="api">
+// ************************************************************************************************
+//    Function: GetPointsAtTimeContext
+//
+// Description: Gets the object-space vertex coordinates from the specified DAG at
+//              the specified Time.
+//
+//       Input: const MDagPath&amp; dagPath: The DAG path for the mesh object.
+//              const MTime&amp; mayaTime: The Time at which to query the vertex coordinates.
+//              MPointArray&amp; points: Storage for the array of vertex coordinates.
+//
+//      Output: (MStatus): MS::kSuccess if it worked; else MS::kFailure.
+// ************************************************************************************************
+MStatus myPlugIn::GetPointsAtTimeContext(
+    const MDagPath&amp; dagPath,
+    const MTime&amp; mayaTime,
+    MPointArray&amp; points )
+{
+  MStatus                    status = MS::kSuccess;
+
+  points.clear();
+
+  MFnDependencyNode          fnDependNode( dagPath.node(), &amp;status );
+
+  MPlug                      plugMesh;
+  MObject                    meshData;
+
+  <SPAN CLASS="comment">// Get the .outMesh plug for this mesh</SPAN>
+  plugMesh = fnDependNode.findPlug( MString( "outMesh" ), &amp;status );
+
+  <SPAN CLASS="comment">// Get its value at the specified Time.</SPAN>
+  status = plugMesh.getValue( meshData, MDGContext( mayaTime ) );
+
+  <SPAN CLASS="comment">// Use its MFnMesh function set </SPAN>
+  MFnMesh                    fnMesh( meshData, &amp;status );
+
+  <SPAN CLASS="comment">// And query the point coordinates</SPAN>
+  status = fnMesh.getPoints( points );
+
+  return status;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.018.html">How do I write a polygon mesh exporter?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->30 March 2003</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

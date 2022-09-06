@@ -1,0 +1,36 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · popupEditMenu</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">popupEditMenu</P>
+
+<IMG SRC="popupEditMenu.gif" ALT="popupEditMenu UI" WIDTH=160 HEIGHT=242 ALIGN=RIGHT>
+<H3>Function</H3>
+
+<P>Creates a hotkey popup menu in the model panels to access
+the various edit menus (e.g. Edit Curves, Surfaces, etc.)</P>
+
+<H3>Usage</H3>
+
+<P>Call ‘<CODE>popupEditMenu</CODE>’ and the menus are automatically created 
+and activated.</P>
+
+<P>By default, the menu is configured to activate with a 
+CTRL-RMB click (hold CTRL and press the right mouse button).
+This can be changed by modifying the options in the line:</P>
+
+<PRE CLASS="mel">
+string $menu = `popupMenu -p viewPanes -aob 1 -alt 0 -ctl 1 -b 3 tempMM`;
+</PRE>
+
+<P>At the bottom of the menu is a list to swap modes.  For example
+if the current menu is Edit Curves, selecting Edit Surfaces Menu
+will rebuild the menu with the Edit Surfaces functions.  You
+will need to re-click the RMB to access the new menu.</P>
+
+<!-- footer --></BODY>
+</HTML>

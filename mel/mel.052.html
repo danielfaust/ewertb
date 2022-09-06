@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#52</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #52</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.051.html">Previous</a> &middot; <a href="mel.053.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I get the names of the locators that animate a two- or three-node Camera's "View" and "Up" control if all I know is the name of the Camera?</h2>
+<!-- How do I get the names of the locators that animate a two- or three-node Camera's "View" and "Up" control if all I know is the name of the Camera? -->
+
+<P>A two-node camera creates a locator which acts as the "view."  The "view"
+locator feeds its translation values into a "camera group" node which is
+actually a node of type "lookAt".  This "lookAt" node provides the constrain
+values to control the camera's rotation attributes (‘<CODE>.rotateX</CODE>’, ‘<CODE>.rotateY</CODE>’
+and ‘<CODE>.rotateZ</CODE>’ ).</P>
+
+<P>A three-node camera also creates the "view" node and connections as above, with
+the addition of an "up" node.  This is a simple locator node which feeds its
+‘<CODE>.worldMatrix</CODE>’ attribute into the ‘<CODE>.worldUpMatrix</CODE>’ attribute of the lookAt
+node (which, again, serves as the "group" node for the camera).</P>
+
+<P>To determine the locators that serve as the "view" and "up" controls, use
+the <CODE>connectionInfo</CODE> MEL command on the Camera to determine what is driving the rotation
+attributes of the camera.  If the camera's rotation is driven by a "lookAt"
+node, trace that upstream to the locator the feeds the ‘<CODE>.target</CODE>’ attribute of this
+group node (that would be the "view") and the locator that feeds the
+‘<CODE>.worldUpMatrix</CODE>’ (that would be the "up").</P>
+
+<div class="sidebar">
+  <P CLASS="sans"><b>MEL Tip</b></P>
+
+  <P CLASS="sans">Always perform a:</p>
+  <PRE CLASS="mel">if ( `connectionInfo -isDestination [...]` )</PRE>
+
+  <P CLASS="sans">before querying with:</p>
+  <PRE class="mel">string $connect = `connectionInfo -sourceFromDestination [...]`</pre>
+
+  <P CLASS="sans">The latter will fail with an error if the plug is not actually a destination.</P>
+</div>
+
+<P>The two MEL procedures below -- ‘<CODE>getCameraView()</CODE>’ and ‘<CODE>getCameraUp()</CODE>’ -- demonstrate how this can be done:</P>
+
+<PRE CLASS="mel">
+proc string getTransform( string $shape )
+{
+  string $transform = $shape;
+
+  if ( "transform" != `nodeType $shape` )
+  <SPAN CLASS="comment">// If given node is already a transform, just pass on through</SPAN>
+  {
+    string $parents[] = `listRelatives -fullPath -parent $shape`;
+    $transform = $parents[0];
+  }
+
+  return $transform;
+}
+
+proc string rootNode( string $object )
+<SPAN CLASS="comment">// Description: Strips the dot-suffix of the specified string.</SPAN>
+{
+  string $buffer[];
+  tokenize $object "." $buffer;
+  return $buffer[0];
+}
+
+proc string getCameraView( string $cam )
+{
+  string $cameraView = "";
+
+  <SPAN CLASS="comment">// assert that we are querying the Camera's transform</SPAN>
+  $cam = getTransform( $cam );
+
+  <SPAN CLASS="comment">// Is Camera's rotation constrained via a "lookAt" constraint?</SPAN>
+  if ( `connectionInfo -id ( $cam + ".rotateX" )` &amp;&amp;
+       nodeType( `connectionInfo -sfd ( $cam + ".rotateX" )` ) == "lookAt"
+     )
+  {
+    string $lookAt = rootNode( `connectionInfo -sfd
+      ( $cam + ".rotateX" )` );
+
+    <SPAN CLASS="comment">// What's the transform feeding the .target attribute?</SPAN>
+    if ( `connectionInfo -id ( $lookAt +
+          ".target[0].targetTranslateX" )` )
+    {
+      $cameraView = rootNode( `connectionInfo -sfd ( $lookAt +
+        ".target[0].targetTranslateX" )` );
+    }
+  }
+
+  return $cameraView;
+}
+
+proc string getCameraUp( string $cam )
+{
+  string $cameraUp = "";
+
+  <SPAN CLASS="comment">// assert that we are querying the Camera's transform</SPAN>
+  $cam = getTransform( $cam );
+
+  <SPAN CLASS="comment">// Is Camera's rotation constrained via a "lookAt" constraint?</SPAN>
+  if ( `connectionInfo -id ( $cam + ".rotateX" )` &amp;&amp;
+       nodeType( `connectionInfo -sfd ( $cam + ".rotateX" )` ) == "lookAt"
+     )
+  {
+    string $lookAt =
+      rootNode( `connectionInfo -sfd ( $cam + ".rotateX" )` );
+
+    <SPAN CLASS="comment">// What's the transform feeding the .worldUpMatrix attribute?</SPAN>
+    if ( `connectionInfo -id ( $lookAt + ".worldUpMatrix" )` )
+    {
+      $cameraUp = rootNode( `connectionInfo -sfd ( $lookAt +
+        ".worldUpMatrix" )` );
+    }
+  }
+
+  return $cameraUp;
+}
+</PRE>
+
+<P CLASS="rcomment"><!-- DATE -->Wednesday, December 13, 2000</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

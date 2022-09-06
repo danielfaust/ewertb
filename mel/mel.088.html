@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#88</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #88</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.087.html">Previous</a> &middot; <a href="mel.089.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine which window -- like the Outliner or MultiLister -- is currently the active window?</h2>
+<!-- How do I determine which window -- like the Outliner or MultiLister -- is currently the active window? -->
+
+<P>The Outliner and MultiLister, and all of the modelling views, are instances of Maya panel types.  Tearing off one of these instantiates the panel in a window.</P>
+
+<P>There are two methods available to determine the active panel, including windows if the window contains a torn-off panel.</P>
+
+<P><B>Method #1:</B> Returns the panel that is currently active:</P>
+
+<PRE CLASS="mel">
+getPanel -withFocus;
+<SPAN CLASS="comment">// Result: outlinerPanel1 //</SPAN>
+</PRE>
+
+<P><B>Method #1:</B> Returns the panel under the mouse cursor, regardless of whether it is
+active:</P>
+
+<PRE CLASS="mel">
+getPanel -underPointer;
+<SPAN CLASS="comment">// Result: multiListerPanel1 //</SPAN>
+</PRE>
+
+<P>Note that these work for <EM>panels</EM> but not for windows created with MEL
+scripts, or with the Script Editor or Attribute Editor/Channel Box.</P>
+
+<P>As demonstrated, they will work for the Outliner and MultiLister.</P>
+
+<P>I don't know of a method that works with non-panels.</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

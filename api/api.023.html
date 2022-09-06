@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#23</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #23</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.022.html">Previous</a> &middot; <a href="api.024.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I see the contents of an MString when debugging in .NET?</h2>
+<!-- How can I see the contents of an MString when debugging in .NET? -->
+
+<br>
+<div CLASS="sidebar"><div class="center">
+This tip is credited entirely to David Galloway and is quoted almost verbatim from his contribution to Highend3D.com. I've included it here because I often cite this tip to others.
+</div></div>
+
+<p>Here's the original thread for this topic from <a href="http://www.highend3d.com">Highend3D.com</a>:</p>
+
+<div class="in">
+<p><code><a href="http://www.highend3d.com/maya/devarchive/sp.3d?mail_id=3444">http://www.highend3d.com/maya/devarchive/sp.3d?mail_id=3444</a></code></p>
+</div>
+
+<p>First, edit the MString.h header in the "include" folder in Maya's SDK. In the declarations section near the top of the file add the following definition:</p>
+
+<pre class="api">
+struct MStringData
+{
+  int refCount;
+  int length;
+  int pad;
+  char mayastring[];
+};
+</pre>
+
+<p><SPAN CLASS="note">Note:</SPAN> This relies on sizeof(int) == 4.</p>
+
+<p>In the private section of the MString class replace the (void*) declaration for api_data.</p>
+
+<pre class="api">
+private:
+<SPAN CLASS="comment">// before</SPAN>
+  <SPAN CLASS="comment">// void* api_data;</SPAN>
+
+<SPAN CLASS="comment">// replace with...</SPAN>
+  MStringData* api_data;
+</pre>
+
+<p>You may also wish to add the following to the top of the file to suppress warnings which may now appear:</p>
+
+<PRE CLASS="api">
+#pragma warning(disable: 4200)
+</PRE>
+
+<p>If you'd like .NET to display MString contents in the pop-up tips that appear when you 'mouse-over'
+the variables then edit the following "autoexp.dat" file located in:</p>
+
+<div class="in">
+<SPAN CLASS="comment">// .NET 2002</SPAN><br>
+<code>\Program Files\Microsoft Visual Studio .NET\Common7\Packages\Debugger\autoexp.dat</code><br>
+<SPAN CLASS="comment">// .NET 2003</SPAN><br>
+<code>\Program Files\Microsoft Visual Studio .NET 2003\Common7\Packages\Debugger\autoexp.dat</code><br>
+</div>
+
+<p>Add the following two lines to the end of the file:</p>
+
+<PRE CLASS="api">
+; for Maya 4.0
+MString = &lt;api_data-&gt;mayastring&gt;
+</PRE>
+
+<p>You'll need to restart .NET to have this take effect.</p>
+
+<br><h3 class="body">Acknowledgements</h3>
+<div class="in">
+<ul>
+<li>David Galloway</li>
+<li>Will McCullough - <a href="http://www.highend3d.com">Highend3D.com</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->24 Jun 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

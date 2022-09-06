@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#03</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #03</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.002.html">Previous</a> &middot; <a href="api.005.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I get a MStringArray of a particular type of DAG/DG node?</h2>
+<!-- How can I get a MStringArray of a particular type of DAG/DG node? -->
+
+<P>Here's an example of how I've extend the MStringArray class to populate itself with the names of DAG/DG nodes matching a specified type.</P>
+
+<PRE CLASS="api">
+//------------------------------------------------------------
+// MStringArrayHelper declaration
+//------------------------------------------------------------
+
+class MStringArrayHelper: public MStringArray
+{
+  public:
+
+    enum PathType
+    {
+      kFullPathName = 0,
+      kPartialPathName
+    };
+
+    MStringArrayHelper(void);
+    virtual ~MStringArrayHelper(void);
+
+    MStatus   getDGOfType( MFn::Type );
+    MStatus   getDAGOfType( MFn::Type, MStringArrayHelper::PathType pathType );
+};
+
+</PRE>
+
+<PRE CLASS="api">
+//------------------------------------------------------------
+// getDGOfType
+//
+// Fills MStringArray with array of node names matching given type.
+//
+// * My findings suggested that the MGlobal::getSelection* functions
+// could ONLY for DAG nodes and not DG nodes.  Thus, I've created
+// this function as a member of a MStringArray-derived class to
+// return a string array.
+//------------------------------------------------------------
+
+MStatus MStringArrayHelper::getDGOfType( MFn::Type type )
+{
+  MObject             dNode;
+  MFnDependencyNode   dNodeFn;
+
+  for ( MItDependencyNodes listIter( type ); !listIter.isDone(); listIter.next() )
+  {
+    dNode = listIter.item();
+    dNodeFn.setObject( dNode );
+    if ( MS::kSuccess != append( dNodeFn.name() ) )
+      return MS::kFailure;
+  }
+
+  return MS::kSuccess;
+}
+
+//------------------------------------------------------------
+// getDAGOfType
+//
+// Fills MSelectionList with array of node names of given type.
+//
+// My findings suggest that the MGlobal::getSelection* functions
+// can be used ONLY for DAG nodes, and not DG nodes.  For DG node
+// support, see MStringArrayHelper::getDGOfType()
+//------------------------------------------------------------
+
+MStatus MStringArrayHelper::getDAGOfType( MFn::Type type, MStringArrayHelper::PathType pathType )
+{
+  MObject           dNode;
+  MFnDagNode        nodeFn;
+
+  for ( MItDag listIter( MItDag::kDepthFirst, type ); !listIter.isDone(); listIter.next() )
+  {
+    switch ( pathType )
+    {
+    case kFullPathName:
+      {
+        if ( MS::kSuccess != append( listIter.fullPathName() ) )
+          return MS::kFailure;
+      }
+    case kPartialPathName:
+      {
+        if ( MS::kSuccess != append( listIter.partialPathName() ) )
+          return MS::kFailure;
+      }
+    }
+  }
+
+  return MS::kSuccess;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.002.html">How can I get a MObjectArray of a particular type of DAG/DG node?</a></li>
+</ul>
+</div>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

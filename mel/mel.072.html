@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#72</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #72</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.071.html">Previous</a> &middot; <a href="mel.073.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I output the UVs for each Vertex component?</h2>
+<!-- How do I output the UVs for each Vertex component? -->
+
+<P>Maya maintains a mapping for each vertex to an entry in the object's UV table
+(this table is part of the mesh node).  This way, UVs can be optimized for reuse when possible.</P>
+
+<P>Use the &lsquo;<CODE>polyListComponentConversion</CODE>&rsquo; command to convert
+each Vertex component to its corresponding UV mapping:</P>
+
+<PRE CLASS="mel">
+select -r pCube1.vtx[3];
+
+polyListComponentConversion -fv -tuv;
+// Result: pCube1.map[3] //
+</PRE>
+
+<P>You can then use the &lsquo;<CODE>polyEditUV</CODE>&rsquo; command to query the UV value:</P>
+
+<PRE CLASS="mel">
+polyEditUV -q pCube1.map[3];
+// Result: 1 1 //
+</PRE>
+
+<P>Each vertex has the potential to be mapped to '<I>n</I>' UVs, where '<I>n</I>' is the
+number of faces using that vertex.  For example, a vertex is assigned to multiple UV
+mappings when the "Cut UVs" function is applied to its Edge component.
+To obtain a 1:1 vertex-to-UV relationship in this case you must query per-vertex per-face UVs.
+Maya maintains these as "<CODE>.vtxFace</CODE>" components.</P>
+
+<P>The first step is to determine how may faces share the given vertex:</P>
+
+<PRE CLASS="mel">
+select -r pCube1.vtx[0];
+polyListComponentConversion -fv -tf;
+// Result: pCube1.f[0] pCube1.f[3] pCube1.f[5] //
+</PRE>
+
+<P>This tells you that <CODE>.vtx[0]</CODE> is shared by faces 0, 3 and 5.</P>
+
+<P>Now build three queries, one for each face:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Declare a string for the result.</SPAN>
+string $uvMap;
+
+<SPAN CLASS="comment">// Query Vertex 0 for Face 0</SPAN>
+select -r pCube1.vtxFace[0][0];
+$uvMap = `polyListComponentConversion -fvf -tuv`;
+// Result: pCube1.map[0] //
+<SPAN CLASS="comment">// Query the UV for this mapping.</SPAN>
+polyEditUV -q $uvMap;
+// Result: 0 0 //
+
+<SPAN CLASS="comment">// Query Vertex 0 for Face 3</SPAN>
+select -r pCube1.vtxFace[0][3];
+$uvMap = `polyListComponentConversion -fvf -tuv`;
+// Result: pCube1.map[8] //
+<SPAN CLASS="comment">// Query the UV for this mapping.</SPAN>
+polyEditUV -q $uvMap;
+// Result: 0 4 //
+
+<SPAN CLASS="comment">// Query Vertex 0 for Face 5</SPAN>
+select -r pCube1.vtxFace[0][5];
+$uvMap = `polyListComponentConversion -fvf -tuv`;
+// Result: pCube1.map[0] //
+<SPAN CLASS="comment">// Query the UV for this mapping.</SPAN>
+polyEditUV -q $uvMap;
+// Result: 0 0 //
+</PRE>
+
+<P>To build the "<CODE>.vtxFace</CODE>" component indices you'll need to extract the component index
+from the vertex and from each face in the array returned when using &lsquo;<CODE>polyListComponentConversion</CODE>&rsquo;
+to obtain the face list.  Here's a MEL procedure I use to extract component indices from a string:</P>
+
+<PRE CLASS="mel">
+// //////////////////////////////////////////////////////////////////////
+//  componentRange
+//
+// Description: Parses the provided selection item (presumably with a
+//  component factor (e.g. "pSphere.vtx[0:25]") and returns the
+//  start and end for the selection range.
+//
+// Example: If vertices 3 through 5 of a model are selected, Maya
+//  lists this as 'polyModel.vtx[3:5]'; in this case, componentRange()
+//  will return the array { 3, 5 }.  If only a single vertex is selected,
+//  Maya lists this as, e.g., 'polyMode.vtx[12]'; in this case,
+//  componentRange() will return the array { 12, 12 }.
+
+proc int[] componentRange( string $select )
+{
+  string $buffer[];
+  int $i, $tokens;
+  int $elements[2] = { 0, 0 };
+
+  $tokens = `tokenize $select "[:]" $buffer`;
+
+  $elements[0] = $elements[1] = int($buffer[1]);
+
+  if ( $tokens > 2 )
+    $elements[1] = int($buffer[2]);
+
+  return $elements;
+}
+</PRE>
+
+</DIV>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.056.html">How do I determine which UV Set is being used to derive the UVs for the Texture of a given face component?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Tuesday, October 09, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

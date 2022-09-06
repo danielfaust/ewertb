@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#87</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #87</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.086.html">Previous</a> &middot; <a href="mel.088.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine the coordinates for an object relative to the camera's viewport?</h2>
+<!-- How do I determine the coordinates for an object relative to the camera's viewport? -->
+
+<P>Firstly, I must acknowledge that this tutorial is based almost exclusively on the "screenSpace.mel" script
+generously distributed by <A HREF="http://www.185vfx.com">185vfx</A>. Whereas their script determines
+a screen-space coordinate from a selected point, this tutorial outlines the steps required
+for going the other way. I am using their math, simply solved for the inverse
+of the equation.</P>
+
+<P>When finding a world location to match a 2D coordinate for
+a camera view one must accept there is an infinite number of solutions to the problem. You can stretch
+a line from the camera to infinity where the entire line is represented by a single pixel on the
+screen. Thus, when plotting from screen-space to world-space you need to make a choice for
+where on that line you wish to solve. A common choice for this is a distance equal to (or just
+slightly greater than) the camera's near clip plane.</P>
+
+<P>For this example Maya's default perspective camera - "persp" - will be used for the calculations.
+Here's the camera's values in the Attribute Editor. I've modified some attributes - such as Camera Scale -
+to show how they apply to the calculation; you wouldn't necessarily use the values I have set.</P>
+
+<P><IMG SRC="camera_attributes.gif" WIDTH="395" HEIGHT="170" ALT="camera attributes"><BR>
+<IMG SRC="film_back.gif" WIDTH="395" HEIGHT="210" ALT="film back"></P>
+
+<P>And here's what it looks like. The dotted lines encompassing the larger area represent the
+camera's <EM>film gate</EM>, whereas the solid line represents the <EM>resolution gate</EM>.
+These two ratios - both different than the area that is being displayed by Maya - are
+significant depending on whether you wish to plot a point within the camera frustum,
+a point within the rendered image, or a point that you can see in Maya's viewport.</P>
+
+<P><IMG SRC="camera.gif" WIDTH="525" HEIGHT="450" ALT="persp camera"></P>
+
+<P>The camera's scale and lens squeeze ratio will influence our results, so let's grab those first.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Get the camera's scale and lens squeeze ratio</SPAN>
+float $cs = `camera -q -cs persp`;
+// Result: 1.616 //
+
+float $lsr = `camera -q -lsr persp`;
+// Result: 2 //
+</PRE>
+
+<P>The camera's film aspect, expressed as a ratio between its horizontal and vertical
+fields of view, represents the area shown as the <EM>film gate</EM>. These two angles
+start our calculation.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Get the camera's horizontal field of view</SPAN>
+float $hfv = `camera -q -hfv persp`;
+// Result: 27.407221 //
+
+<SPAN CLASS="comment">// Get the camera's vertical field of view</SPAN>
+float $vfv = `camera -q -vfv persp`;
+// Result: 23.344729 //
+</PRE>
+
+<P>The angles are halved, as they represent the full viewing angle across the frame.
+We're interested in the angle from the center of the view to the edge of the frame,
+which is exactly half of the full viewing angle. Our example plots a point at the top-right
+corner of the view; to calculate a different position, use a portion of this angle.
+Negate the horizontal angle for the left side of the screen; negate the vertical for the
+bottom half.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> These values will be returned in the unit as defined by your Angular Unit Preferences.
+For consistency, we will represent all angle values in radians, and all linear values in
+centimeters. To assist us in this quest, we define three convenience procedures.</P>
+
+<PRE CLASS="mel">
+proc float angle_to_internal( float $angle )
+{
+  string $pref = `currentUnit -q -a`;
+  if ( "deg" == $pref )
+  {
+    $angle = $angle * 0.0174532925;
+  }
+
+  return $angle;
+}
+
+proc float linear_to_internal( float $linear )
+{
+  float $factor = 1.0;
+  string $pref = `currentUnit -q -l`;
+  if ( "mm" == $pref ) $factor = 0.1;
+  if ( "m" == $pref ) $factor = 100.0;
+  if ( "inch" == $pref ) $factor = 2.54;
+  if ( "ft" == $pref ) $factor = 30.48;
+  if ( "yard" == $pref ) $factor = 91.44;
+
+  return ( $linear * $factor );
+}
+
+proc float linear_to_ui( float $linear )
+{
+  float $factor = 1.0;
+  string $pref = `currentUnit -q -l`;
+  if ( "mm" == $pref ) $factor = 10.0;
+  if ( "m" == $pref ) $factor = 0.01;
+  if ( "inch" == $pref ) $factor = 0.3937007874;
+  if ( "ft" == $pref ) $factor = 0.03280839895;
+  if ( "yard" == $pref ) $factor = 0.01093613298;
+
+  return ( $linear * $factor );
+}
+</PRE>
+
+<P>Now use these to express the field of view angles in radians.</P>
+
+<PRE CLASS="mel">
+$hfv = angle_to_internal( $hfv );
+// Result: 0.478346 //
+
+$vfv = angle_to_internal( $vfv );
+// Result: 0.407442 //
+</PRE>
+
+<P>Use the tan() trigonometric function to obtain the X and Y components of our
+camera-space vector.</P>
+
+<P>Note also that we apply the camera's lens squeeze ratio here, modifying the X coordinate accordingly.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Determine the X coordinate in 2D</SPAN>
+float $x = tan($hfv/2.0);
+// Result: 0.24384 //
+
+<SPAN CLASS="comment">// Apply the camera's lens squeeze ratio</SPAN>
+$x = $x * $lsr;
+// Result: 0.487681 //
+
+<SPAN CLASS="comment">// Apply the camera's scale</SPAN>
+$x = $x * $cs;
+// Result: 0.788092 //
+</PRE>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Determine the Y coordinate in 2D</SPAN>
+float $y = tan($vfv/2.0);
+// Result: 0.206587 //
+
+<SPAN CLASS="comment">// Apply the camera's scale</SPAN>
+$y = $y * $cs;
+// Result: 0.333845 //
+</PRE>
+
+<P>The Z component for the vector will be 1.0, which is one unit in front of the camera.
+If Z was <EM>not</EM> 1.0, then the X and Y coordinates would have to be
+multiplied by the Z coordinate. For example, if we used a Z of l.618034 then
+the X and Y coordinates we calculate would both be multiplied by l.618034.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Decide how far from the camera our point will be.</SPAN>
+<SPAN CLASS="comment">// This value can be anything, but if you need an object at the final</SPAN>
+<SPAN CLASS="comment">// coordinates to display in the viewport then this value must be</SPAN>
+<SPAN CLASS="comment">// within the camera's near and far clip planes.</SPAN>
+float $z = 1.0;
+
+<SPAN CLASS="comment">// Maintain homogenous coordinates.</SPAN>
+$x = $x * $z;
+$y = $y * $z;
+</PRE>
+
+<P>Here's our vector. This vector represents the position - in camera-space -
+at the top-right corner of the camera's film gate. Initially this vector is
+expressed using our UI units, so we use the procedure we defined earlier to
+convert it to Maya's internal (cm) units.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Z is negated here because the camera's local view axis is {0.0,0.0,-1.0}.</SPAN>
+vector $camera_space = &lt;&lt; $x, $y, -z &gt;&gt;;
+// Result: &lt;&lt;0.788092, 0.333845, -1&gt;&gt;  //
+
+$camera_space = $camera_space * linear_to_internal( 1.0 );
+// Result: &lt;&lt;78.809246, 33.384472, -100&gt;&gt;  //
+</PRE>
+
+<P>Now we'll employ a couple of procedures borrowed from <A HREF="http://www.185vfx.com">185vfx</A>.
+These take care of querying our camera's matrix attributes, and multiplying our vector
+by this matrix.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Get a matrix</SPAN>
+proc matrix screenSpaceGetMatrix(string $attr)
+{
+  float $v[]=`getAttr $attr`;
+  matrix $mat[4][4]=&lt;&lt; $v[ 0], $v[ 1], $v[ 2], $v[ 3];
+                       $v[ 4], $v[ 5], $v[ 6], $v[ 7];
+                       $v[ 8], $v[ 9], $v[10], $v[11];
+                       $v[12], $v[13], $v[14], $v[15] &gt;&gt;;
+ return $mat;
+}
+
+<SPAN CLASS="comment">// Multiply the vector v by the 4x4 matrix m.</SPAN>
+proc vector screenSpaceVecMult(vector $v, matrix $m)
+{
+  matrix $v1[1][4]=&lt;&lt;$v.x, $v.y, $v.z, 1&gt;&gt;;
+  matrix $v2[1][4]=$v1*$m;
+  return &lt;&lt;$v2[0][0], $v2[0][1],  $v2[0][2]&gt;&gt;;
+}
+</PRE>
+
+<P>To move our camera-space coordinate to the corresponding location in the world we
+need simply transform it by the same matrix as applied to the camera.</P>
+
+<P><SPAN CLASS="note">Note:</SPAN> Here is where our consistency with Maya's (cm) units becomes important.
+Maya will always return the '.worldMatrix' attribute using its internal linear unit. If
+our own vector was not in (cm) we'd be mixing units and our results
+wouldn't be very useful.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Query the camera's inclusive matrix.</SPAN>
+matrix $camera_matrix[4][4] = screenSpaceGetMatrix("persp.worldMatrix");
+
+<SPAN CLASS="comment">// And apply it to our vector.</SPAN>
+vector $world_space = screenSpaceVecMult( $camera_space, $camera_matrix );
+// Result: &lt;&lt;78.809253, 247.057664, 509.212149&gt;&gt;  //
+</PRE>
+
+<P>Convert our vector to our linear unit preference:</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Convert back from (cm) units to Maya's unit preference.</SPAN>
+$world_space = $world_space * linear_to_ui( 1.0 );
+// Result: &lt;&lt;0.788093, 2.470577, 5.092121&gt;&gt;  //
+</PRE>
+
+<P>Let's plot a locator at this point to test our results:</P>
+
+<PRE CLASS="mel">
+spaceLocator -p ($world_space.x) ($world_space.y) ($world_space.z);
+</PRE>
+
+<P><IMG SRC="camera_locator.gif" WIDTH="525" HEIGHT="450" ALT="persp camera with locator"></P>
+
+<BR>
+<P><SPAN CLASS="heading">Acknowledgements</SPAN></P>
+
+<DIV CLASS="in">
+
+<P><SPAN CLASS="acknowledgement"><A HREF="http://www.185vfx.com">185vfx</A></SPAN></P>
+
+</DIV>
+
+<P CLASS="rcomment"><!-- DATE -->14 Oct 2003</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

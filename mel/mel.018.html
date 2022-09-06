@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#18</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #18</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.017.html">Previous</a> &middot; <a href="mel.019.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I get information for a motion curve value at a specific time?</h2>
+<!-- How do I get information for a motion curve value at a specific time? -->
+
+<P>If you're looking for the ‘<CODE>.uValue</CODE>’ at a specified time:</P>
+
+<PRE CLASS="mel">
+// Create a curve:
+
+string $curve = `curve -d 3 -p -7.425213 12.202613 1.439619
+  -p -7.750539 10.676282 8.273118 -p -8.401192 7.62362 21.940116
+  -p 25.720537 -16.234996 -7.200271 -p -12.58179 -3.496693 -16.762239
+  -p -5.70914 0.8393886 -24.073161 -p -2.272816 3.007429 -27.728622
+  -k 0 -k 0 -k 0 -k 1 -k 2 -k 3 -k 4 -k 4 -k 4`;
+
+// And a sphere:
+
+string $sphereA[] = `polySphere -r 1 -sx 16 -sy 8 -ax 0 1 0 -tx 1 -ch 1`;
+string $sphere = $sphereA[0];
+
+// Assign the sphere to a motionPath of the curve:
+
+string $motionPath = `pathAnimation -fractionMode true -follow false
+  -startTimeU 1 -endTimeU 30 -c $curve $sphere`;
+
+// Get the .uValue of the resultant motionPath at frame 12:
+
+getAttr -time 12 ( $motionPath + ".uValue" );
+// Result: 0.3793103 //
+</PRE>
+
+<P><B>** Warning!</B>  The '.uValue' attribute does not respect the Working Units Preference!  If your Unit Preference is set to something other than "centimeter" then the value you get will be off by a factor of 10<SUP>^n</SUP>.  For example, if your Working Units are set to "meter" then you will have to multiply this value by 100 to get the proper result.  <I>This has been logged with A|w as Case ID #35184.</I></P>
+
+<P>If you know the name of the curve but not the name of the associated motionPath you can use my ‘<CODE>getMotionPath()</CODE>’ function from <A HREF="http://www.highend3d.com/maya/mel/">Highend3D</A> to derive the latter.  It's in the "Animation" section of the MEL Scripts.</P>
+
+<P>If you're looking to get keyed values along the motion path...</P>
+
+<PRE CLASS="mel">
+// Add a keyframe to the motionPath at frame 6:
+
+currentTime 6;
+// assuming Working Unit == "centimeter"
+setKeyframe -v 0.4 -at uValue $motionPath;
+
+// Now get the motion key information for this motionPath:
+
+keyframe -q -timeChange -valueChange $motionPath;
+// Result: 1 0 6 0.4 30 1.0 //
+</PRE>
+
+<P>This returns a float array as pairs of numbers in the order { timeChange, valueChange }.  Read as:</P>
+
+<PRE>
+  At frame 1, uValue == 0.0 (start of curve).
+  At frame 6, uValue == 0.4.
+  At frame 30, uValue == 1.0 (end of curve).
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

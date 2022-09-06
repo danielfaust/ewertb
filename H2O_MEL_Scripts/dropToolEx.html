@@ -1,0 +1,50 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · dropToolEx</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">dropToolEx</P>
+
+<H3>Purpose</H3>
+
+<P>Provides a "smart" Drop Tool function that can 
+auto-swap back to the previous tool.</P>
+
+<H3>Function</H3>
+
+<P>If called while Maya has an active tool context, this script
+stores the context for the tool then drops the tool
+and switches to the Select Tool.</P>
+
+<P>If subsequently called while Maya is in Select Mode, the script recalls the previous context and reactivates it.</P>
+
+<P>If <CODE>($mode)</CODE> is <SPAN CLASS="ui">FALSE</SPAN> and Maya is already in Select Mode
+then no action is taken.</P>
+
+<H3>Typical Usage</H3>
+
+<P>Assign this to your usual "drop tool" key (e.g. 'q') as:</P>
+
+<PRE CLASS="mel">
+dropToolEx( true );
+</PRE>
+
+<H3>Input</H3>
+
+<PRE CLASS="mel">
+int $mode
+</PRE>
+<DIV CLASS="in">
+  If <SPAN CLASS="ui">TRUE</SPAN>, swap to previous tool from Select Tool.<BR>
+  If <SPAN CLASS="ui">FALSE</SPAN>, no action is taken from Select Tool.
+</DIV>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Tuesday, August 15, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#70</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #70</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.069.html">Previous</a> &middot; <a href="mel.071.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I intercept a Save or Save As operation?</h2>
+<!-- How can I intercept a Save or Save As operation? -->
+
+<P>Along the evolution of a robust in-house toolset for Maya you will inevitably come
+across the need to perform a set of actions each time someone saves a scene from Maya.
+This could be to initiate a process to integrate the saved data into the production
+pipeline, or something simpler like generating a log file containing information
+about the scene.</P>
+
+<P>I have found that the best way to reliably integrate this into Maya's
+operation is to edit the "pv_performAction.mel" script; e.g.:</P>
+
+<PRE>
+\AW\Maya3.0\scripts\others\pv_performAction.mel
+</PRE>
+
+<P>Add your custom operation(s) at the necessary stage within the long series
+of &lsquo;<CODE>if..else</CODE>&rsquo; statements.</P>
+
+<P>For the "Save As" function this would be in or about Line 245 (using Maya v3.0.1),
+amongst:</P>
+
+<PRE CLASS="mel">
+if ($OKToSave) {
+  if ($gv_operationMode == "SaveAs") {
+  // ...
+    evalEcho($cmd);
+  // ...
+    addRecentFile ($theSavedFile, $fileType);
+
+// *** Add call to your MEL procedure here ***
+
+  } else if ($gv_operationMode == "ExportActive") {
+</PRE>
+
+<P>When modifying Maya's own internal scripts, I recommend saving the modified
+versions in a different location, leaving the original intact.  If your company's
+workstations share a common drive mapping, create a "scripts" folder on this
+drive and save the new MEL here.  Set the <CODE>MAYA_SCRIPT_PATH</CODE>
+for each workstation to include this mapped drive, specifying your folder
+earlier in the list than Maya's default paths.  Save the modified
+"pv_performAction.mel" into the mapped folder and it will conveniently override
+the default behaviour.</P>
+
+<P><SPAN CLASS="note">Caution: </SPAN>The "pv_performAction.mel" script typically changes with each version of Maya, so if
+you upgrade Maya you'll want to move your custom functionality into the
+script applicable to the version you are running.  Wrap your enhancements in
+big bold comments so they're easy to spot.</P>
+
+<P CLASS="rcomment"><DATE>Wednesday, August 29, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

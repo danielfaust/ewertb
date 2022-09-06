@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#100</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #100</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.099.html">Previous</a> &middot; <a href="mel.101.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I store a value or string such that it is saved and restored with the current scene?</h2>
+<p>There are myriad ways to store custom data in a scene file. The only specific thing that you need to remember is this:</p>
+
+<div class="sidebar">
+<p>Everything Maya stores in a scene file must be part of its dependency graph. Thus, it must
+exist as a node, an attribute on a node, or a connection between nodes.</p>
+</div>
+
+<p>Over the years there have been several suggestions from Maya users on this topic. Each has its own merits and possible
+limitations; you'll need to decide which is best for your application.</p>
+
+<p><span class="heading">Custom Attributes</span></p>
+
+<p>The easiest method is to simply pick a node and create a custom dynamic attribute. This attribute
+can be of numeric or string form and you can save your data in any form you choose, provided
+its a valid form for Maya's attribute types.</p>
+
+<p>The key limitation to this method is that it is prone to user deletion. If the node to which you add
+your data is a DAG node then it will appear in Maya's Outliner, Hypergraph and camera views. If the
+user can select it, then the user can delete it.</p>
+
+<p><SPAN CLASS="note">Note:</SPAN> Maya 5.0 introduced functions within the API to lock nodes or attributes so as to make
+them read-only.</p>
+
+<p><span class="heading">The "Unknown" Node</span></p>
+
+<p>Another popular method is to use an "unknown" node. <span class="remark">(No, I'm not kidding - Maya allows you to create
+a node of type "unknown".)</span></p>
+
+<p>This is similar to the "Custom Attributes" method above, except that this
+node will not appear in Maya's DAG and will be a less obvious target for a tired artist to blow
+away during crunch time. The flip-side to this is that it requires more effort to find if the data
+needs to be edited; you'll likely want to offer a custom UI for the user's convenience.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Create an "unknown" node.</SPAN>
+string $unknown = `createNode -name "_sceneNotes" "unknown"`;
+
+<SPAN CLASS="comment">// Add two attributes.</SPAN>
+addAttr -dt "string" -ln "rigComment" $unknown;
+addAttr -at "float" -ln "strideDistance" $unknown;
+
+<SPAN CLASS="comment">// Assign values to the attributes.</SPAN>
+setAttr -type "string" ( $unknown + ".rigComment" ) "This rig is ready for animating.";
+setAttr ( $unknown + ".strideDistance" ) 0.65;
+</PRE>
+
+<p><SPAN CLASS="note">Note:</SPAN> There is no way to distinguish one "unknown" node from another (other than by name).
+Maya uses this node type to preserve node information when a scene is loaded containing data of an unknown type (from
+a plug-in, for example). Be sure to identify your own data node using a unique name rather than relying on finding any
+"unknown" node in the scene.</p>
+
+<p><span class="heading">The Camera Hack</span></p>
+
+<p>A common hack to prevent user data from being inadvertantly deleted is to use one of Maya's default cameras -
+persp, top, front or side - and add a custom attribute with which to store your data. This is reasonably safe
+because the default cameras are read-only and Maya does not allow them to be deleted.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Find Maya's default camera.</SPAN>
+string $camera = findStartUpCamera( "persp" );
+
+<SPAN CLASS="comment">// Add two attributes.</SPAN>
+addAttr -dt "string" -ln "rigComment" $camera;
+addAttr -at "float" -ln "strideDistance" $camera;
+
+<SPAN CLASS="comment">// Assign values to the attributes.</SPAN>
+setAttr -type "string" ( $camera + ".rigComment" ) "This rig is ready for animating.";
+setAttr ( $camera + ".strideDistance" ) 0.65;
+</PRE>
+
+<p><SPAN CLASS="note">Note:</SPAN> The "findStartUpCamera" command returns the name for the camera's <em>transform</em> and not the shape.</p>
+
+<p><span class="heading">The Custom Node</span></p>
+
+<p>By using the API to create a custom node type you can define the attribute structure which will
+store your data. These attributes are part of the node's definition and cannot be changed. Nor do
+they need to be added as dynamic attributes using the "addAttr" MEL command. Simply create your
+custom node and all of the necessary attributes are immediately available.</p>
+
+<p>This also offers the convenience of identification. There is no ambiguity in the purpose for the node,
+and you don't need to rely on naming schemes.</p>
+
+<PRE CLASS="mel">
+string $myCustomNodes[] = `ls -type "myCustomNode"`;
+</PRE>
+
+
+<p><span class="heading">The ".notes" Attribute</span></p>
+
+<p>Maya 4.5 added the ability to assign notes to each node from the Attribute Editor. These notes
+are stored on the '.notes' attribute for each node (imagine that!).</p>
+
+<P>Be aware that this attribute is added dynamically, and does not exist until a non-empty note
+has been assigned to the node. If you are managing this attribute yourself you'll need to determine
+if the attribute exists, and add it if necessary.</P>
+
+<PRE CLASS="mel">
+string $targetNode = "someNodeInYourScene";
+
+<SPAN CLASS="comment">// Add the ".notes" attribute if it doesn't exist.</SPAN>
+if ( !`attributeQuery -node $targetNode -exists "notes"` )
+{
+  addAttr -sn "nts" -ln "notes" -dt "string" $targetNode;
+}
+
+<SPAN CLASS="comment">// Assign the note.</SPAN>
+setAttr -type "string" ( $targetNode + ".notes" )
+  "This rig is ready for animating. The stride distance should be 0.65m";
+</PRE>
+
+<p><span class="heading">The "fileInfo" Command</span></p>
+
+<p>In Maya 5.0 there's a new MEL command which may be used to - ta da! - "provides a mechanism for keeping information related to a Maya scene file."
+The "fileInfo" command allows you to define keyword/value pairs that will be saved with the scene file.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Assign two keyword/value pairs for the current scene.</SPAN>
+fileInfo "rigComment" "This rig is ready for animating.";
+fileInfo "strideDistance" "0.65";
+</PRE>
+
+<p>Note that the "value" in this case is always a string, but you can store numerical data in this string as well, if desired.</p>
+
+
+<p><span class="heading">The "scriptNode"</span></p>
+
+<p>If you wish to associate an action along with the value you may consider defining a "scriptNode" in the scene.
+This node allows you to define MEL commands which execute when a scene is loaded. These commands could, for example,
+assign values to a common UI, or could generate their own UI.</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// The command will prompt the user loading the scene...</SPAN>
+string $command = "confirmDialog -message \"This rig is ready for animating.\" -button \"OK\";";
+<SPAN CLASS="comment">// ... and will update a value in an artist's control panel.</SPAN>
+$command = $command + "if ( `floatField -q -exists strideDistanceUI` ) " +
+                      "floatField -e -value 0.65 strideDistanceUI;";
+
+<SPAN CLASS="comment">// Create a scriptNode to execute when this scene is loaded.</SPAN>
+scriptNode -scriptType 2 -beforeScript $command -name "_sceneConfig";
+</PRE>
+
+<p><span class="heading">Blind Data</span></p>
+
+<p>You can use blind data to store custom data values directly to individual polygon components, or to any DAG object.</p>
+
+<p>This has the advantage of allowing your geometry to carry your custom data with it when imported or referenced,
+without interfering with, nor overwriting, any custom data you may have already applied in your working scene.</p>
+
+<p>Using blind data carries more of a burden, however. The commands to apply blind data are more complex
+than for simple attributes, and you'll need a custom UI for your artists to manage the application of blind data.
+Also, in contrast to attributes, blind data is applied partly via construction history, which means its use
+will potentially impact the complexity of the dependency graph for your scene. Finally, blind data queries
+can be painfully slow (particularly the selection and false colouring mechanism).</p>
+
+<p><SPAN CLASS="note">Warning!</SPAN> A unfortunate limitation of blind data arises from the fact that it is stored as attributes - either on
+the geometry itself, or on polyBlindData nodes connected to the object. One of Maya's scene optimizations is
+to not store attributes whose current value is equal to its default value. Thus, if you apply blind data using
+its default value, Maya <em>will not save this data</em>. Always define your blind data using default values
+that are <em>not intended to be applied to your scene</em>.</p>
+
+<div class="sidebar">
+<p>A bit of trivia: Maya's Blind Data Editor was never intended to be the primary editor for blind data. It
+was offered as an example for how to create and modify blind data - more as a documentation supplement than
+an official part of Maya's UI. Alias admits that this editor is a little "rough"
+(that's putting it mildly) but its overhaul and replacement has, so far, not been a priority. The topic of blind data
+is a popular one at Alias' developer classes, a testiment to the fact that many users find this feature
+of Maya to be a tad bewildering.</p>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->13 Jul 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#53</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #53</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.052.html">Previous</a> &middot; <a href="mel.054.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I dock Maya's Graph Editor, HyperGraph, Render View, et al, in my own window?</h2>
+<!-- How do I dock Maya's Graph Editor, HyperGraph, Render View, et al, in my own window? -->
+
+<P>The <SPAN CLASS="ui">Graph Editor</SPAN>, <SPAN CLASS="ui">Hypergraph</SPAN> and <SPAN CLASS="ui">Render View</SPAN> are members of a family of "scripted panels" used within Maya.  You can view a list of the Scripted Panel types by using the ‘<CODE>getPanel</CODE>’ command:</P>
+
+<PRE CLASS="mel">
+getPanel -allScriptedTypes;
+// Result: dopeSheetPanel graphEditor hyperGraphPanel multiListerPanel renderWindowPanel //
+</PRE>
+
+<P>These results are abbreviated, but you get the idea.</P>
+
+<BR>
+<P><SPAN CLASS="heading">Creating A Tear-Off Window</SPAN></P>
+
+<P>If you simply want a panel to tear-off into its own window then you can use an existing MEL command that the Maya developers defined for that purpose.  Its argument format is:</P>
+
+<PRE CLASS="mel">
+tearOffPanel &lt;panelLabel&gt; &lt;panelType&gt; &lt;isScripted&gt;;
+</PRE>
+
+<P>To tear-off or open the Graph Editor in its own window:</P>
+
+<PRE CLASS="mel">
+tearOffPanel "Graph Editor" graphEditor true;
+</PRE>
+
+<P>The <SPAN CLASS="arg">panelType</SPAN> argument is derived from the getPanel list above.  Since we know the <SPAN CLASS="ui">Graph Editor</SPAN> is a Scripted Panel, the <SPAN CLASS="arg">isScripted</SPAN> argument must be true in this case.</P>
+
+<div CLASS="sidebar">
+
+  <P CLASS="sans"><b>MEL Tip</b></P>
+  <P class="sans">A popular use of this command is to access the <SPAN CLASS="ui">Set Editor</SPAN> window that was "removed" in the recent versions of Maya:</P>
+
+<PRE CLASS="mel">
+tearOffPanel "Set Editor" "setEditor" true;
+</PRE>
+
+</div>
+
+<P>It's simply a matter of replacing the <SPAN CLASS="arg">panelLabel</SPAN> and <SPAN CLASS="arg">panelType</SPAN> for each of the panels to open:</P>
+
+<PRE CLASS="mel">
+tearOffPanel "Hypergraph" hyperGraphPanel true;
+
+tearOffPanel "Dope Sheet" dopeSheetPanel true;
+
+tearOffPanel "Render Window" renderWindowPanel true;
+// Error: file: D:/AW/Maya3.0/scripts/startup/tearOffPanel.mel line 55:
+          Only one instance of this panel type allowed: renderWindowPanel //
+</PRE>
+
+Whoops.  That didn't work.  However, a little more investigation reveals that the <SPAN CLASS="ui">Render View</SPAN> menu command executes the following:
+
+<PRE CLASS="mel">
+tearOffPanel "Render View" renderWindowPanel true;
+</PRE>
+
+<div class="sidebar">
+  <P CLASS="sans"><b>MEL Tip</b></P>
+  <P CLASS="sans">This information is revealed by turning on <SPAN CLASS="ui">Echo All Commands</SPAN> in the Script Editor, noting that the menu executes the command ‘<CODE>RenderViewWindow</CODE>’, and tracing this to its definition in defaultRunTimeCommands.mel.</p>
+</div>
+
+<P>All that's different is the label used for the window, but it does work.</P>
+
+
+<BR>
+<P><SPAN CLASS="heading">Docking In A Window With Other Controls</SPAN></P>
+
+<P>Now what if you've got other ideas and want to dock one of these panels into your own window with other controls?  Let's use the Graph Editor for the first example.</P>
+
+<PRE CLASS="mel">
+window;
+  string $form = `formLayout`;
+
+    <SPAN CLASS="comment">// Add a paneLayout to hold the Graph Editor</SPAN>
+    string $pane = `paneLayout -configuration "single"`;
+
+      <SPAN CLASS="comment">// The 'scriptedPanel' command is used here, and the type specified</SPAN>
+      <SPAN CLASS="comment">// is again taken from the results of the 'getPanel' list.</SPAN>
+      scriptedPanel -type "graphEditor";
+
+        <SPAN CLASS="comment">// The scriptedPanel returns its own layout, so we</SPAN>
+        <SPAN CLASS="comment">// must setParent one level up before continuing...</SPAN>
+        setParent ..;
+
+      setParent ..;
+
+    <SPAN CLASS="comment">// Add additional controls to the window</SPAN>
+    string $row = `rowLayout -numberOfColumns 2`;
+      button -label "Select Character";
+      button -label "Do something else";
+      setParent ..;
+
+    setParent ..;
+
+  formLayout -e
+    -af   $row          "left"    2
+    -af   $row          "right"   2
+    -af   $row          "bottom"  2
+    -af   $pane         "top"     2
+    -af   $pane         "left"    2
+    -af   $pane         "right"   2
+    -ac   $pane         "bottom"  4   $row
+      $form;
+
+showWindow;
+</PRE>
+
+<P>Achieving a similar layout for the other panel types is again a matter of changing the panel type specified after the scriptedPanel command:</P>
+
+<PRE CLASS="mel">
+scriptedPanel -type "dopeSheetPanel";
+
+scriptedPanel -type "hyperGraphPanel";
+</PRE>
+
+<BR>
+<P><SPAN CLASS="heading">The Finicky Render View</SPAN></P>
+
+<P>But what about the Render View?  Attempting to substitute "renderWindowPanel" into the above script will reward you with:</P>
+
+<PRE CLASS="mel">
+// Error: Only one instance of this panel type allowed: renderWindowPanel //
+</PRE>
+
+<P>Maya will not allow you to create an additional scriptedPanel of type "renderWindowPanel".  But there's nothing preventing you from using the one that already exists:</P>
+
+<PRE CLASS="mel">
+window;
+  string $form = `formLayout`;
+
+    <SPAN CLASS="comment">// Just create the layout for now and leave it empty.</SPAN>
+    string $pane = `paneLayout -configuration "single"`;
+      setParent ..;
+
+    string $row = `rowLayout -numberOfColumns 2`;
+      button -label "Refresh Textures";
+      button -label "Save Light Map";
+      setParent ..;
+
+    setParent ..;
+
+  formLayout -e
+    -af   $row          "left"    2
+    -af   $row          "right"   2
+    -af   $row          "bottom"  2
+    -af   $pane         "top"     2
+    -af   $pane         "left"    2
+    -af   $pane         "right"   2
+    -ac   $pane         "bottom"  4   $row
+      $form;
+
+<SPAN CLASS="comment">// Find the Render View panel</SPAN>
+string $renderViews[] = `getPanel -scriptType renderWindowPanel`;
+
+if ( size( $renderViews ) )
+{
+  <SPAN CLASS="comment">// Unparent the scriptedPanel from where it is currently docked</SPAN>
+  scriptedPanel -e -unParent $renderViews[0];
+  <SPAN CLASS="comment">// Fill the 'hole' left in the UI from removing the Render View</SPAN>
+  fillEmptyPanes;
+}
+else
+<SPAN CLASS="comment">// A Render View panel was not found -- create an unParented panel</SPAN>
+{
+  global int $gUseMenusInPanels;
+  scriptedPanel -mbv $gUseMenusInPanels -type renderWindowPanel
+                -unParent -l "Render View" renderView;
+}
+
+<SPAN CLASS="comment">// Now dock the Render View into our own layout.</SPAN>
+scriptedPanel -e -parent $pane $renderViews[0];
+
+showWindow;
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> If you try to use a saved Panel Configuration containing the Render View while your custom window contains the Render View then Maya will choke with an error.  However, it's perfectly fine to use this script to transfer the Render View from a Panel Configuration.  This just goes to show that your script will be smarter than Maya's own!</P>
+
+<BR>
+
+<DIV CLASS="heading">
+<P>Related Tutorial</P>
+</DIV>
+
+<DIV CLASS="in">
+<P><A HREF="scriptedPanel/index.html">MEL Tutorial: scriptedPanel</A></P>
+</DIV>
+
+<P CLASS="rcomment"><!-- DATE -->05 August 2002</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

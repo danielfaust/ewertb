@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#16</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #16</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.015.html">Previous</a> &middot; <a href="api.017.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can I name a newly created MPxLocatorNode-derived object so its transform is "myNode" and its shape is "myNodeShape"?</h2>
+<!-- How can I name a newly created MPxLocatorNode-derived object so its transform is "myNode" and its shape is "myNodeShape"? -->
+
+<br>
+<div CLASS="sidebar"><div class="center">
+This tip is credited entirely to Dean Edmonds (Gooroos Software).
+</div></div>
+
+<P>When you create a node that is defined in a MPxLocatorNode-derived class, Maya
+will automatically create a transform (assuming you haven't specified one):</P>
+
+<PRE CLASS="mel">
+createNode "myNodeType";
+</PRE>
+
+<P>This results in a DAG of:</P>
+
+<DIV CLASS="in">
+<P>  <CODE>transform1</CODE><BR>
+  <DIV CLASS="in">
+    <CODE>myNodeType1</CODE><BR>
+  </DIV>
+</P></DIV>
+
+<P>Or:</P>
+
+<PRE CLASS="mel">
+createNode "myNodeType" -name useThisName;
+</PRE>
+
+<DIV CLASS="in">
+<P>  <CODE>transform1</CODE><BR>
+  <DIV CLASS="in">
+    <CODE>useThisName</CODE><BR>
+  </DIV>
+</P></DIV>
+
+<P>For my own nodes, I prefer to have the transform name correspond to the node's type,
+and the shape node to identify itself as the shape. What I want is this:</P>
+
+<DIV CLASS="in">
+<P>  <CODE>myNodeType1</CODE><BR>
+  <DIV CLASS="in">
+    <CODE>myNodeTypeShape1</CODE><BR>
+  </DIV>
+</P></DIV>
+
+<P>You can use the MPxLocatorNode::postConstructor() method to name the newly created
+node.</P>
+
+<PRE CLASS="api">
+void myMPxLocatorNode::postConstructor()
+{
+  MFnDependencyNode nodeFn(thisMObject());
+
+  nodeFn.setName("myNodeType#");
+}
+</PRE>
+
+<P>This results in the same thing we saw above:</P>
+
+<PRE CLASS="mel">
+createNode "myNodeType";
+</PRE>
+
+<DIV CLASS="in">
+<P>  <CODE>transform1</CODE><BR>
+  <DIV CLASS="in">
+    <CODE>myNodeType1</CODE><BR>
+  </DIV>
+</P></DIV>
+
+<P>The key is the use of the term "Shape" in the name you specify for your
+new node. Maya will use this as a hint when generating a name for its
+associated transform.</P>
+
+<PRE CLASS="api">
+void myMPxLocatorNode::postConstructor()
+{
+  MFnDependencyNode nodeFn(thisMObject());
+
+  nodeFn.setName("myNodeTypeShape#");
+}
+</PRE>
+
+<P>The result is:</P>
+
+<DIV CLASS="in">
+<P>  <CODE>myNodeType1</CODE><BR>
+  <DIV CLASS="in">
+    <CODE>myNodeTypeShape1</CODE><BR>
+  </DIV>
+</P></DIV>
+
+<P>The hash ("#") here works the same as in MEL - Maya will replace it with a
+numeric suffix to guarantee a unique name for the new node, generating
+successive nodes with the names "myNodeTypeShape1", "myNodeTypeShape2", etc.</P>
+
+<P>This leaves one quirk still lingering, however.</P>
+
+<PRE CLASS="mel">
+createNode "myNodeType" -name useThisName;
+</PRE>
+
+<DIV CLASS="in">
+<P>  <CODE>transform2</CODE><BR>
+  <DIV CLASS="in">
+    <CODE>useThisName</CODE><BR>
+  </DIV>
+</P></DIV>
+
+<P>In this case the name provided on the command line overrides the name the
+plug-in wants to assign in its postContructor method.  When specifying the &lsquo;<CODE>-name</CODE>&rsquo;
+argument for the &lsquo;<CODE>createNode</CODE>&rsquo; command you must use the "Shape" hint in the MEL command.</P>
+
+<PRE CLASS="mel">
+createNode "myNodeType" -name useThisNameShape;
+</PRE>
+
+<DIV CLASS="in">
+<P>  <CODE>useThisName</CODE><BR>
+  <DIV CLASS="in">
+    <CODE>useThisNameShape</CODE><BR>
+  </DIV>
+</P></DIV>
+
+<P>This works even if the MPxLocatorNode::postConstructor() method has not been overridden
+to provide the behavior described in this How-To. Makes one consider that this
+whole exercise was rather pointless, doesn't it?</P>
+
+<br><h3 class="body">Acknowledgements</h3>
+<div class="in">
+<ul>
+<li>Dean Edmonds - <a href="http://www.gooroos.com">Gooroos Software</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>14 August 2002</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

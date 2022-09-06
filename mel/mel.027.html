@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#27</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #27</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.026.html">Previous</a> &middot; <a href="mel.028.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I query/set the Time Slider and Range Slider?</h2>
+<!-- How do I query/set the Time Slider and Range Slider? -->
+
+<P>To query the highlighted range of the Time Slider:</P>
+
+<PRE CLASS="mel">
+global string $gPlayBackSlider;
+float $rangeArray[2];
+$rangeArray = `timeControl -q -rangeArray $gPlayBackSlider`;
+// Result: 1 2 //
+</PRE>
+
+<P>To set the highlighted range of the Time Slider:</P>
+
+<DIV CLASS="in">
+<P>As far as I know, you can't.  My attempts to do so (at least with the ‘<CODE>timeControl</CODE>’ command) have only yielded errors (as of MayaNT v2.5.1).</P>
+</DIV>
+
+<PRE CLASS="mel">
+global string $gPlayBackSlider;
+
+string $range = `timeControl -q -range $gPlayBackSlider`;
+// Result: "93:229" //
+timeControl -e -range $range $gPlayBackSlider;
+// Error: line 1: Too many arguments.  Expected 1, found 2. //
+
+float $rangeArray[2] = `timeControl -q -rangeArray $gPlayBackSlider`;
+// Result: 93 229 //
+timeControl -e -rangeArray $rangeArray $gPlayBackSlider;
+// Error: line 1: Invalid object or value:  //
+</PRE>
+
+<P>To query the Range Slider:</P>
+
+<PRE CLASS="mel">
+float $minTime = `playbackOptions -q -minTime`;
+// Result: 1 //
+float $maxTime = `playbackOptions -q -maxTime`;
+// Result: 30 //
+</PRE>
+
+<P>To set the Range Slider:</P>
+
+<PRE CLASS="mel">
+float $minTime = 12.0;
+float $maxTime = 18.5;
+playbackOptions -minTime $minTime -maxTime $maxTime;
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

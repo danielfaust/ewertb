@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#15</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #15</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.014.html">Previous</a> &middot; <a href="api.016.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I create a Shading Group / Material / File texture network?</h2>
+<!-- How do I create a Shading Group / Material / File texture network? -->
+
+<P>You will need to create a Shading Group, Material and File texture node,
+assign the &lsquo;<CODE>.fileTextureName</CODE>&rsquo; attribute of the File texture node to your
+path/filename, and then string the DG graph for the three together to make a
+valid shading network.</P>
+
+<P>For H2O Entertainment I created a C++ Class for convenient "create and assign Shading
+Groups" using static member functions.  Here's a snippet from the header file:</P>
+
+<PRE CLASS="api">
+<SPAN CLASS="comment">// MShadingGroup.h</SPAN>
+
+  static MStatus    CreateShadingGroup(
+                      const char * fileTextureName,
+                      MShadingGroup::MaterialType materialType,
+                      MObject & shadingGroup );
+
+  static MStatus    AssignToDefaultShadingGroup(
+                      const MDagPath & dagPath,
+                      const MObject & object );
+
+  static MStatus    AssignToShadingGroup(
+                      const MObject & obShadingGroup,
+                      const MDagPath & obDagPath,
+                      const MObject & obComponent = MObject::kNullObj );
+
+  static MStatus    RegisterMaterial( MObject & obMaterial );
+  static MStatus    RegisterTexture( MObject & obTexture );
+
+<SPAN CLASS="comment">// END MShadingGroup.h</SPAN>
+</PRE>
+
+<P CLASS="anno">(Awaiting permission to post MShadingGroup source code.  No guarantees, tho', sorry.)</P>
+
+<BR>
+<P><SPAN CLASS="heading">Registering the Render Nodes</SPAN></P>
+
+<P>You will also need to "register" the Material and Texture node so it appears
+in the MultiLister (and possibly Hypershade) in the UI.  This is not at all
+obvious when you first start creating shading networks via the API (nor is it documented):</P>
+
+<P>Create a Material in Maya's UI and take a look at its DG in the Hypergraph
+(use <SPAN CLASS="ui">Rendering->Show Materials</SPAN>).  You will see a connection to a
+"<CODE>defaultShaderList</CODE>" node from the &lsquo;<CODE>.message</CODE>&rsquo; attribute of the Material.  Now
+create a Texture and use <SPAN CLASS="ui">Rendering->Show Textures</SPAN>.  In this case a
+connection exists from the Texture's &lsquo;<CODE>.message</CODE>&rsquo; attribute to a &lsquo;<CODE>.textures</CODE>&rsquo;
+array attribute of a <CODE>defaultTextureList</CODE> node.  These are the connections you
+need to make to "register" the node to the UI.</P>
+
+<P>I cannot provide the source code for all of MShadingGroup, but I will offer
+the member function that "registers" a Shading Node to get you started:</P>
+
+<PRE CLASS="api">
+<SPAN CLASS="comment">// ***********************************************************************</SPAN>
+<SPAN CLASS="comment">//     Created: Tuesday, February 27, 2001   By: Bryan Ewert</SPAN>
+<SPAN CLASS="comment">//              ©2001 H2O Entertainment Corporation</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//    Function: MShadingGroup::RegisterRenderNode</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">// Description: Registers a Material or Texture node with Maya's UI by</SPAN>
+<SPAN CLASS="comment">//              creating a connection to the "defaultShaderList" or</SPAN>
+<SPAN CLASS="comment">//              "defaultTextureList", as appropriate.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//       Input: MObject & obRenderNode: The node to register.</SPAN>
+<SPAN CLASS="comment">//              MFn::Type type: The nodeType of the destination plug.</SPAN>
+<SPAN CLASS="comment">//                              Specify MFn::kShaderList to register a Material.</SPAN>
+<SPAN CLASS="comment">//                              Specify MFn::kTextureList to register a Texture.</SPAN>
+<SPAN CLASS="comment">//              MString & attr: The name of the source plug.</SPAN>
+<SPAN CLASS="comment">//                              Specify "shaders" to register a Material.</SPAN>
+<SPAN CLASS="comment">//                              Specify "textures" to register a Texture.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">//      Output: (MStatus)</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+<SPAN CLASS="comment">**************************************************************************</SPAN>
+MStatus MShadingGroup::RegisterRenderNode( MObject & obRenderNode, MFn::Type type, MString & attr )
+{
+  MStatus                     status;
+  MDGModifier                 dgModifier;
+
+  <SPAN CLASS="comment">// Find defaultShaderList or defaultTextureList.</SPAN>
+  MItDependencyNodes          itDependNode( type );
+  MObject                     obShaderList;
+  obShaderList = itDependNode.item( &status );
+
+  MFnDependencyNode           fnDependNode( obShaderList );
+  MPlug                       plugAttr, plugAttrElement;
+  MPlug                       plugMessage;
+  int                         nextAvailable;
+
+  plugAttr = fnDependNode.findPlug( attr, &status );
+
+  nextAvailable = 0;
+
+  <SPAN CLASS="comment">// Loop until an available connection is found</SPAN>
+  while( true )
+  {
+    plugAttrElement = plugAttr.elementByLogicalIndex( nextAvailable, &status );
+
+    <SPAN CLASS="comment">// If this plug isn't connected, break and use it below.</SPAN>
+    if ( !plugAttrElement.isConnected() )
+      break;
+
+    nextAvailable++;
+  }
+
+  fnDependNode.setObject( obRenderNode );
+  plugMessage = fnDependNode.findPlug( "message" );
+
+  <SPAN CLASS="comment">// Connect '.message' plug of render node to "shaders"/"textures" plug of default*List</SPAN>
+  dgModifier.connect( plugMessage, plugAttrElement );
+
+  status = dgModifier.doIt();
+
+  return status;
+}
+</PRE>
+
+<P>It's also a good idea when you are prompted to create a shading network that
+you query for the existence of a network that already uses the specified
+File texture.  That way you don't end up with multitudes of Shading Groups
+that describe exactly the same image.</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.008.html">How do I assign polygon objects (and individual face components) to a Shading Group?</a></li>
+<li class="howto"><a href="api.021.html">How do I find the file texture, and the image filepath, assigned to a material?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><DATE>Wednesday, October 10, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2004 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

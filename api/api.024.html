@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#24</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #24</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.023.html">Previous</a> &middot; <a href="api.025.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I enable syntax highlighting for MEL files in .NET?</h2>
+<!-- How do I enable syntax highlighting for MEL files in .NET? -->
+
+<p>This requires a registry hack, since Visual Studio offers no facility for configuring new syntax highlighting rules.</p>
+
+<p>Launch "regedit" and browse to the following branch:</p>
+
+<div class="in">
+<p><code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\7.0\Languages\File Extensions</code></p>
+</div>
+
+<p>Create a new key here named ".mel". Then open the ".cpp" key and copy its (Default) value to the clipboard. Paste this value into the ".mel" key.</p>
+
+<p>Below is a sample of the two keys, as exported from regedit. Note that the values for the keys may differ in your configuration.</p>
+
+<pre>
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\7.0\Languages\File Extensions\.cpp]
+@="{B2F072B0-ABC1-11D0-9D62-00C04FD9DFD9}"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\7.0\Languages\File Extensions\.mel]
+@="{B2F072B0-ABC1-11D0-9D62-00C04FD9DFD9}"
+</pre>
+
+<p>You'll need to restart .NET to have this take effect.</p>
+
+<br><h3 class="body">Acknowledgements</h3>
+<div class="in">
+<ul>
+<li>Rod Davison - <a href="http://www.radical.ca">Radical Technology, Inc.</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->24 Jun 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

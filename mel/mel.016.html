@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#16</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #16</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.015.html">Previous</a> &middot; <a href="mel.017.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I hook up a slider to an attribute so that it updates in real time?</h2>
+<!-- How do I hook up a slider to an attribute so that it updates in real time? -->
+
+<P>There are two ways to do this.</P>
+
+<P><B>Method #1:</B> Use the ‘<CODE>connectControl</CODE>’ command:</P>
+
+<PRE CLASS="mel">
+// Create a sphere for this example
+string $sphereA[] = `polySphere -r 10 -sx 16 -sy 8 -ax 0 1 0 -tx 1 -ch 1`;
+string $sphere = $sphereA[0];
+
+// Our highly complex custom UI
+
+if ( `window -exists myWindow` )
+  deleteUI -window myWindow;
+
+window -title "connectControl" myWindow;
+  string $form = `formLayout`;
+
+    // Create a slider
+    string $label = `text -label "Sphere rotateY" -align "right"`;
+    string $field = `floatField -min 0.0 -max 360.0 -precision 2`;
+    string $slider = `floatSlider -min 0.0 -max 360.0`;
+
+    // Connect the sphere's Y rotation to the controls
+    connectControl $field ( $sphere + ".rotateY" );
+    connectControl $slider ( $sphere + ".rotateY" );
+
+    // Edit the formLayout
+    formLayout -e
+      -af   $label    top   6
+      -af   $label    left  2
+      -af   $field    top   2
+      -ac   $field    left  4   $label
+      -af   $slider   top   2
+      -ac   $slider   left  2   $field
+      -af   $slider   right 2
+        $form;
+
+showWindow;
+</PRE>
+
+<P><IMG SRC="connectControl.gif" WIDTH=346 HEIGHT=53></P>
+
+<P>Advantage:  Since each control is connected individually it provides complete control over layout of the UI.  It's possible to layout the controls with the label on top of the field/slider combo, or with the slider on a line by itself.</P>
+
+<P>Disadvantage:  No visual indication when the attribute is driven by an animCurve (eg. orange shading) and no RMB menu offering ‘<CODE>Set Key</CODE>’ et al. (although you could do the latter yourself).</P>
+
+
+<P><B>Method #2:</B> Use ‘<CODE>attrFieldSliderGrp</CODE>’ which creates the connection automatically:</P>
+
+<PRE CLASS="mel">
+string $sphereA[] = `polySphere -r 10 -sx 16 -sy 8 -ax 0 1 0 -tx 1 -ch 1`;
+string $sphere = $sphereA[0];
+
+// Our highly complex custom UI
+
+if ( `window -exists myWindow` )
+  deleteUI -window myWindow;
+
+window -title "attrFieldSliderGrp" myWindow;
+  columnLayout -adjustableColumn true;
+
+    // Create a slider
+    string $slider = `attrFieldSliderGrp -label "Sphere rotateY"
+      -adjustableColumn 3 -columnAlign 1 "right"
+      -columnWidth 1 84 -columnWidth 4 1
+      -min 0.0 -max 360.0 -at ( $sphere + ".rotateY" )`;
+
+showWindow;
+</PRE>
+
+<P><IMG SRC="attrFieldSliderGrp.gif" WIDTH=367 HEIGHT=49></P>
+
+<P>Advantage: Keyframe feedback - field shades in orange if an animCurve is driving the attribute, gray if it's locked, etc.</P>
+
+<P>Disadvantage: Minimal layout control.  You can tweak the sizes of each group element a bit, but you're stuck with everything on one line, and stuck with two label fields that, unless coerced otherwise, waste a lot of UI space.</P>
+
+<P>Which method to use depends on which is more important to you:  Better layout control, or more complete feedback.  Most animators will pressure you for the latter, so if you're creating the UI for someone else you're best-advised to sacrifice some screen real-estate for the more standard controls.  Some tips for optimizing the layout of the ‘<CODE>attrFieldSliderGrp</CODE>’ control:</P>
+
+<UL>
+  <LI><P>If placing the control in a ‘<CODE>columnLayout</CODE>’ then include ‘<CODE>&minus;adjustableColumn true</CODE>’ as part of the layout definition, and...</P></LI>
+  <LI><P>Use ‘<CODE>&minus;adjustableColumn 3</CODE>’ to allow the slider control to resize with the parent layout.</P></LI>
+  <LI><P>Use ‘<CODE>&minus;columnWidth 1 <I>n</I></CODE>’ where possible to optimize the amount of space consumed by the control's label.</P></LI>
+  <LI><P>Use ‘<CODE>&minus;columnWidth 4 1</CODE>’ to avoiding leaving unused blank space to the right of the slider.</P></LI>
+</UL>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

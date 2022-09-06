@@ -1,0 +1,332 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#28</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #28</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.027.html">Previous</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I read and write a "componentList" attribute, such as '.inputComponents' found on polygon modifier nodes?</h2>
+<!-- How do I read and write a "componentList" attribute, such as '.inputComponents' found on polygon modifier nodes?  -->
+
+<h3>Reading</h3>
+
+<p>It is necessary to use the API in order to read the components specified in a componentList attribute, because it is not possible
+to do so via MEL (see below).</p>
+
+<p>The example below is an excerpt from a MPxCommand-derived plug-in which reads the component indices from a "componentList"
+attribute.</p>
+
+<pre class="api">
+<SPAN CLASS="comment">// ----------------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">//  ReadComponents</SPAN>
+<SPAN CLASS="comment">// ----------------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">/// From Maya API How-To #28, by Bryan Ewert</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// Reads the '.inputComponents' attribute for the specified node and</SPAN>
+<SPAN CLASS="comment">/// writes its contents - in a representative form - to the string array</SPAN>
+<SPAN CLASS="comment">/// results of a MPxCommand.</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// \param  The node from which to query the '.inputComponents' attribute.</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// \return Maya status; the usual.</SPAN>
+<SPAN CLASS="comment">// ----------------------------------------------------------------------</SPAN>
+MStatus InputComponentsCommand::ReadComponents( MObject&amp; node ) const
+{
+    MStatus status;
+    MStringArray results;
+
+    MFnDependencyNode fnDependNode( node );
+
+    <SPAN CLASS="comment">// Can you believe that Alias switches between '.ics' and '.ic' as the </SPAN>
+    <SPAN CLASS="comment">// short name for '.inputComponents' on different nodes? Tsk tsk, careless.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    MPlug icsPlug = fnDependNode.findPlug( INPUTCOMPONENTS_NAME, &amp;status );
+    if ( MS::kSuccess == status )
+    {
+        MObject icsData;
+
+        MString componentType;
+        MIntArray elements;
+        MIntArray sIndexArray;
+        MIntArray tIndexArray;
+        MIntArray uIndexArray;
+        MIntArray vIndexArray;
+        unsigned int e;
+
+        <SPAN CLASS="comment">// Read the data object from the '.inputComponents' plug.</SPAN>
+        <SPAN CLASS="comment">// If this returns an error it means the data is _empty_,</SPAN>
+        <SPAN CLASS="comment">// and not that the command failed to execute properly.</SPAN>
+        <SPAN CLASS="comment">//</SPAN>
+        MStatus dataStatus = icsPlug.getValue( icsData );
+        if ( MS::kSuccess == dataStatus )
+        {
+            <SPAN CLASS="comment">// Wrap the data in its function set.</SPAN>
+            <SPAN CLASS="comment">//</SPAN>
+            MFnComponentListData fnComponent( icsData );
+            unsigned int numComponents = fnComponent.length();
+
+            <SPAN CLASS="comment">// Append each component's representation to the command results.</SPAN>
+            <SPAN CLASS="comment">//</SPAN>
+            while ( numComponents-- )
+            {
+                MObject component = fnComponent[numComponents];
+
+                componentType = component_type( component );
+
+                <SPAN CLASS="comment">// Examples of single indexed components: poly vertices, poly edges,</SPAN>
+                <SPAN CLASS="comment">// poly faces, NURBS curve CVs or edit points.</SPAN>
+                <SPAN CLASS="comment">//</SPAN>
+                if ( component.hasFn( MFn::kSingleIndexedComponent ) )
+                {
+                    MFnSingleIndexedComponent fnSingleComponent( component );
+
+                    fnSingleComponent.getElements( elements );
+                    for ( e = 0; e &lt; elements.length(); e++ )
+                    {
+                        appendToResult( componentType + "[" + elements[e] + "]" );
+                    }
+                }
+                else
+                <SPAN CLASS="comment">// Examples of double indexed components: NURBS Surface CVs or</SPAN>
+                <SPAN CLASS="comment">// edit points.</SPAN>
+                <SPAN CLASS="comment">//</SPAN>
+                if ( component.hasFn( MFn::kDoubleIndexedComponent ) )
+                {
+                    MFnDoubleIndexedComponent fnDoubleComponent( component );
+
+                    fnDoubleComponent.getElements( uIndexArray, vIndexArray );
+                    for ( e = 0; e &lt; uIndexArray.length(); e++ )
+                    {
+                        <SPAN CLASS="comment">// Line split for readability in online How-To.</SPAN>
+                        appendToResult( componentType + "[" + uIndexArray[e] + "]" +
+                                                        "[" + vIndexArray[e] + "]" );
+                    }
+                }
+                else
+                <SPAN CLASS="comment">// Examples of triple indexed components: Lattice points.</SPAN>
+                <SPAN CLASS="comment">//</SPAN>
+                if ( component.hasFn( MFn::kTripleIndexedComponent ) )
+                {
+                    MFnTripleIndexedComponent fnTripleComponent( component );
+
+                    fnTripleComponent.getElements( sIndexArray, tIndexArray, uIndexArray );
+                    for ( e = 0; e &lt; uIndexArray.length(); e++ )
+                    {
+                        <SPAN CLASS="comment">// Line split for readability in online How-To.</SPAN>
+                        appendToResult( componentType + "[" + sIndexArray[e] + "]" +
+                                                        "[" + tIndexArray[e] + "]" +
+                                                        "[" + uIndexArray[e] + "]" );
+                    }
+                }
+                else
+                <SPAN CLASS="comment">// Subdivision surface face components seem to fit as a double indexed component,</SPAN>
+                <SPAN CLASS="comment">// but the API offers no function set for them (as of Maya 6.0.1).</SPAN>
+                <SPAN CLASS="comment">//</SPAN>
+                if ( component.hasFn( MFn::kSubdivFaceComponent ) )
+                {
+                    <SPAN CLASS="comment">// Line split for readability in online How-To.</SPAN>
+                    MGlobal::displayInfo( "I wish I could help, but Maya's API doesn't appear to "
+                                          "support the MFn::kSubdivFaceComponent type." );
+                    MGlobal::displayInfo( "It _should_ be a kDoubleIndexedComponent, but it's not." );
+                }
+            }
+        }
+    }
+
+    return status;
+}
+</pre>
+
+<h3>Writing</h3>
+
+<p>As above, the following is an excerpt from a MPxCommand-derived plug-in which writes a list of component indices to a
+"componentList" attribute.</p>
+
+<p>Note the restriction described in the code below. This function <em>will not work in Maya 4</em>, but has been tested successfully in Maya 6.</p>
+
+<pre class="api">
+<SPAN CLASS="comment">// ----------------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">//  WriteComponents</SPAN>
+<SPAN CLASS="comment">// ----------------------------------------------------------------------</SPAN>
+<SPAN CLASS="comment">/// From Maya API How-To #28, by Bryan Ewert</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// Writes a "componentList" attribute, assigning the specified elements</SPAN>
+<SPAN CLASS="comment">/// of the specified component type, to the '.inputComponents' attribute</SPAN>
+<SPAN CLASS="comment">/// on the specified node.</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// \note   This will fail under Maya 4. See comments in code below.</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// \param  node: The node whose '.inputComponents' attribute will be</SPAN>
+<SPAN CLASS="comment">///               modified.</SPAN>
+<SPAN CLASS="comment">/// \param  componentType: The component type.</SPAN>
+<SPAN CLASS="comment">/// \param  elements: The list of elements. Can't be (const) because</SPAN>
+<SPAN CLASS="comment">///                   Maya's MFnSingleIndexedComponent::setElements()</SPAN>
+<SPAN CLASS="comment">///                   is not (const) correct.</SPAN>
+<SPAN CLASS="comment">///</SPAN>
+<SPAN CLASS="comment">/// \return Maya status; the usual.</SPAN>
+<SPAN CLASS="comment">// ----------------------------------------------------------------------</SPAN>
+MStatus InputComponentsCommand::WriteComponents( MObject&amp; node,
+                                                 MFn::Type componentType,
+                                                 MIntArray&amp; elements ) const
+{
+    if ( componentType == MFn::kInvalid )
+    {
+        MGlobal::displayError( "Invalid component type." );
+        return MS::kInvalidParameter;
+    }
+
+    MStatus status;
+
+    MFnDependencyNode fnDependNode( node );
+
+    <SPAN CLASS="comment">// Can you believe that Alias switches between '.ics' and '.ic' as the </SPAN>
+    <SPAN CLASS="comment">// short name for '.inputComponents' on different nodes? Tsk tsk, careless.</SPAN>
+    <SPAN CLASS="comment">//</SPAN>
+    MPlug icsPlug = fnDependNode.findPlug( INPUTCOMPONENTS_NAME, &amp;status );
+    if ( MS::kSuccess == status )
+    {
+        <SPAN CLASS="comment">// Create a component list.</SPAN>
+        <SPAN CLASS="comment">//</SPAN>
+        MFnComponentListData fnComponentList;
+        MObject componentData = fnComponentList.create();
+
+        <SPAN CLASS="comment">// Create an appropriate component.</SPAN>
+        <SPAN CLASS="comment">//</SPAN>
+        MObject component( MObject::kNullObj );
+
+        switch ( componentType )
+        {
+            case MFn::kMeshVertComponent:
+            case MFn::kMeshEdgeComponent:
+            case MFn::kMeshPolygonComponent:
+            {
+                <SPAN CLASS="comment">// Create a single component.</SPAN>
+                <SPAN CLASS="comment">//</SPAN>
+                MFnSingleIndexedComponent fnSingleComponent;
+                component = fnSingleComponent.create( componentType );
+
+                fnSingleComponent.addElements( elements );
+
+                break;
+            }
+        }
+
+        if ( MObject::kNullObj != component )
+        {
+            <SPAN CLASS="comment">// Add the component to the list data.</SPAN>
+            <SPAN CLASS="comment">//</SPAN>
+            <SPAN CLASS="comment">// Note: This will fail under Maya 4. Maya "crashes" internally</SPAN>
+            <SPAN CLASS="comment">//       and aborts execution of the plug-in when attempting to add</SPAN>
+            <SPAN CLASS="comment">//       the component MObject to the component list.</SPAN>
+            <SPAN CLASS="comment">//</SPAN>
+            <SPAN CLASS="comment">// Tested successfully under Maya 6.0.1.</SPAN>
+            <SPAN CLASS="comment">//</SPAN>
+            fnComponentList.add( component );
+
+            <SPAN CLASS="comment">// Write the data to the attribute.</SPAN>
+            <SPAN CLASS="comment">//</SPAN>
+            icsPlug.setValue( componentData );
+        }
+    }
+
+    return status;
+}
+</pre>
+
+<br>
+<h2>"componentList" Attributes and MEL</h2>
+
+<h3>Reading</h3>
+
+<p>It is not possible to read the components from a componentList attribute via MEL.</p>
+
+<pre class="mel">
+getAttr polySubdFace1.inputComponents;
+// Error: line 1: The data is not a numeric or string value, and cannot be displayed. //
+</pre>
+
+<h3>Writing</h3>
+
+<p>Writing a componentList attribute is possible via MEL - necessarily so, since it is required for the loading of MayaAscii scene
+files. To assign a componentList you must specify the attribute type for the "setAttr" command, using the '-type' flag, as
+"componentList". You must specify, as the first argument for the componentList, the number of components which are to be assigned.
+This is followed by one or more strings which define the components.</p>
+
+<p>I've also found that it is sometimes necessary to force Maya to recalculate the dependency graph using the "dgdirty" command in
+order to see the results. You can specify the input attribute on the affected node - e.g. '.inputPolymesh', for a polyModifier-based node
+- or simply mark the whole node as dirty. The former is a little more efficient, but it's doubtful you'd ever notice the difference
+unless you were assigning hundreds of nodes.</p>
+
+<pre class="mel">
+string $node = "polySubdFace1";
+
+<SPAN CLASS="comment">// Assign faces 0 and 2 to be subdivided by the polySubdFace node.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+setAttr -type "componentList" ( $node + ".inputComponents" ) 2 "f[0]" "f[2]";
+dgdirty ( $node + ".inputPolymesh" );
+</pre>
+
+Note that, if you use the compressed form of specifying a range of attributes - e.g. "e[0:3]" - that this counts as a single entry in the
+component list.
+
+<pre class="mel">
+string $node = "polySubdEdge1";
+
+<SPAN CLASS="comment">// Assign faces 0 through 3 inclusive to be subdivided by the polySubdFace node.</SPAN>
+<SPAN CLASS="comment">//</SPAN>
+setAttr -type "componentList" ( $node + ".inputComponents" ) 1 "e[0:3]";
+dgdirty ( $node + ".inputPolymesh" );
+</pre>
+
+<br>
+<h2>Running on Empty?</h2>
+
+<p>Note that if you specify an empty component list, many nodes will cause Maya to generate a warning.</p>
+
+<pre class="mel">
+string $node = "polySubdEdge1";
+
+setAttr -type "componentList" ( $node + ".inputComponents" ) 0;
+// Warning: Can't perform polySubdEdge1 on disabled selection //
+</pre>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.025.html">How do I select components?</a></li>
+<li class="howto"><a href="api.020.html">What are the advantages of using the API versus MEL?</a></li>
+<li class="howto"><a href="api.019.html">How do I execute MEL commands from the API? And <EM>why</EM> would I want or need to execute MEL from the API?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->28 Nov 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

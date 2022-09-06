@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#19</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #19</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.018.html">Previous</a> &middot; <a href="api.020.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I execute MEL commands from the API? And <EM>why</EM> would I want or need to execute MEL from the API?</h2>
+<!-- How do I execute MEL commands from the API? And <EM>why</EM> would I want or need to execute MEL from the API? -->
+
+<P>Yes, it is possible to execute MEL commands from the API. Sometimes it's a
+convenience, but there are times you have no other choice. There are two
+methods in the API for this purpose:</P>
+
+<PRE CLASS="api">
+MGlobal::executeCommand()
+MDGModifier::commandToExecute()
+</PRE>
+
+<P>The difference between these two is how the Undo is handled. Refer to this
+useful reply from Dean Edmonds in the Maya Developer's Mailing List:</P>
+
+<PRE>
+<A HREF="http://www.highend3d.com/maya/devarchive/sp.3d?mail_id=3583">http://www.highend3d.com/maya/devarchive/sp.3d?mail_id=3583</A>
+</PRE>
+
+<p>To prйcis: You can use <SPAN CLASS="api">MDGModifier::commandToExecute()</SPAN> to "stack"
+MEL commands so that a series is controllable through a single undo/redo event.
+Using <SPAN CLASS="api">MGlobal::executeCommand()</SPAN>, each MEL command creates
+an additional undo/redo event. If you are executing many small or iterative commands it would
+be inconvenient for the user to require multiple undos, and filling up the
+queue means that it would be impossible for the user to completely undo to
+a previous state.</p>
+
+<P>There are a few cases that spring to mind where calling MEL is the only way
+out:</P>
+
+<P CLASS="topic">1. User Interface</P>
+
+<P CLASS="in">Maya's UI control is handled exclusively via MEL. The API
+offers no access to generating, editing or querying windows, layouts or
+controls. For the most part you'll want to create separate MEL scripts to
+manage your UI, and limit the API involvement to simply querying states and
+such. In other words, don't try to build and manage a UI using
+MGlobal::executeCommand() calls.</P>
+
+<P CLASS="topic">2. Preferences</P>
+
+<P CLASS="in">There is no API equivalent to the "optionVar" MEL command.
+If you want to query or set user preferences from within your plug-in you'll
+need to do via MEL.</P>
+
+<P CLASS="topic">3. componentListData</P>
+
+<P CLASS="in">Here's one interesting attribute type. From what I've been able to determine, a 'componentListData'
+attribute type can only be queried via the API, and can only be set via MEL.</P>
+
+
+<P>In the sake of convenience, it typically boils down to: "How much work are
+you willing to do?" Take the &lsquo;<CODE>polyMapCut</CODE>&rsquo; command for example. Yes, it's
+possible to replicate its behavior using only API calls - provided you want
+to deal with introducing contruction history, generating the intermediate
+mesh, wiring up all the plug dependencies, and populating the polymapCut node
+(which, incidentally, uses a "componentListData" attribute)
+to describe the edges you wish to cut.</P>
+
+<P>Or you can simply call, for example:</P>
+
+<PRE CLASS="mel">
+polyMapCut -ch 1 pPlane1.e[18];
+</PRE>
+
+<P>And let Maya take care of all that.</P>
+
+<P>Doing it the "hard way" provided me the opportunity to create a convenient
+library for introducting construction history on a mesh, and for managing
+undo/redo - both of which were handy when used on other projects. But if I
+was building a simple "one off" tool for an artist, I'd likely simply call
+MEL to do it.</P>
+
+<br><h3 class="body">Acknowledgements</h3>
+<div class="in">
+<ul>
+<li>Dean Edmonds - <a href="http://www.gooroos.com">Gooroos Software</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->01 Sep 2003</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.020.html">What are the advantages of using the API versus MEL?</a></li>
+</ul>
+</div>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

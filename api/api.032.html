@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#32</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #32</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.031.html">Previous</a> &middot; <a href="api.033.html">Next</a></td><td> <a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do you use Maya's "function" attribute types, commonly found on Trax character and clip animation nodes?</h2>
+<p>Using the "Node and Attribute Reference" from Maya's documentation you'll find the following
+uses for the attribute type "function":</p>
+
+<div class="in">
+<pre>
+animBlend::blend
+
+animCurve::apply
+
+character::clipEvaluate.clipEvaluate_Hidden
+character::clipEvaluate.clipEvaluate_Raw
+
+clipLibrary::clipEvalList.clipEval.clipEval_Hidden
+clipLibrary::clipEvalList.clipEval.clipEval_Raw
+clipLibrary::clipFunction
+
+clipScheduler::blendList.blendList_Hidden
+clipScheduler::blendList.blendList_Raw
+clipScheduler::blendList.clipEvaluate
+clipScheduler::clipFunction.clipFunction_Hidden
+clipScheduler::clipFunction.clipFunction_Raw
+
+fluidShape::fieldList.fieldFunction.fieldFunction_Hidden
+fluidShape::fieldList.fieldFunction.fieldFunction_Raw
+fluidShape::emissionList.emissionFunction.emissionFunction_Hidden
+fluidShape::emissionList.emissionFunction.emissionFunction_Raw
+
+sampler::function.function_Hidden
+sampler::function.function_Raw
+</pre>
+</div>
+
+<p>Unfortunately, there's no obvious means to wrap this type of data in the API. There is no
+<CODE>MFnFunctionAttribute</CODE>, for example. Well, I suppose that's the reason that several
+of these are marked "For Internal Use Only," right?</p>
+
+<p>Right off the bat, and to avoid making you read the rest of this expecting a clever solution,
+I'm going to admit that I do not know how to utilize these attributes to introduce custom
+behavior. What follows is my assumptions for how they might be used within Maya, and possible
+theories for how one might start to crack the shell of their mysteries. All very <em>caveat
+lector</em> from here on in…</p>
+
+<h3>The Rosetta Stone</h3>
+
+<p>My interpretation of "function" is that the data is a pointer which the node dereferences and
+executes as a callback within its <CODE>compute()</CODE> method. If this is indeed the case there
+are a couple of ways that I can see Alias implementing it:</p>
+
+<p>Firstly, they could be using something akin to MFnPluginData. The value is passed as generic
+data, and its only the fact that the node knows how to interpret it that makes it a function. I
+note, however, that none of these attributes are storable, and one of the purposes behind
+MFnPluginData is to allow for serialization of custom data. Since this isn't a factor here,
+perhaps the overhead of this class isn't required.</p>
+
+<p>Second guess is that they are simply storing a 32-bit integer value, similar to a <CODE>
+Tint32</CODE>. Within the node, the value is cast to an appropriate function definition, and
+dereferenced; e.g.:</p>
+
+<PRE CLASS="api">
+MDataHandle inputHandle = datablock.inputValue( aEmissionFunction );
+int fnInt = inputHandle.asInt();
+
+MDataHandle toHandle = datablock.inputValue( aFieldFunctionInmapTo );
+short paramTo = toHandle.asShort();
+MDataHandle fromHandle = datablock.inputValue( aFieldFunctionInmapFrom );
+short paramFrom = fromHandle.asShort();
+
+(EmissionFunction*)(fnInt)( paramTo, paramFrom );
+</PRE>
+
+<p>This value would refer to a static/global function, and the plug would be initally assigned
+to a default behavior that was defined within the node itself. Other nodes, once connected to
+this plug, could replace the default behavior by assigning the address of its own callback
+function. It would be required to have the same declaration signature, of course.</p>
+
+<p>Mind you, either way such usage would seriously compromise the rules of the dependency graph,
+where each node is responsible for its own internal calculations and data storage.  It certainly
+piques one's curiosity as to its implementation.</p>
+
+<h3>The Stonecutters</h3>
+
+<p>Before one even gets so far as to deciphering the glyphs for the callback functions, the
+first hurdle would be connecting your own source attribute to one of these "function"
+attributes. So the question is: What is the secret knock to get in? Perhaps a clue can be
+obtained by querying the attribute via MFnAttribute::accepts(), as this will indicate which
+MFnData::Type and/or MTypeId will be accepted for an incoming connection.</p>
+
+<p>I wrote a quick "fnAttr" command to run a query of the MFnData::Type enumerations against a
+couple of the attributes listed above:</p>
+
+<pre class="mel">
+string $animBlend = `createNode animBlend`;
+// Result: animBlend1 //
+
+fnAttr -at blend $animBlend;
+// MFnData::kComponentList: No
+// MFnData::kDoubleArray: No
+// MFnData::kDynArrayAttrs: No
+// MFnData::kDynSweptGeometry: No
+// MFnData::kIntArray: No
+// MFnData::kLattice: No
+// MFnData::kMatrix: No
+// MFnData::kMesh: No
+<b>// MFnData::kNumeric: YES</b>
+// MFnData::kNurbsCurve: No
+// MFnData::kNurbsSurface: No
+// MFnData::kPlugin: No
+// MFnData::kPluginGeometry: No
+// MFnData::kPointArray: No
+// MFnData::kSphere: No
+// MFnData::kString: No
+// MFnData::kStringArray: No
+// MFnData::kSubdSurface: No
+// MFnData::kVectorArray: No
+</pre>
+
+<pre class="mel">
+string $clipLibrary = `createNode clipLibrary`;
+// Result: clipLibrary1 //
+
+fnAttr -at clipFunction $clipLibrary;
+// MFnData::kComponentList: No
+// MFnData::kDoubleArray: No
+// MFnData::kDynArrayAttrs: No
+// MFnData::kDynSweptGeometry: No
+// MFnData::kIntArray: No
+// MFnData::kLattice: No
+// MFnData::kMatrix: No
+// MFnData::kMesh: No
+<b>// MFnData::kNumeric: YES</b>
+// MFnData::kNurbsCurve: No
+// MFnData::kNurbsSurface: No
+// MFnData::kPlugin: No
+// MFnData::kPluginGeometry: No
+// MFnData::kPointArray: No
+// MFnData::kSphere: No
+// MFnData::kString: No
+// MFnData::kStringArray: No
+// MFnData::kSubdSurface: No
+// MFnData::kVectorArray: No
+</pre>
+
+<p>These results seem to lend support to the <CODE>Tint32</CODE> theory above. Can we use a numeric to make an arbitrary connection to this node?</p>
+
+<pre class="mel">
+string $fn = `createNode unknown -name fnImpersonator`;
+// Result: fnImpersonator //
+
+addAttr -at "long" -longName "function" -shortName "fn" $fn;
+
+connectAttr ( $animBlend + ".blend" ) ( $fn + ".function" );
+// Error: Connection not made: 'animBlend1.blend' -> 'fnImpersonator.function'.  
+          Data types of source and destination are not compatible. //
+
+connectAttr -f ( $fn + ".function" ) character1Scheduler1.clipFunction_Raw;
+// Error: Connection not made: 'fnImpersonator.function' -> 'character1Scheduler1.clipFunction_Raw'.  
+          Data types of source and destination are not compatible. //
+</pre>
+
+
+<h3>The Babel Fish</h3>
+
+<p>Of course, even if a connection were possible the workings behind this function are
+undocumented, and there's no way to know what you need to do on the other side of the connection
+that would make sense to the target node. I expect that one would need to appeal to Alias and
+see if they might provide some "behind the scenes" as to how you could utilize it for your own
+needs. I'd be surprised if they capitulated, but one can't know but to ask.</p>
+
+<P CLASS="rcomment"><!-- DATE -->22 Jan 2006</P>
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2006 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <a href="http://www.autodesk.com">Autodesk</a> (formerly <A HREF="http://www.alias.com">Alias</A>)<br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

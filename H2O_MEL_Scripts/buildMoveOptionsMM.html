@@ -1,0 +1,34 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · buildMoveOptionsMM</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">buildMoveOptionsMM</P>
+
+<IMG SRC="buildMoveOptionsMM.gif" ALT="buildMoveOptionsMM" WIDTH=265 HEIGHT=91 ALIGN="right">
+
+<P>When mapped to a hotkey, builds a marking menu as depicted at right.  It activates the <SPAN CLASS="ui">Move Tool</SPAN> with the specified option.</P>
+
+<P>The ‘<CODE>Press</CODE>’ assignment should be:</P>
+
+<PRE CLASS="mel">
+buildMoveOptionsMM;
+</PRE>
+
+<P>The ‘<CODE>Release</CODE>’ assignment should be:</P>
+
+<PRE CLASS="mel">
+if( `popupMenu -exists tempMM` ) { deleteUI tempMM; }
+</PRE>
+
+<P>The Marking Menu is activated with the <SPAN CLASS="ui">Left Mouse Button</SPAN>.</P>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Tuesday, August 15, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

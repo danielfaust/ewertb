@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#98</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #98</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.097.html">Previous</a> &middot; <a href="mel.099.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I determine if an object is visible?</h2>
+<p>A "cheap" test for visibility would be to simply test a node's '.visibility'
+attribute; however, this would not be entirely accurate. There are other factors to consider:</p>
+<ul>
+<li><p>An object's
+visibility is determined not only by its own '.visibility' attribute, but
+also by all of its parents' '.visibility' attributes. If a parent node is
+hidden, the child node is hidden as well.</p></li>
+<li><p>If the node is a mesh node, and
+if its '.intermediateObject' attribute is TRUE, then it is not drawn nor
+rendered.</p></li>
+<li><p>If the object is a member of a displayLayer, and if that
+displayLayer is hidden, then the object is not visible.</p></li>
+</ul>
+
+<p>The following MEL procedure shows a method for querying a node's visibility:</p>
+
+<PRE CLASS="mel">
+proc int nodeIsVisible( string $node )
+{
+  <SPAN CLASS="comment">// If user is asking about a bogus node, return FALSE.</SPAN>
+  if ( !`objExists $node` ) return false;
+
+  <SPAN CLASS="comment">// Object must be a DAG node, or it's not visible.</SPAN>
+  <SPAN CLASS="comment">// There's no MEL query to identify a DAG node, but the kDagNode class adds</SPAN>
+  <SPAN CLASS="comment">// the '.visibility' attribute, so we'll use its existence as a cue.</SPAN>
+  if ( !`attributeQuery -node $node -exists "visibility"` ) return false;
+
+  <SPAN CLASS="comment">// The obvious: Start with the '.visibility' attribute on the node.</SPAN>
+  int $visible = `getAttr ( $node + ".visibility" )`;
+
+  <SPAN CLASS="comment">// If this is an intermediate mesh, it's not visible.</SPAN>
+  if ( `attributeQuery -node $node -exists "intermediateObject"` )
+  {
+    $visible = $visible &amp;&amp; !`getAttr ( $node + ".intermediateObject" )`;
+  }
+
+  <SPAN CLASS="comment">// If the object is in a displayLayer, and the displayLayer is hidden,</SPAN>
+  <SPAN CLASS="comment">// then the object is hidden.</SPAN>
+  if ( `attributeQuery -node $node -exists "overrideEnabled"` &amp;&amp;
+       `getAttr ( $node + ".overrideEnabled" )` )
+  {
+    $visible = $visible &amp;&amp; `getAttr ( $node + ".overrideVisibility" )`;
+  }
+
+  <SPAN CLASS="comment">// Ascend the hierarchy and check all of the parent nodes.</SPAN>
+  if ( $visible )
+  {
+    string $parents[] = `listRelatives -parent $node`;
+    if ( `size $parents` &gt; 0 )
+    {
+      $visible = $visible &amp;&amp; nodeIsVisible( $parents[0] );
+    }
+  }
+
+  return $visible;
+}
+</PRE>
+
+<P CLASS="rcomment"><!-- DATE -->11 Apr 2004</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#09</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #09</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.008.html">Previous</a> &middot; <a href="mel.010.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I find out which items are highlighted/selected in the MultiLister?</h2>
+<!-- How do I find out which items are highlighted/selected in the MultiLister? -->
+
+<PRE CLASS=mel>
+// getMultiListerSelection  v1.1  (28 July 1999)
+//
+// MEL procedure for Maya
+//
+// by Bryan Ewert
+//    http://www.ewertb.com
+//    maya@ewertb.com
+//
+//    H2O Entertainment Corporation
+//    Calgary, Canada
+//    http://www.h2oent.com
+
+// PURPOSE
+//   Determine what is highlighted or selected in the MultiLister
+
+// INPUTS
+//   none
+
+// RESULTS
+//   A string array containing all highlighted or selected items from the
+//   MultiLister
+
+proc string[] getMultiListerSelection()
+{
+  string $targets[];
+
+  // Get the MultiLister panel.  There _should_ be only one
+  // of these.
+  string $scriptPanels[] = `getPanel -scriptType "multiListerPanel"`;
+
+  // Just in case...
+  if ( size( $scriptPanels ) > 1 )
+  {
+    warning ( "More than one active multiListerPanel!" );
+  }
+
+  string $nameRoot = $scriptPanels[0];
+
+  // Get the control for the panel.
+  // Append the Panel name to get the "topLayout"
+  string $control = `scriptedPanel -q -control $nameRoot`;
+
+  // If no control is present, MultiLister is not open
+  if ( "" != $control )
+  {
+    string $topLayout = $control + "|" + $nameRoot;
+
+    // And finally, the active MultiLister
+    $theLister = `findActiveLister $topLayout $nameRoot`;
+
+    if ( `listerEditor -exists $theLister` )
+    {
+      // Code unabashedly copy and paste from 'buildMultiListerEditMenu.mel'
+
+      int $inSelectMode = `listerEditor -q -inSelectMode $theLister`;
+
+      if($inSelectMode == 0)
+      {
+        // get highlight list
+        $targets = `listerEditor -q -highlight $theLister`;
+      }
+      else
+      {
+        $targets = `ls -sl`;
+      }
+    }
+  }
+
+  return $targets;
+}
+</PRE>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

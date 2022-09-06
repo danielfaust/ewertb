@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#04</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #04</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.003.html">Previous</a> &middot; <a href="mel.005.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">Given a polymesh edge component, how can I get a list of its associated vertices?</h2>
+<!-- Given a polymesh edge component, how can I get a list of its associated vertices? -->
+<PRE CLASS=mel>
+proc int[] edgeVertices( string $edge )
+{
+  int $vertices[2];
+
+  string $vlist[] = `listAttr $edge`;
+
+  $vertices[0] = match( "[0-9]+", $vlist[0] );
+  $vertices[1] = match( "[0-9]+", $vlist[4] );
+
+  return $vertices;
+}
+</PRE>
+
+<P>However, Maya always returns the vertices in numeric order and not in what I call "construction order."  For example, if you activate the PolyAppendTool and pick an edge, you'll see an arrow that defines the "vector" for that edge.  The order of the vertices returned does not necessarily match the orientation of this vector.</P>
+
+<P>Per the documentation on the 'mesh' DG Node you're <I>supposed</I> to be able to query this using:</P>
+
+<PRE CLASS=mel>
+getAttr polymesh.e[0];
+</PRE>
+
+<P>or more directly, possibly something like:</P>
+
+<PRE CLASS=mel>
+getAttr polymesh.e[0].edg1;
+getAttr polymesh.e[0].edg2;
+</PRE>
+
+<P>However, that appears to be broken (at least in MEL) right now.  Maya Tech Support is currently investigating this.</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

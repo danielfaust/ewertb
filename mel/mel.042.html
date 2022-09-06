@@ -1,0 +1,225 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#42</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #42</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.041.html">Previous</a> &middot; <a href="mel.043.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I find/close Maya's editor windows -- the Dope Sheet and Graph Editor, for example?</h2>
+<!-- How do I find/close Maya's editor windows - the Dope Sheet and Graph Editor, for example? -->
+
+<P>Maya editor windows are primarily based on panels (an editor window is
+typically a torn-off panel).  You can query panel information using the MEL
+command <SPAN CLASS="mel">getPanel</SPAN>.</P>
+
+<P>There are several ways to determine if the Graph Editor window/panel is
+currently displayed.</P>
+
+<OL>
+  <LI><P>You could do a string-match to find the Graph Editor panel(s).</P>
+
+<PRE CLASS="mel">
+getPanel -visiblePanels;
+// Result: modelPanel4 graphEditor1 //
+</PRE>
+
+  <P>Scan the returned array for the string "graphEditor", likely using the ‘<CODE>gmatch</CODE>’ MEL command.
+  Those that match stand a good chance of representing a Graph Editor panel.</P>
+
+  </LI>
+
+  <LI><P>Typically the Graph Editor has the label "Graph Editor".</P>
+
+<PRE CLASS="mel">
+getPanel -withLabel "Graph Editor";
+// Result: graphEditor1 //
+</PRE>
+
+  <P>The panel returned in this query is likely a Graph Editor.</P>
+
+  </LI>
+
+  <LI><P>Query all existing panels of scripted type "graphEditor".</P>
+
+<PRE CLASS="mel">
+getPanel -scriptType graphEditor;
+// Result: graphEditor1 //
+</PRE>
+
+  <P>As above, this is likely a Graph Editor.</P>
+
+  </LI>
+</OL>
+
+<P>As implied here, the Graph Editor is a scripted panel type.  Its behavior is
+controlled (at least partially) through MEL support scripts.</P>
+
+<P>Closing the Graph Editor window is not as simple as deleting "<CODE>graphEditor1</CODE>."   This doesn't kill the window
+but rather deletes the panel within the window.</P>
+
+<P>Unfortunately, there is no mechanism in MEL to easily backtrack from an
+existing panel to its parent window -- the ‘<CODE>&minus;parent</CODE>’ flag for the
+‘<CODE>scriptedPanel</CODE>’ command does not offer a Query mode.</P>
+
+<P>It is sometimes possible to query the "control" for the scriptedPanel and
+tokenize the UI path to extract the window portion:</P>
+
+<PRE CLASS="mel">
+string $graphEditor[] = `getPanel -scriptType graphEditor`;
+for ( $editor in $graphEditor )
+{
+  string $tokens[];
+  string $control = `scriptedPanel -q -ctl $editor`;
+
+  if ( $control != "" )
+  {
+    if ( 0 &lt; `tokenize $control "|" $tokens` )
+    {
+      print ( "Window for Graph Editor: " + $tokens[0] + "\n" );
+    }
+  }
+  else
+    print ( "Could not determine Window for Graph Editor.\n" );
+}
+
+// Result: Window for Graph Editor: graphEditor1Window //
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> Heed the documentation warnings -- it
+is possible for the control to be NULL.  Make sure you check for this.
+</P>
+
+<P>As the above suggests, it is somewhat a standard practice within Maya
+for a panel's parent window to simply be the name of the panel appended
+with the string "Window".  If you want to make this assumption, you
+could do this:</P>
+
+<PRE CLASS="mel">
+string $graphEditor[] = `getPanel -scriptType graphEditor`;
+for ( $editor in $graphEditor )
+{
+  string $graphEditorWindow = ( $editor + "Window" );
+
+  if ( `window -exists $graphEditorWindow` )
+    print ( "Window for Graph Editor: " + $graphEditorWindow + "\n" );
+  else
+    print ( "Could not determine Window for Graph Editor.\n" );
+}
+
+// Result: Window for Graph Editor: graphEditor1Window //
+</PRE>
+
+<P>Now that you've found the window for the Graph Editor you can "close" it using the ‘<CODE>deleteUI</CODE>’ command:</P>
+
+<PRE CLASS="mel">
+deleteUI -window graphEditor1Window;
+</PRE>
+
+<div class="sidebar">
+  <P CLASS="sans"><b>MEL Tip</b></P>
+
+  <P CLASS="sans">There are two ways to ensure that the UI you are deleting is in fact a window:</P>
+
+<OL>
+  <LI><P CLASS="sans">Assert that the window exists.</P>
+
+<PRE CLASS="mel">
+if ( `window -exists $window` ) { deleteUI $window }
+</PRE>
+
+  </LI>
+
+  <LI><P CLASS="sans">Specify that deleteUI should only delete a window.</P>
+
+<PRE CLASS="mel">
+deleteUI -window $window;
+</PRE>
+
+  </LI>
+</OL>
+</div>
+
+<P><SPAN CLASS="note">Note:</SPAN> If the editor panel is currently docked, your query will identify the
+main Maya window:</P>
+
+<PRE CLASS="mel">
+// Result: Window for Graph Editor: MayaWindow //
+</PRE>
+
+<P>It's likely not a good idea to delete this window.  The user may get upset.</P>
+
+<P>Most of the above should work for all UI panels, and not just the Graph
+Editor.</P>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Query derived from panel's control</SPAN>
+string $dopeSheetPanels[] = `getPanel -scriptType dopeSheetPanel`;
+// Result: dopeSheetPanel1 //
+
+string $dopeSheet = $dopeSheetPanels[0];
+
+string $control = `scriptedPanel -q -ctl $dopeSheet`;
+// Result: dopeSheetPanel1Window|TearOffPane|dopeSheetPanel1 //
+
+if ( $control != "" )
+{
+  string $tokens[];
+  if ( 0 &lt; `tokenize $control "|" $tokens` )
+  {
+    print ( "Window for Dope Sheet: " + $tokens[0] + "\n" );
+  }
+}
+else
+  print ( "Could not derive Dope Sheet Window from control.\n" );
+
+// Result: Window for Graph Editor: dopeSheetPanel1Window //
+
+<SPAN CLASS="comment">// Query assuming name includes "Window" string</SPAN>
+string $dopeSheetWindow = ( $dopeSheet + "Window" );
+
+if ( `window -exists $dopeSheetWindow` )
+  print ( "Window for Dope Sheet: " + $dopeSheetWindow + "\n" );
+else
+  print ( "Could not find Dope Sheet Window by name.\n" );
+
+// Result: Window for Dope Sheet: dopeSheetPanel1Window //
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.041.html">How do I replicate the Frame Selected and Frame All hotkey functions in MEL?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Wednesday, January 10, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

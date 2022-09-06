@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · findIntermediates</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">findIntermediates</P>
+
+<H3>Preamble</H3>
+
+<P>As best as I can find from Maya's documentation:</P>
+
+<P CLASS="in">"Intermediate object ... specifies whether the dagNode is an intermediate object resulting
+from a construction history operation.  dagNodes with this attribute
+set to true not visible and/or rendered."
+</P>
+
+<H3>Function</H3>
+
+<P>This script will track down Intermediate node types and select them for you.</P>
+
+<H3>Usage</H3>
+
+<OL>
+
+<LI><P>Enter the command:  <CODE>findIntermediates</CODE></P></LI>
+
+<LI><P>The script will issue warnings for any Intermediate objects if finds; e.g.</P>
+<PRE CLASS="mel">
+// Warning: polySurfaceShape3 is an Intermediate object //
+</PRE>
+</LI>
+
+<LI><P>The script will select all nodes reported as Intermediate objects.</P></LI>
+
+<LI><P>Open the Hypergraph</P></LI>
+
+<LI><P><SPAN CLASS="ui">Graph -> Scene Heirarchy</SPAN></P>
+<P>(This mode will be unavailable if the Hypergraph is already in Scene Heirarchy mode)</P></LI>
+
+<LI><P><SPAN CLASS="ui">Options -> Display -> Shape Nodes</SPAN><BR>
+<SPAN CLASS="ui">Options -> Display -> Invisible Nodes</SPAN></P></LI>
+
+<LI><P><SPAN CLASS="ui">Edit -> Show Selected</SPAN></P></LI>
+
+<LI><P><SPAN CLASS="ui">View -> Frame Selection</SPAN></P>
+<P>(If nothing frames in the view, it's possible that your selection was canceled by a rogue mouse-click in the Hypergraph window; try running findIntermediates again.)</P>
+</LI>
+
+<LI><P>You should now see the highlighted Intermediate objects displayed
+in the Hypergraph.  Delete them, edit them, whatever, at your whim.</P></LI>
+</OL>
+
+<SPAN CLASS="comment"><DATE>14 Jun 2000</DATE></SPAN>
+
+<!-- footer --></BODY>
+</HTML>

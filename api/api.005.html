@@ -1,0 +1,234 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Maya API How-To">
+<meta name="keywords" content="maya,api,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>Maya API How-To
+#05</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>Maya API How-To #05</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="api.html">Back</a> &middot; <a href="api.003.html">Previous</a> &middot; <a href="api.006.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I "constrain" my custom manipulator so it moves with its parent node?</h2>
+<!-- How do I "constrain" my custom manipulator so it moves with its parent node? -->
+
+<DIV CLASS="heading">
+<P><B>Method #1</B>: For function sets with a .setStartPoint() method (e.g. MFnDistanceManip)</P>
+</DIV>
+
+<P>First, declare a ‘<CODE>MDagPath</CODE>’ and ‘<CODE>MPoint</CODE>’ object within your manipulator class.</P>
+
+<P>We'll also be using a utility function ‘<CODE>nodeTranslation()</CODE>’, which we'll declare here as well.</P>
+
+<PRE CLASS="api">class myManip : public MPxManipContainer
+{
+  <SPAN CLASS="comment">// ...</SPAN>
+
+private:
+        MDagPath        fNodePath;
+        MPoint          nodePos;
+
+        MVector         nodeTranslation() const;
+
+  <SPAN CLASS="comment">// ...</SPAN>
+
+};</PRE>
+
+<P>Within the ‘<CODE>connectToDependNode()</CODE>’ method, set <CODE>fNodePath</CODE> to the DAG path for your manipulator.  Use <CODE>fNodePath</CODE> in the ‘<CODE>nodeTranslation()</CODE>’ function to determine the offset required; assign this offset to the <CODE>nodePos</CODE> member variable.</P>
+
+<PRE CLASS="api">
+MStatus myManip::connectToDependNode(const MObject &node)
+{
+  <SPAN CLASS="comment">// ...</SPAN>
+
+  <SPAN CLASS="comment">// Get the DAG path for this manipulator</SPAN>
+  MFnDagNode dagNodeFn(node);
+  dagNodeFn.getPath(fNodePath);
+
+  <SPAN CLASS="comment">// Set member variable to node position</SPAN>
+  nodePos =  nodeTranslation();
+
+  MPlug myPlug = nodeFn.findPlug("myPlug", &stat);
+
+  if ( stat != MS::kFailure )
+  {
+    MFnDistanceManip distanceManipFn( fDistanceManip );
+    distanceManipFn.connectToDistancePlug( myPlug );
+
+    <SPAN CLASS="comment">// Set the "home" pos for this manipulator</SPAN>
+    distanceManipFn.setStartPoint( startPoint );
+  }
+
+  finishAddingManips();
+  MPxManipContainer::connectToDependNode(node);
+
+  <SPAN CLASS="comment">// ...</SPAN>
+}
+</PRE>
+
+<P>The ‘<CODE>nodeTranslation()</CODE>’ method returns the world-space translation of the manipulator.</P>
+
+<PRE CLASS="api">
+MVector myManip::nodeTranslation() const
+{
+  MFnDagNode dagFn(fNodePath);
+  MDagPath path;
+  dagFn.getPath(path);
+  path.pop();  <SPAN CLASS="comment">// pop from the shape to the transform</SPAN>
+  MFnTransform transformFn(path);
+  return transformFn.translation(MSpace::kWorld);
+}
+</PRE>
+
+<P>If you are providing any custom GL calls for your manipulator, you can use the stored nodePos value.  Add its matrix to any text or GL draw calls.</P>
+
+<PRE CLASS="api">void myManip::draw(M3dView & view,
+           const MDagPath & path,
+           M3dView::DisplayStyle style,
+           M3dView::DisplayStatus status)
+{
+  <SPAN CLASS="comment">// ...</SPAN>
+
+  view.beginGL();
+  glMatrixMode(GL_MODELVIEW);
+
+  glPushMatrix();
+
+  <SPAN CLASS="comment">// Move manip to node's position</SPAN>
+  glTranslated( nodePos.x, nodePos.y, nodePos.z );
+  <SPAN CLASS="comment">// convert to Y-up</SPAN>
+  glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+
+  glBegin( GL_LINE_LOOP );
+
+    <SPAN CLASS="comment">// Draw a 1.0-unit circle around node/manip</SPAN>
+    for ( r = 0; r &lt; SEGMENTS; r++ )
+    {
+      double angle = ( 2 * PI ) / SEGMENTS * r;
+      GLdouble radiusX = cos(angle);
+      GLdouble radiusY = sin(angle);
+
+      glVertex2d( radiusX, radiusY );
+    }
+
+  glEnd();
+
+  MString manipText( "Pick me!" );
+  MPoint textPos( 0.0, 0.0, 0.0 );
+
+  <SPAN CLASS="comment">// offset text by node's position</SPAN>
+  textPos += nodePos;
+  view.drawText( manipText, textPos, M3dView::kRight );
+
+  glPopMatrix();
+
+  view.endGL();
+
+  <SPAN CLASS="comment">// ...</SPAN>
+}</PRE>
+
+<DIV CLASS="heading">
+<P><B>Method #2</B>: For function sets without a .setStartPoint() method (e.g. MFnStateManip)</P>
+</DIV>
+
+<P>This technique is almost identical to the one above -- we just have to use a <CODE>plugToManipConversionCallback</CODE> to get the "startPoint" (or equivalent) is all.</P>
+
+<P>The declaration of your manipulator will still include a MDagPath object and nodeTranslation() method, and also the callback (as exemplified in footPrintManip.cpp in the DevKit):</P>
+
+<PRE CLASS="api">class myManip : public MPxManipContainer
+{
+  <SPAN CLASS="comment">// ...</SPAN>
+
+private:
+        MDagPath        fNodePath;
+
+        MManipData      startPointCallback( unsigned index ) const;
+        MVector         nodeTranslation() const;
+
+  <SPAN CLASS="comment">// ...</SPAN>
+
+};</PRE>
+
+<P>The ‘<CODE>startPointCallback()</CODE>’ method uses ‘<CODE>nodeTranslation()</CODE>’ to pass the world-space offset of the node to the manipulators startPoint.</P>
+
+<PRE CLASS="api">
+MManipData containerManip::startPointCallback(unsigned index) const
+{
+  MFnNumericData numData;
+  MObject numDataObj = numData.create(MFnNumericData::k3Double);
+  MVector vec = nodeTranslation();
+  numData.setData(vec.x, vec.y, vec.z);
+  return MManipData(numDataObj);
+}
+
+MVector myManip::nodeTranslation() const
+{
+  MFnDagNode dagFn(fNodePath);
+  MDagPath path;
+  dagFn.getPath(path);
+  path.pop();  <SPAN CLASS="comment">// pop from the shape to the transform</SPAN>
+  MFnTransform transformFn(path);
+  return transformFn.translation(MSpace::kWorld);
+}
+</PRE>
+
+<P>Within the ‘<CODE>connectToDependNode()</CODE>’ method, set <CODE>fNodePath</CODE> to the DAG path for your manipulator.  Also required in this case is to set up the <CODE>plugToManipConversionCallback</CODE> for the manipulator's positionIndex.</P>
+
+<PRE CLASS="api">
+MStatus myManip::connectToDependNode(const MObject &node)
+{
+  <SPAN CLASS="comment">// ...</SPAN>
+
+  <SPAN CLASS="comment">// Get the DAG path for this manipulator</SPAN>
+  MFnDagNode dagNodeFn(node);
+  dagNodeFn.getPath(fNodePath);
+
+  MFnStateManip containerStateManipFn( fContainerStateManip );
+  positionIndex = containerStateManipFn.positionIndex();
+
+  <SPAN CLASS="comment">// Use the callback to set the startPoint for this manipulator</SPAN>
+  addPlugToManipConversionCallback(positionIndex, (plugToManipConversionCallback) startPointCallback);
+
+  <SPAN CLASS="comment">// ...</SPAN>
+
+  finishAddingManips();
+  MPxManipContainer::connectToDependNode(node);
+
+  <SPAN CLASS="comment">// ...</SPAN>
+}
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN> I've had problems (read: Maya crashes) initiating multiple startPointCallbacks for multiple manipulators in the same MPxManipContainer.  I know it's possible, because A|w does so in their examples.  I think the crashes were due to the fact that the manipulators were all of the same type (in my case, MFnDistanceManip).  This was the reason I started using the "direct" method of using setStartPoint() instead of the callback.  Your mileage may vary.</P>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="api.006.html">How do I "constrain" my custom manipulator to the position of another manipulator within the same MPxManipContainer?</a></li>
+</ul>
+</div>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

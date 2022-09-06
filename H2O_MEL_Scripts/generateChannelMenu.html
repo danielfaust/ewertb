@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · generateChannelMenu</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">
+generateChannelMenu<BR>
+generateTearoffChannelMenu
+</P>
+
+<IMG SRC="generateChannelMenu.gif" ALT="Enhanced Channel Box menu" WIDTH=133 HEIGHT=432 ALIGN="right">
+
+<H3>Function</H3>
+
+<P>The ‘<CODE>generateChannelMenu.mel</CODE>’ script replaces the default installed as:</P>
+
+<PRE>
+\AW\Maya2.5\scripts\startup\generateChannelMenu.mel
+</PRE>
+
+<P><SPAN CLASS="note">WARNING!</SPAN>  The contents of this function are originally from Maya v2.5.1.  Beware replacing this function under Maya v3!</P>
+
+<P>It adds several functions to the Channel Box menu:</P>
+
+<P CLASS="ui">
+Unkey Selected<BR>
+Unkey All<BR>
+</P>
+
+<P CLASS="in">These two additional functions allow you to use the Channel Box's context menu to
+  delete a channel's key for the current frame/time.</P>
+
+<P CLASS="ui">
+Block Selected<BR>
+Unblock Selected<BR>
+</P>
+
+<P CLASS="in">These two set the ‘<CODE>nodeState</CODE>’ attribute for the selected channel(s).
+  The former of the two sets the attribute to ‘<CODE>Blocking</CODE>’, which disables animation
+  on the selected channel(s).  The latter sets the attribute to ‘<CODE>Normal</CODE>’.</P>
+
+<P CLASS="in"><SPAN CLASS="note">Note</SPAN>: The ‘<CODE>Unblock&nbsp;Selected</CODE>’ function will not preserve the ‘<CODE>nodeState</CODE>’ attribute if it was originally set to ‘<CODE>Has&nbsp;No&nbsp;Effect</CODE>’.</P>
+
+<P CLASS="ui">
+Select<BR>
+</P>
+
+<P CLASS="in">This menu item is enabled for highlighted INPUT channels.  Use this menu item to select
+the desired input node.</P>
+
+<P CLASS="ui">
+Graph Editor<BR>
+</P>
+
+<P CLASS="in">Just a quick way to bring up the Graph Editor when you need it.</P>
+
+<P CLASS="sidebar">You need not replace the original script in your Maya install directory;
+simply place this script within your ‘<CODE>MAYA_SCRIPT_PATH</CODE>’, restart Maya,
+and it will politely perform the enhancement.</P>
+
+<H3>Related Scripts</H3>
+
+The ‘<CODE>generateTearoffChannelMenu</CODE>’ script is necessary to provide menus for
+the <A HREF="tearoffChannelBox.html">Tearoff Channel Box</A>; it includes the
+enhancements described above.</P>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Wednesday, October 18, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

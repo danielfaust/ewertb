@@ -1,0 +1,36 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · buildPolygonToolsMM</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">buildPolygonToolsMM</P>
+
+<H3>Function</H3>
+
+<IMG SRC="buildPolygonToolsMM.gif" ALT="buildPolygonToolsMM" WIDTH=361 HEIGHT=160 ALIGN="right">
+
+<P>Creates a marking menu that offers common Polygon Modeling Tools, as depicted at right.</P>
+
+<H3>Usage</H3>
+
+<P>Assign to a hotkey.</P>
+
+<P>The ‘<CODE>Press</CODE>’ assignment should be:</P>
+
+<DIV CLASS="ui">
+<P CLASS="in">
+buildPolygonToolsMM;
+</P></DIV>
+
+<P>The ‘<CODE>Release</CODE>’ assignment should be:</P>
+
+<DIV CLASS="ui">
+<P CLASS="in">
+if( `popupMenu -exists tempMM` ) { deleteUI tempMM; }
+</P></DIV>
+
+<!-- footer --></BODY>
+</HTML>

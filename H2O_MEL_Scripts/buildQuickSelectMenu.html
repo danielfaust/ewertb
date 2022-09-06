@@ -1,0 +1,36 @@
+<HTML>
+<HEAD>
+<TITLE>H2O MEL Scripts · buildQuickSelectMenu</TITLE>
+<LINK REL=STYLESHEET HREF="mel.css" TYPE="text/css">
+</HEAD>
+
+<BODY CLASS="docs">
+
+<P CLASS="title">buildQuickSelectMenu</P>
+
+<IMG SRC="buildQuickSelectMenu.gif" ALT="buildQuickSelectMenu" WIDTH=75 HEIGHT=86 ALIGN="right">
+
+<P>When mapped to a hotkey, builds a popup menu containing all current Quick Select Sets, as depicted at right.</P>
+
+<P>The ‘<CODE>Press</CODE>’ assignment should be:</P>
+
+<PRE CLASS="mel">
+buildQuickSelectMenu;
+</PRE>
+
+<P>The ‘<CODE>Release</CODE>’ assignment should be:</P>
+
+<PRE CLASS="mel">
+if( `popupMenu -exists tempMM` ) { deleteUI tempMM; }
+</PRE>
+
+<P>The Popup Menu is activated with the <SPAN CLASS="ui">Left Mouse Button</SPAN>.</P>
+
+<BR>
+
+<P><A HREF="index.html" TARGET="_parent"><IMG SRC="_back.gif" WIDTH="32" HEIGHT="32" ALT="Reload H2O MEL Scripts" BORDER="0"></A></P>
+
+<P CLASS="rcomment"><DATE>Tuesday, August 15, 2000</DATE></P>
+
+<!-- footer --></BODY>
+</HTML>

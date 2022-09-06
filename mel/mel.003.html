@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#03</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #03</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.002.html">Previous</a> &middot; <a href="mel.004.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How can a get a list of all vertex or edge components that are associated with a polymesh face? (or vice versa)</h2>
+<!-- How can a get a list of all vertex or edge components that are associated with a polymesh face? (or vice versa) -->
+
+<P>There's a nice little hidden (well, non-obvious anyway) MEL command that
+came to light with Quang Tran's edgePath/facePath tools:</P>
+
+<PRE CLASS="mel">
+polyListComponentConversion
+</PRE>
+
+<p>It returns a converted selection list, so all you need to do is assign the
+results of this command to a string array:</p>
+
+<PRE CLASS="mel">
+<SPAN CLASS="comment">// Vertices associated with face</SPAN>
+string $vtx[] = `polyListComponentConversion -toVertexFace pCube1.f[5]`;
+// Result: pCube1.vtx[0] pCube1.vtx[2] pCube1.vtx[4] pCube1.vtx[6] //
+
+<SPAN CLASS="comment">// Edges associated with face</SPAN>
+string $edge[] = `polyListComponentConversion -toEdge pCube1.f[1]`;
+// Result: pCube1.e[1:2] pCube1.e[6:7] //
+
+<SPAN CLASS="comment">// Vertices associated with edge</SPAN>
+string $vtx[] = `polyListComponentConversion -toVertex pCube1.e[1]`;
+// Result: pCube1.vtx[2:3] //
+
+<SPAN CLASS="comment">// Faces associated with vertex</SPAN>
+string $face[] = `polyListComponentConversion -toFace pCube1.vtx[1]`;
+// Result: pCube1.f[0] pCube1.f[3:4] //
+</PRE>
+
+<BR>
+
+<H3 class="body">The "Old Way"</H3>
+
+<P>I originally used a "brute force" procedure and parsed the results of the 'listAttr' command to get the vertices associated with a face.</P>
+
+<PRE CLASS=mel>
+proc int[] facetVertices( string $facet )
+{
+   int $vertices[];
+   int $numVertices = 0;
+
+   string $attr[] = `listAttr $facet`;
+
+   for ( $i = 0; $i &lt; size( $attr ); $i+=4 )
+   {
+      $vertices[$numVertices++] = match( "[0-9]+", $attr[$i] );
+   }
+
+   return $vertices;
+}
+</PRE>
+
+<br><h3 class="body">Related How-To's</h3>
+<div class="in">
+<ul>
+<li class="howto"><a href="mel.055.html">How can a get a list of all vertex or edge components from a polymesh in proper counter-clockwise or "render" order?</a></li>
+</ul>
+</div>
+
+<P CLASS="rcomment"><!-- DATE -->Thursday, January 18, 2001</P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>

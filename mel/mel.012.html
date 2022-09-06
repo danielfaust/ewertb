@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+<HEAD>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="MEL How-To">
+<meta name="keywords" content="maya,mel,how-to">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<LINK REL=STYLESHEET HREF="../ewertb.css" TYPE="text/css">
+
+<TITLE>MEL How-To
+#12</TITLE>
+
+</HEAD>
+
+<BODY><!-- {{ header }} --><div class="body">
+
+<table cellspacing=0 cellpadding=0 width="100%"><tr><td class="title"><h1>MEL How-To #12</h1></td></tr>
+<tr><td class="bar"><table cellspacing=0 cellpadding=0 width="100%"><tr><td class="php"><a href="mel.html">Back</a> &middot; <a href="mel.011.html">Previous</a> &middot; <a href="mel.013.html">Next</a></td><td> <!--<a href="../../">Home</a> &middot; --><a href="../../maya.html">Maya</a></td></tr></table></td></tr>
+
+<tr><td class="body">
+
+<h2 class="body">How do I save preferences for my scripts so they are recalled in subsequent sessions?</h2>
+<!-- How do I save preferences for my scripts so they are recalled in subsequent sessions? -->
+
+<P>I'll start with a homework assignment.  Study up on:
+
+<PRE CLASS=mel>
+optionVar
+</PRE>
+
+<P>I'm not a fan of smattering global variables throughout a script.  I prefer to use the ‘<CODE>optionVar</CODE>’ command to save and restore all user settings.  This offers a few advantages:</P>
+
+<OL>
+  <LI><P>No global variables smattered throughout the script.</P></LI>
+  <LI><P>Settings are preserved between Maya sessions.</P></LI>
+  <LI><P>Settings are user-specific.</P></LI>
+</OL>
+
+<P>The following demonstrates saving the user's preferred filetype to the optionVar ‘<CODE>MayaDefaultFileType</CODE>’:</P>
+
+<PRE CLASS=mel>
+string $defaultFileType = "MayaAscii";
+optionVar -stringValue MayaDefaultFileType $defaultFileType;
+</PRE>
+
+<P><SPAN CLASS="note">Note:</SPAN>  If you query an optionVar that has not been set it will return an int value of 0.  Always provide a suitable default value for all preferences, then check if the optionVar has been set before reading it into your preference settings.
+
+<P>The following demonstrates restoring the user's preferred filetype to the string variable <CODE>$defaultFileType</CODE>:</P>
+
+<PRE CLASS=mel>
+string $defaultFileType = "MayaBinary";
+
+<SPAN CLASS="comment">// Ensure optionVar has been set by user</SPAN>
+
+if ( `optionVar -exists MayaDefaultFileType` )
+  $defaultFileType = `optionVar -q MayaDefaultFileType`;
+
+<SPAN CLASS="comment">// If optionVar has not been set, initialize with default</SPAN>
+
+else
+  optionVar -stringValue MayaDefaultFileType $defaultFileType;
+</PRE>
+
+<P>I try to create all UIs to be as user-friendly as possible.  This includes the saving of state information that reflect the user's interaction with the UI.</P>
+
+<P>The following demonstrates the use of ‘<CODE>optionVar</CODE>’ to control preferences related to a script's UI controls, in this case the selected tabLayout tab and the collapse status of a frameLayout.</P>
+
+<PRE CLASS=mel>
+<SPAN CLASS="comment">// ** Restore preferences **</SPAN>
+
+int $tab = 1;
+int $collapse = 1;
+
+if ( `optionVar -exists myTab` )
+  $tab = `optionVar -q myTab`;
+else
+  optionVar -intValue myTab $tab;
+
+if ( `optionVar -exists collapseStatus` )
+  $collapse = `optionVar -q collapseStatus`;
+else
+  optionVar -intValue collapseStatus $collapse;
+
+<SPAN CLASS="comment">// ** Propogate preferences to UI **</SPAN>
+
+tabLayout -e -selectTabIndex $tab myTabLayout;
+
+frameLayout -e -collapse $collapse myFrameLayout;
+
+<SPAN CLASS="comment">// ... //</SPAN>
+
+<SPAN CLASS="comment">// ** Save preferences **</SPAN>
+
+$tab = `tabLayout -q -selectTabIndex myTabLayout`;
+$collapse = `frameLayout -q -collapse myFrameLayout`;
+
+optionVar -intValue myTab $tab;
+optionVar -intValue collapseStatus $collapse;
+</PRE>
+
+<P CLASS="rcomment"><DATE>Wednesday, July 4, 2001</DATE></P>
+
+</td></tr>
+
+<tr><td class="footer">Copyright &copy;2005 by Bryan Ewert, <A HREF="mailto:maya@ewertb.com">maya@ewertb.com</A><BR>
+<I>Maya</I> is a Registered Trademark of <A HREF="http://www.alias.com">Alias</A><br>
+</td></tr>
+
+</table>
+</div>
+<!-- {{ footer }} --></body>
+
+
+</HTML>
